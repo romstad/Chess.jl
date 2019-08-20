@@ -12,8 +12,8 @@ export Board, MoveList, UndoInfo
 export attacksto, bishopattacks, bishoplike, bishops, copyto!, divide, domove,
     domove!, emptyboard, emptysquares, epsquare, fen, fromfen, haslegalmoves,
     isattacked, ischeck, ischeckmate, isdraw, ismaterialdraw, isrule50draw,
-    isstalemate, kings, kingsquare, knights, lastmove, movecount, moves,
-    occupiedsquares, pawns, perft, pieceon, pieces, pinned, pprint,
+    isstalemate, isterminal, kings, kingsquare, knights, lastmove, movecount,
+    moves, occupiedsquares, pawns, perft, pieceon, pieces, pinned, pprint,
     queenattacks, queens, rooklike, rookattacks, rooks, sidetomove, startboard,
     undomove!
 

@@ -52,6 +52,7 @@ end
 mutable struct GameHistoryEntry
     move::Union{Move, Nothing}
     undo::Union{UndoInfo, Nothing}
+    key::UInt64
 end
 
 
@@ -78,7 +79,8 @@ function SimpleGame(startboard::Board=startboard())
     result = SimpleGame(GameHeaders(),
                         deepcopy(startboard),
                         deepcopy(startboard),
-                        GameHistoryEntry[GameHistoryEntry(nothing, nothing)],
+                        GameHistoryEntry[GameHistoryEntry(nothing, nothing,
+                                                          startboard.key)],
                         1)
     if fen(startboard) ≠ START_FEN
         setheadervalue!(result, "FEN", fen(startboard))
@@ -352,7 +354,8 @@ function domove!(g::SimpleGame, m::Move)
     g.history[g.ply].move = m
     g.ply += 1
     deleteat!(g.history, g.ply:length(g.history))
-    push!(g.history, GameHistoryEntry(nothing, domove!(g.board, m)))
+    u = domove!(g.board, m)
+    push!(g.history, GameHistoryEntry(nothing, u, g.board.key))
 end
 
 function domove!(g::SimpleGame, m::String)
@@ -746,4 +749,83 @@ Adds a Numeric Annotation Glyph (NAG) to the current game node.
 """
 function addnag!(g::Game, nag::Int)
     addata!(g, "nag", nag)
+end
+
+
+function isrepetitiondraw(g::SimpleGame)::Bool
+    key = board(g).key
+    rcount = 1
+    for i in 2:2:board(g).r50
+        if g.history[g.ply - i].key == key
+            rcount += 1
+            if rcount == 3
+                return true
+            end
+        end
+    end
+    false
+end
+
+function isrepetitiondraw(g::Game)::Bool
+    rcount = 1
+    key = g.node.board.key
+    n = g.node.parent
+    while n != nothing
+        if n.board.key == key
+            rcount += 1
+            if rcount == 3
+                return true
+            end
+        end
+        if n.board.r50 == 0
+            break
+        end
+        n = n.parent
+    end
+    false
+end
+
+
+"""
+    isdraw(g::SimpleGame)
+    isdraw(g::Game)
+
+Checks whether the current game position is drawn.
+"""
+function isdraw(g::SimpleGame)::Bool
+    isdraw(board(g)) || isrepetitiondraw(g)
+end
+
+function isdraw(g::Game)::Bool
+    isdraw(board(g)) || isrepetitiondraw(g)
+end
+
+
+"""
+    ischeckmate(g::SimpleGame)
+    ischeckmate(g::Game)
+
+Checks whether the current game position is a checkmate.
+"""
+function ischeckmate(g::SimpleGame)::Bool
+    ischeckmate(board(g))
+end
+
+function ischeckmate(g::Game)::Bool
+    ischeckmate(board(g))
+end
+
+
+"""
+    isterminal(g::SimpleGame)
+    isterminal(g::Game)
+
+Checks whether the current game position is terminal, i.e. mate or drawn.
+"""
+function isterminal(g::SimpleGame)
+    isterminal(board(g)) || isrepetitiondraw(g)
+end
+
+function isterminal(g::Game)
+    isterminal(board(g)) || isrepetitiondraw(g)
 end
