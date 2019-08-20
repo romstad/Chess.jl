@@ -1,6 +1,8 @@
-using Chess
-using Test
+using Chess, Test
 
-@testset "Chess.jl" begin
-    # Write your own tests here.
-end
+include("piece.jl")
+include("square.jl")
+include("squareset.jl")
+include("move.jl")
+include("board.jl")
+include("san.jl")
