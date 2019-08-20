@@ -4,5 +4,5 @@
 ```
 
 ```@autodocs
-Modules = [Chess]
+Modules = [Chess, Chess.PGN, Chess.UCI]
 ```
