@@ -1,3 +1,21 @@
+#=
+        Chess.jl: A Julia chess programming library
+        Copyright (C) 2019 Tord Romstad
+
+        This program is free software: you can redistribute it and/or modify
+        it under the terms of the GNU Affero General Public License as
+        published by the Free Software Foundation, either version 3 of the
+        License, or (at your option) any later version.
+
+        This program is distributed in the hope that it will be useful,
+        but WITHOUT ANY WARRANTY; without even the implied warranty of
+        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+        GNU Affero General Public License for more details.
+
+        You should have received a copy of the GNU Affero General Public License
+        along with this program.  If not, see <https://www.gnu.org/licenses/>.
+=#
+
 begin
     local b = fromfen("2r2k2/1P6/8/8/p7/2N3N1/8/R3K2R w KQ -")
     @test movefromsan(b, "b8=Q") == Move(SQ_B7, SQ_B8, QUEEN)

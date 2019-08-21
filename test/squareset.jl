@@ -1,3 +1,21 @@
+#=
+        Chess.jl: A Julia chess programming library
+        Copyright (C) 2019 Tord Romstad
+
+        This program is free software: you can redistribute it and/or modify
+        it under the terms of the GNU Affero General Public License as
+        published by the Free Software Foundation, either version 3 of the
+        License, or (at your option) any later version.
+
+        This program is distributed in the hope that it will be useful,
+        but WITHOUT ANY WARRANTY; without even the implied warranty of
+        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+        GNU Affero General Public License for more details.
+
+        You should have received a copy of the GNU Affero General Public License
+        along with this program.  If not, see <https://www.gnu.org/licenses/>.
+=#
+
 @test SS_FILE_D ∩ SS_RANK_3 == SquareSet(SQ_D3)
 
 @test SS_FILE_D ∪ SS_RANK_3 ==
@@ -65,5 +83,3 @@ const BLOCKERS = SquareSet(SQ_B2, SQ_E3, SQ_A5, SQ_E7)
 @test squaresbetween(SQ_A4, SQ_D4) == SquareSet(SQ_B4, SQ_C4)
 
 @test squaresbetween(SQ_F7, SQ_A2) == SquareSet(SQ_B3, SQ_C4, SQ_D5, SQ_E6)
-
-
