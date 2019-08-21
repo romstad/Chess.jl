@@ -22,7 +22,7 @@ export Game, GameHeaders, GameNode, SimpleGame
 
 export board, addcomment!, adddata!, addmove!, addnag!, addprecomment!, back!,
     comment, domove!, forward!, headervalue, isatbeginning, isatend, isleaf,
-    precomment, printtree, removeallchildren!, removenode!, replacemove!,
+    precomment, printboard, removeallchildren!, removenode!, replacemove!,
     setheadervalue!, tobeginning!, tobeginningofvariation!, toend!, undomove!
 
 
@@ -846,4 +846,19 @@ end
 
 function isterminal(g::Game)
     isterminal(board(g)) || isrepetitiondraw(g)
+end
+
+
+"""
+    printboard(g::SimpleGame)
+    printboard(g::Game)
+
+Pretty-print the current board position to the standard output.
+"""
+function printboard(g::SimpleGame)
+    pprint(board(g))
+end
+
+function printboard(g::Game)
+    pprint(board(g))
 end

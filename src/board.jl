@@ -103,6 +103,7 @@ end
 """
     pieceon(b::Board, s::Square)
     pieceon(b::Board, f::SquareFile, r::SquareRank)
+    pieceon(b::Board, s::String)
 
 Find the piece on the given square of the board.
 
@@ -119,6 +120,9 @@ true
 
 julia> pieceon(b, SQ_B5) == EMPTY
 true
+
+julia> pieceon(b, "d8") == PIECE_BQ
+true
 ```
 """
 function pieceon(b::Board, s::Square)::Piece
@@ -127,6 +131,10 @@ end
 
 function pieceon(b::Board, f::SquareFile, r::SquareRank)::Piece
     pieceon(b, Square(f, r))
+end
+
+function pieceon(b::Board, s::String)
+    pieceon(b, squarefromstring(s))
 end
 
 
@@ -995,12 +1003,16 @@ end
 
 """
     domove(b::Board, m::Move)
+    domove(b::Board, m::String)
 
 Do the move `m` on the board `b`, and return the new board.
 
 The board `b` itself is left unchanged, a new board is returned. There is a
 much faster destructive function `domove!()` that should be called instead when
 high performance is required.
+
+If the supplied move is a string, this function tries to parse the move as a
+UCI move first, then as a SAN move.
 
 It's the caller's responsibility to make sure `m` is a legal move on this board.
 """
@@ -1055,6 +1067,14 @@ function domove(b::Board, m::Move)::Board
     result.pin = findpinned(result)
 
     result
+end
+
+function domove(b::Board, m::String)::Board
+    mv = movefromstring(m)
+    if mv == nothing
+        mv = movefromsan(b, m)
+    end
+    domove(b, mv)
 end
 
 
