@@ -88,6 +88,26 @@ mutable struct SimpleGame
 end
 
 
+function Base.show(io::IO, g::SimpleGame)
+    print(io, "SimpleGame:\n ")
+    b = deepcopy(g.startboard)
+    ply = 1
+    for ghe in g.history
+        if ply == g.ply
+            print(io, "* ")
+        end
+        if ghe.move ≠ nothing
+            print(io, movetosan(b, ghe.move), " ")
+            domove!(b, ghe.move)
+        end
+        ply += 1
+    end
+    if ply == g.ply
+        print(io, "* ")
+    end
+end
+
+
 """
     SimpleGame(startboard::Board=startboard())
 
@@ -123,7 +143,7 @@ end
 
 Type representing a node in a `Game`.
 
-Games can contain variations, so this type actually represents a node in a
+Game can contain variations, so this type actually represents a node in a
 tree-like structure.
 
 A `GameNode` is a mutable struct with the following slots:
@@ -200,6 +220,38 @@ mutable struct Game
     root::GameNode
     node::GameNode
     nodemap::Dict{UUID, GameNode}
+end
+
+
+function Base.show(io::IO, g::Game)
+    function formatvariation(node)
+        if !isempty(node.children)
+            if node == g.node
+                print(io, "* ")
+            end
+            child = first(node.children)
+            print(io, movetosan(node.board, lastmove(child.board)))
+            for child in node.children[2:end]
+                print(io, " (")
+                print(io, movetosan(node.board, lastmove(child.board)))
+                if !isempty(child.children)
+                    print(io, " ")
+                    formatvariation(child)
+                elseif child == g.node
+                    print(io, " *")
+                end
+                print(io, ")")
+            end
+            if !isleaf(child)
+                print(io, " ")
+            end
+            formatvariation(first(node.children))
+        elseif node == g.node
+            print(io, " *")
+        end
+    end
+    print(io, "Game:\n ")
+    formatvariation(g.root)
 end
 
 
@@ -374,6 +426,7 @@ function domove!(g::SimpleGame, m::Move)
     deleteat!(g.history, g.ply:length(g.history))
     u = domove!(g.board, m)
     push!(g.history, GameHistoryEntry(nothing, u, g.board.key))
+    g
 end
 
 function domove!(g::SimpleGame, m::String)
@@ -387,6 +440,7 @@ end
 function domove!(g::Game, m::Move)
     removeallchildren!(g)
     addmove!(g, m)
+    g
 end
 
 function domove!(g::Game, m::String)
@@ -417,6 +471,7 @@ function addmove!(g::Game, m::Move)
     push!(g.node.children, node)
     g.nodemap[node.id] = node
     g.node = node
+    g
 end
 
 function addmove!(g::Game, m::String)
@@ -512,12 +567,14 @@ function back!(g::SimpleGame)
         undomove!(g.board, g.history[g.ply].undo)
         g.ply -= 1
     end
+    g
 end
 
 function back!(g::Game)
     if !isatbeginning(g)
         g.node = g.node.parent
     end
+    g
 end
 
 
@@ -535,12 +592,14 @@ function forward!(g::SimpleGame)
         domove!(g.board, g.history[g.ply].move)
         g.ply += 1
     end
+    g
 end
 
 function forward!(g::Game)
     if !isatend(g)
         g.node = first(g.node.children)
     end
+    g
 end
 
 
@@ -556,12 +615,14 @@ function tobeginning!(g::SimpleGame)
     while !isatbeginning(g)
         back!(g)
     end
+    g
 end
 
 function tobeginning!(g::Game)
     while !isatbeginning(g)
         back!(g)
     end
+    g
 end
 
 
@@ -578,12 +639,14 @@ function toend!(g::SimpleGame)
     while !isatend(g)
         forward!(g)
     end
+    g
 end
 
 function toend!(g::Game)
     while !isatend(g)
         forward!(g)
     end
+    g
 end
 
 
@@ -603,6 +666,7 @@ function tobeginningofvariation!(g::Game)
             break
         end
     end
+    g
 end
 
 
@@ -649,6 +713,7 @@ function removeallchildren!(g::Game, node::GameNode = g.node)
         removeallchildren!(g, c)
         delete!(g.nodemap, c.id)
     end
+    g
 end
 
 
@@ -667,20 +732,7 @@ function removenode!(g::Game, node::GameNode = g.node)
         delete!(g.nodemap, node.id)
         g.node = node.parent
     end
-end
-
-
-"""
-    replacemove!(g::Game, m::Move)
-
-Remove all children of the current node of the game, and add the new move.
-
-The move `m` is alssumed to be a legal move. It's the callers responsibility to
-ensure that this is the case.
-"""
-function replacemove!(g::Game, m::Move)
-    removeallchildren!(g)
-    addmove!(g, m)
+    g
 end
 
 

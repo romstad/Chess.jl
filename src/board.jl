@@ -1111,6 +1111,9 @@ struct UndoInfo
 end
 
 
+Base.show(io::IO, _::UndoInfo) = print(io, "UndoInfo(...)")
+
+
 """
     domove!(b::Board, m::Move)
 
