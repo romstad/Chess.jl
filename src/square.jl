@@ -59,6 +59,28 @@ struct SquareRank
     val::Int
 end
 
+
+function Base.show(io::IO, f::SquareFile)
+    if isok(f)
+        print(io, "FILE_$(uppercase(tochar(f)))")
+    elseif f == FILE_NONE
+        print(io, "FILE_NONE")
+    else
+        print(io, "SquareFile($(f.val))")
+    end
+end
+
+function Base.show(io::IO, r::SquareRank)
+    if isok(r)
+        print(io, "RANK_$(tochar(r))")
+    elseif r == RANK_NONE
+        print(io, "RANK_NONE")
+    else
+        print(io, "SquareRank($(r.val))")
+    end
+end
+
+
 (<)(f1::SquareFile, f2::SquareFile) = f1.val < f2.val
 (<)(r1::SquareRank, r2::SquareRank) = r1.val < r2.val
 
@@ -226,6 +248,18 @@ true
 struct Square
     val::Int
 end
+
+
+function Base.show(io::IO, s::Square)
+    if isok(s)
+        print(io, "SQ_$(uppercase(tostring(s)))")
+    elseif s == SQ_NONE
+        print(io, "SQ_NONE")
+    else
+        print(io, "Square($(s.val))")
+    end
+end
+
 
 Square(f::SquareFile, r::SquareRank) = Square(r.val + 8 * (f.val - 1))
 

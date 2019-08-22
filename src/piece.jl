@@ -45,6 +45,18 @@ const WHITE = PieceColor(1)
 const BLACK = PieceColor(2)
 const COLOR_NONE = PieceColor(3)
 
+function Base.show(io::IO, c::PieceColor)
+    if c == WHITE
+        print(io, "WHITE")
+    elseif c == BLACK
+        print(io, "BLACK")
+    elseif c == COLOR_NONE
+        print(io, "COLOR_NONE")
+    else
+        print(io, "PieceColor(???)")
+    end
+end
+
 
 """
     isok(c::PieceColor)
@@ -182,6 +194,28 @@ const QUEEN = PieceType(5)
 const KING = PieceType(6)
 const PIECE_TYPE_NONE = PieceType(7)
 
+
+function Base.show(io::IO, t::PieceType)
+    if t == PAWN
+        print(io, "PAWN")
+    elseif t == KNIGHT
+        print(io, "KNIGHT")
+    elseif t == BISHOP
+        print(io, "BISHOP")
+    elseif t == ROOK
+        print(io, "ROOK")
+    elseif t == QUEEN
+        print(io, "QUEEN")
+    elseif t == KING
+        print(io, "KING")
+    elseif t == PIECE_TYPE_NONE
+        print(io, "PIECE_TYPE_NONE")
+    else
+        print(io, "PieceType($(t.val))")
+    end
+end
+
+
 """
     isok(t::PieceType)
 
@@ -291,7 +325,9 @@ struct Piece
     val::Int
 end
 
+
 Piece(c::PieceColor, t::PieceType) = Piece(((c.val - 1) << 3) | t.val)
+
 
 const PIECE_WP = Piece(WHITE, PAWN)
 const PIECE_WN = Piece(WHITE, KNIGHT)
@@ -306,6 +342,17 @@ const PIECE_BR = Piece(BLACK, ROOK)
 const PIECE_BQ = Piece(BLACK, QUEEN)
 const PIECE_BK = Piece(BLACK, KING)
 const EMPTY = Piece(COLOR_NONE, PIECE_TYPE_NONE)
+
+
+function Base.show(io::IO, p::Piece)
+    if isok(p)
+        print(io, "PIECE_$(uppercase(tochar(pcolor(p))))$(uppercase(tochar(ptype(p))))")
+    elseif p == EMPTY
+        print(io, "EMPTY")
+    else
+        print(io, "PieceType($(p.val))")
+    end
+end
 
 
 """

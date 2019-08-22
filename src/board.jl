@@ -63,6 +63,27 @@ mutable struct Board
 end
 
 
+function Base.show(io::IO, b::Board)
+    println(io, "Board ($(fen(b))):")
+    for ri in 1:8
+        r = SquareRank(ri)
+        for fi in 1:8
+            f = SquareFile(fi)
+            p = pieceon(b, f, r)
+            if isok(p)
+                print(io, " $(tochar(p)) ")
+            else
+                print(io, " - ")
+            end
+        end
+        if ri < 8
+            println(io, "")
+        end
+    end
+    # print(io, "Board($(fen(b)))")
+end
+
+
 function copyto!(dest::Board, src::Board)
     copyto!(dest.board, src.board)
     copyto!(dest.bycolor, src.bycolor)

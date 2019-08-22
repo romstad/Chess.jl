@@ -34,6 +34,9 @@ struct Move
 end
 
 
+Base.show(io::IO, m::Move) = print(io, "Move($(tostring(m)))")
+
+
 """
     Move(from::Square, to::Square)
 

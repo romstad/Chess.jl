@@ -150,7 +150,7 @@ end
 
 
 function Base.show(io::IO, n::GameNode)
-    print("GameNode($(fen(n.board)))")
+    print(io, "GameNode($(fen(n.board)))")
 end
 
 

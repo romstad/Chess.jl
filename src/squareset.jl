@@ -71,6 +71,25 @@ struct SquareSet
 end
 
 
+function Base.show(io::IO, ss::SquareSet)
+    println(io, "SquareSet:")
+    for ri in 1:8
+        r = SquareRank(ri)
+        for fi in 1:8
+            f = SquareFile(fi)
+            if Square(f, r) ∈ ss
+                print(io, " # ")
+            else
+                print(io, " - ")
+            end
+        end
+        if ri < 8
+            println(io, "")
+        end
+    end
+end
+
+
 function SquareSet(ss::Vararg{Square})
     result = UInt64(0)
     for s in ss
