@@ -1116,8 +1116,12 @@ Base.show(io::IO, _::UndoInfo) = print(io, "UndoInfo(...)")
 
 """
     domove!(b::Board, m::Move)
+    domove!(b::Board, m::String)
 
 Destructively modify the board `b` by making the move `m`.
+
+If the supplied move is a string, this function tries to parse the move as a
+UCI move first, then as a SAN move.
 
 It's the caller's responsibility to make sure the move `m` is legal.
 
@@ -1182,6 +1186,14 @@ function domove!(b::Board, m::Move)::UndoInfo
     b.pin = findpinned(b)
 
     result
+end
+
+function domove!(b::Board, m::String)::UndoInfo
+    mv = movefromstring(m)
+    if mv == nothing
+        mv = movefromsan(b, m)
+    end
+    domove!(b, mv)
 end
 
 
