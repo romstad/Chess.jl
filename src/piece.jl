@@ -364,17 +364,17 @@ Find the color or the type of a `Piece`.
 # Examples
 
 ```julia-repl
-julia> pcolor(PIECE_WB) == WHITE
-true
+julia> pcolor(PIECE_WB)
+WHITE
 
-julia> ptype(PIECE_BQ) == QUEEN
-true
+julia> ptype(PIECE_BQ)
+QUEEN
 
-julia> pcolor(EMPTY) == COLOR_NONE
-true
+julia> pcolor(EMPTY)
+COLOR_NONE
 
-julia> ptype(EMPTY) == PIECE_TYPE_NONE
-true
+julia> ptype(EMPTY)
+PIECE_TYPE_NONE
 ```
 """
 function pcolor(p::Piece)::PieceColor
@@ -431,11 +431,11 @@ If the input value is not a valid English piece letter, the function returns
 # Examples
 
 ```julia-repl
-julia> piecefromchar('Q') == PIECE_WQ
-true
+julia> piecefromchar('Q')
+PIECE_WQ
 
-julia> piecefromchar('p') == PIECE_BP
-true
+julia> piecefromchar('n')
+PIECE_BN
 
 julia> piecefromchar('-') == nothing
 true

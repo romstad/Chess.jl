@@ -163,11 +163,11 @@ does not represent a valid file or rank.
 # Examples
 
 ```julia-repl
-julia> filefromchar('c') == FILE_C
-true
+julia> filefromchar('c')
+FILE_C
 
-julia> rankfromchar('2') == RANK_2
-true
+julia> rankfromchar('2')
+RANK_2
 
 julia> filefromchar('2') == nothing
 true
@@ -192,6 +192,7 @@ end
 
 """
     tochar(f::SquareFile)
+    tochar(r::SquareRank)
 
 Converts a `SquareFile` or a `SquareRank` to a character.
 
@@ -200,29 +201,18 @@ Converts a `SquareFile` or a `SquareRank` to a character.
 ```julia-repl
 julia> tochar(FILE_E)
 'e': ASCII/Unicode U+0065 (category Ll: Letter, lowercase)
-```
-"""
-function tochar(f::SquareFile)
-    Char(f.val - 1 + Int('a'))
-end
 
-
-"""
-    tochar(r::SquareRank)
-
-Converts a `SquareRank` to a character.
-
-# Examples
-
-```julia-repl
 julia> tochar(RANK_3)
 '3': ASCII/Unicode U+0033 (category Nd: Number, decimal digit)
 ```
 """
+function tochar(f::SquareFile)
+    Char(f.val - 1 + Int('a'))
+end,
+
 function tochar(r::SquareRank)
     Char(8 - r.val + Int('1'))
 end
-
 
 
 """
@@ -238,11 +228,11 @@ squares on the board.
 # Examples
 
 ```julia-repl
-julia> Square(FILE_G, RANK_6) == SQ_G6
-true
+julia> Square(FILE_G, RANK_6)
+SQ_G6
 
-julia> Square(8) == SQ_A1
-true
+julia> Square(8)
+SQ_A1
 ```
 """
 struct Square
@@ -275,11 +265,11 @@ The return value is of one of the types `SquareFile` or `SquareRank`.
 # Examples
 
 ```julia-repl
-julia> file(SQ_C4) == FILE_C
-true
+julia> file(SQ_C4)
+FILE_C
 
-julia> rank(SQ_C4) == RANK_4
-true
+julia> rank(SQ_C4)
+RANK_4
 ```
 """
 function file(s::Square)
@@ -359,8 +349,8 @@ if there are additional characters.
 # Examples
 
 ```julia-repl
-julia> squarefromstring("d6") == SQ_D6
-true
+julia> squarefromstring("d6")
+SQ_D6
 
 julia> squarefromstring("xy") == nothing
 true
@@ -368,8 +358,8 @@ true
 julia> squarefromstring("") == nothing
 true
 
-julia> squarefromstring("g1f3") == SQ_G1
-true
+julia> squarefromstring("g1f3")
+SQ_G1
 ```
 """
 function squarefromstring(s::String)::Union{Square, Nothing}
@@ -439,8 +429,8 @@ true
 julia> SQ_D3 - SQ_C3 == DELTA_E
 true
 
-julia> SQ_G8 - 3 * DELTA_N == SQ_G5
-true
+julia> SQ_G8 - 3 * DELTA_N
+SQ_G5
 ```
 """
 struct SquareDelta

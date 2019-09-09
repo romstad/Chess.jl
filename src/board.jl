@@ -133,17 +133,17 @@ Find the piece on the given square of the board.
 ```julia-repl
 julia> b = startboard();
 
-julia> pieceon(b, SQ_E1) == PIECE_WK
-true
+julia> pieceon(b, SQ_E1)
+PIECE_WK
 
-julia> pieceon(b, FILE_B, RANK_8) == PIECE_BN
-true
+julia> pieceon(b, FILE_B, RANK_8)
+PIECE_BN
 
-julia> pieceon(b, SQ_B5) == EMPTY
-true
+julia> pieceon(b, SQ_B5)
+EMPTY
 
-julia> pieceon(b, "d8") == PIECE_BQ
-true
+julia> pieceon(b, "d8")
+PIECE_BQ
 ```
 """
 function pieceon(b::Board, s::Square)::Piece
@@ -169,13 +169,13 @@ The current side to move, `WHITE` or `BLACK`.
 ```julia-repl
 julia> b = startboard();
 
-julia> b2 = domove(b, movefromstring("e2e4"));
+julia> b2 = domove(b, "e4");
 
-julia> sidetomove(b) == WHITE
-true
+julia> sidetomove(b)
+WHITE
 
-julia> sidetomove(b2) == BLACK
-true
+julia> sidetomove(b2)
+BLACK
 ```
 """
 function sidetomove(b::Board)::PieceColor
@@ -203,11 +203,11 @@ The square of the king for the given side.
 ```julia-repl
 julia> b = startboard();
 
-julia> kingsquare(b, WHITE) == SQ_E1
-true
+julia> kingsquare(b, WHITE)
+SQ_E1
 
-julia> tostring(kingsquare(b, BLACK))
-"e8"
+julia> kingsquare(b, BLACK)
+SQ_E8
 ```
 """
 function kingsquare(b::Board, c::PieceColor)::Square
@@ -237,24 +237,16 @@ true
 julia> pieces(b, BLACK, PAWN) == SS_RANK_7
 true
 
-julia> pprint(pieces(b, PIECE_WB))
-+---+---+---+---+---+---+---+---+
-|   |   |   |   |   |   |   |   |
-+---+---+---+---+---+---+---+---+
-|   |   |   |   |   |   |   |   |
-+---+---+---+---+---+---+---+---+
-|   |   |   |   |   |   |   |   |
-+---+---+---+---+---+---+---+---+
-|   |   |   |   |   |   |   |   |
-+---+---+---+---+---+---+---+---+
-|   |   |   |   |   |   |   |   |
-+---+---+---+---+---+---+---+---+
-|   |   |   |   |   |   |   |   |
-+---+---+---+---+---+---+---+---+
-|   |   |   |   |   |   |   |   |
-+---+---+---+---+---+---+---+---+
-|   |   | # |   |   | # |   |   |
-+---+---+---+---+---+---+---+---+
+julia> pieces(b, PIECE_WB)
+SquareSet:
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  #  -  -  #  -  -
 ```
 """
 function pieces(b::Board, c::PieceColor)::SquareSet
@@ -1036,6 +1028,23 @@ If the supplied move is a string, this function tries to parse the move as a
 UCI move first, then as a SAN move.
 
 It's the caller's responsibility to make sure `m` is a legal move on this board.
+
+# Examples
+
+```julia-repl
+julia> b = startboard();
+
+julia> domove(b, "Nf3")
+Board (rnbqkbnr/pppppppp/8/8/8/5N2/PPPPPPPP/RNBQKB1R b KQkq -):
+ r  n  b  q  k  b  n  r
+ p  p  p  p  p  p  p  p
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  N  -  -
+ P  P  P  P  P  P  P  P
+ R  N  B  Q  K  B  -  R
+```
 """
 function domove(b::Board, m::Move)::Board
     result = deepcopy(b)
@@ -1128,6 +1137,25 @@ It's the caller's responsibility to make sure the move `m` is legal.
 The function returns a value of type `UndoInfo`. You'll need this if you want
 to later call `undomove!()` to take back the move and get the original position
 back.
+
+# Examples
+
+```julia-repl
+julia> b = startboard();
+
+julia> domove!(b, "d4");
+
+julia> b
+Board (rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq -):
+ r  n  b  q  k  b  n  r
+ p  p  p  p  p  p  p  p
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  -  P  -  -  -  -
+ -  -  -  -  -  -  -  -
+ P  P  P  -  P  P  P  P
+ R  N  B  Q  K  B  N  R
+```
 """
 function domove!(b::Board, m::Move)::UndoInfo
     f = from(m)
@@ -1204,6 +1232,37 @@ Undo a move earlier done by `domove!()`.
 
 The second parameter is the `UndoInfo` value returned by the earlier call to
 `domove!()`.
+
+# Examples
+```julia-repl
+julia> b = startboard();
+
+julia> u = domove!(b, "c4");
+
+julia> b
+Board (rnbqkbnr/pppppppp/8/8/2P5/8/PP1PPPPP/RNBQKBNR b KQkq -):
+ r  n  b  q  k  b  n  r
+ p  p  p  p  p  p  p  p
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  P  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ P  P  -  P  P  P  P  P
+ R  N  B  Q  K  B  N  R
+
+julia> undomove!(b, u);
+
+julia> b
+Board (rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -):
+ r  n  b  q  k  b  n  r
+ p  p  p  p  p  p  p  p
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ P  P  P  P  P  P  P  P
+ R  N  B  Q  K  B  N  R
+```
 """
 function undomove!(b::Board, u::UndoInfo)
     m = lastmove(b)
@@ -2446,7 +2505,7 @@ end
 """
     haslegalmoves(b::Board)::Bool
 
-Returns `true` iff the side to move has at least one legal move.
+Returns `true` if the side to move has at least one legal move.
 """
 function haslegalmoves(b::Board)::Bool
     if ischeck(b)

@@ -310,8 +310,16 @@ The binary operators `∪` and `∩` can be used instead of the named functions.
 julia> SS_FILE_D ∩ SS_RANK_3 == SquareSet(SQ_D3)
 true
 
-julia> (SS_FILE_D ∪ SS_FILE_E) ∩ (SS_RANK_4 ∪ SS_RANK_5) == SquareSet(SQ_D4, SQ_E4, SQ_D5, SQ_E5)
-true
+julia> (SS_FILE_D ∪ SS_FILE_E) ∩ (SS_RANK_4 ∪ SS_RANK_5)
+SquareSet:
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  -  #  #  -  -  -
+ -  -  -  #  #  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
 ```
 """
 function union(ss1::SquareSet, ss2::SquareSet)
@@ -361,9 +369,16 @@ The set of all squares that are in `ss1`, but not in `ss2`.
 # Examples
 
 ```julia-repl
-julia> SquareSet(SQ_A1, SQ_A2, SQ_A3, SQ_B1, SQ_B2, SQ_B3) - SS_RANK_2 ==
-       SquareSet(SQ_A1, SQ_A3, SQ_B1, SQ_B3)
-true
+julia> SquareSet(SQ_A1, SQ_A2, SQ_A3, SQ_B1, SQ_B2, SQ_B3) - SS_RANK_2
+SquareSet:
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ #  #  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ #  #  -  -  -  -  -  -
 ```
 """
 function setdiff(ss1::SquareSet, ss2::SquareSet)

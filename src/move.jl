@@ -67,11 +67,14 @@ The source square of a move.
 # Examples
 
 ```julia-repl
-julia> from(Move(SQ_G1, SQ_F3)) == SQ_G1
-true
+julia> Move(SQ_D2, SQ_D4)
+Move(d2d4)
 
-julia> from(Move(SQ_C7, SQ_C8, QUEEN)) == SQ_C7
-true
+julia> from(Move(SQ_G1, SQ_F3))
+SQ_G1
+
+julia> from(Move(SQ_C7, SQ_C8, QUEEN))
+SQ_C7
 ```
 """
 function from(m::Move)::Square
@@ -87,10 +90,11 @@ The destination square of a move.
 # Examples
 
 ```julia-repl
-julia> to(Move(SQ_G1, SQ_F3)) == SQ_F3
-true
+julia> to(Move(SQ_G1, SQ_F3))
+SQ_F3
 
-julia> to(Move(SQ_C7, SQ_C8, QUEEN)) == SQ_C8
+julia> to(Move(SQ_C7, SQ_C8, QUEEN))
+SQ_C8
 true
 ```
 """
@@ -130,11 +134,11 @@ the move is a promotion move at all.
 # Examples
 
 ```julia-repl
-julia> promotion(Move(SQ_C7, SQ_C8, QUEEN)) == QUEEN
-true
+julia> promotion(Move(SQ_C7, SQ_C8, QUEEN))
+QUEEN
 
-julia> promotion(Move(SQ_B2, SQ_B1, KNIGHT)) == KNIGHT
-true
+julia> promotion(Move(SQ_B2, SQ_B1, KNIGHT))
+KNIGHT
 ```
 """
 function promotion(m::Move)::PieceType

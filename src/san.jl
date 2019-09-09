@@ -24,7 +24,17 @@ export dosanmove, dosanmove!, dosanmoves, dosanmoves!, movefromsan, movetosan
 
 Tries to read a move in Short Algebraic Notation.
 
-Returns `Nothing` if the provided string is an impossible or ambiguous move.
+Returns `nothing` if the provided string is an impossible or ambiguous move.
+
+# Examples
+
+```julia-repl
+julia> movefromsan(b, "Nf3")
+Move(g1f3)
+
+julia> movefromsan(b, "???") == nothing
+true
+```
 """
 function movefromsan(b::Board, san::String)::Union{Move, Nothing}
     ms = moves(b)
@@ -125,6 +135,14 @@ end
     function movetosan(b::Board, m::Move)
 
 Converts a move to a string in short algebraic notation.
+
+# Examples
+```julia-repl
+julia> b = startboard();
+
+julia> movetosan(b, Move(SQ_D2, SQ_D4))
+"d4"
+```
 """
 function movetosan(b::Board, m::Move)::String
     f = from(m)
