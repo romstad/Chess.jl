@@ -28,12 +28,12 @@ export START_FEN
 export Board, MoveList, UndoInfo
 
 export attacksto, bishopattacks, bishoplike, bishops, copyto!, divide, domove,
-    domove!, emptyboard, emptysquares, epsquare, fen, fromfen, haslegalmoves,
-    isattacked, ischeck, ischeckmate, isdraw, ismaterialdraw, isrule50draw,
-    isstalemate, isterminal, kings, kingsquare, knights, lastmove, movecount,
-    moves, occupiedsquares, pawns, perft, pieceon, pieces, pinned, pprint,
-    queenattacks, queens, rooklike, rookattacks, rooks, sidetomove, startboard,
-    undomove!
+    domove!, domoves, domoves!, emptyboard, emptysquares, epsquare, fen,
+    fromfen, haslegalmoves, isattacked, ischeck, ischeckmate, isdraw,
+    ismaterialdraw, isrule50draw, isstalemate, isterminal, kings, kingsquare,
+    knights, lastmove, movecount, moves, occupiedsquares, pawns, perft, pieceon,
+    pieces, pinned, pprint, queenattacks, queens, rooklike, rookattacks, rooks,
+    sidetomove, startboard, undomove!
 
 
 """
@@ -1104,6 +1104,9 @@ function domove(b::Board, m::String)::Board
     if mv == nothing
         mv = movefromsan(b, m)
     end
+    if mv == nothing
+        throw("Illegal or ambiguous move: $m")
+    end
     domove(b, mv)
 end
 
@@ -1221,6 +1224,9 @@ function domove!(b::Board, m::String)::UndoInfo
     if mv == nothing
         mv = movefromsan(b, m)
     end
+    if mv == nothing
+        throw("Illegal or ambiguous move: $m")
+    end
     domove!(b, mv)
 end
 
@@ -1307,6 +1313,114 @@ function undomove!(b::Board, u::UndoInfo)
         end
     end
     b.key = u.key
+end
+
+
+"""
+    domoves!(b::Board, moves::Vararg{Move})
+    domoves!(b::Board, moves::Vararg{String})
+
+Destructively modify the board b by making a sequence of moves.
+
+If the supplied moves are strings, this function tries to parse the moves
+as UCI moves first, and as SAN moves if UCI move parsing fails.
+
+It's the caller's responsibility to make sure all moves are legal. If a
+plain move is illegal, the consequences are undefined. If a move string cannot
+be parsed as an unambiguous legal move, the function throws an exception.
+
+There is also a non-destructive version of this version, named `domoves`.
+
+# Examples
+```julia-repl
+julia> b = startboard();
+
+julia> domoves!(b, "e4", "c5", "Nf3", "d6", "d4", "cxd4", "Nxd4", "Nf6", "Nc3");
+
+julia> b
+Board (rnbqkb1r/pp2pppp/3p1n2/8/3NP3/2N5/PPP2PPP/R1BQKB1R b KQkq -):
+ r  n  b  q  k  b  -  r
+ p  p  -  -  p  p  p  p
+ -  -  -  p  -  n  -  -
+ -  -  -  -  -  -  -  -
+ -  -  -  N  P  -  -  -
+ -  -  N  -  -  -  -  -
+ P  P  P  -  -  P  P  P
+ R  -  B  Q  K  B  -  R
+
+julia> b = startboard();
+
+julia> domoves!(b, "e4", "Qxe4+")
+ERROR: "Illegal or ambiguous move: Qxe4+"
+```
+"""
+function domoves!(b::Board, moves::Vararg{Move})::Board
+    for m in moves
+        domove!(b, m)
+    end
+    b
+end,
+
+function domoves!(b::Board, moves::Vararg{String})::Board
+    for m in moves
+        mv = movefromstring(m)
+        if mv == nothing
+            mv = movefromsan(b, m)
+        end
+        if mv == nothing
+            throw("Illegal or ambiguous move: $m")
+        end
+        domove!(b, mv)
+    end
+    b
+end
+
+
+"""
+    domoves(b::Board, moves::Vararg{Move})
+    domoves(b::Board, moves::Vararg{String})
+
+Return the board achieved from a starting board `b` by making a sequence of
+moves.
+
+If the supplied moves are strings, this function tries to parse the moves
+as UCI moves first, and as SAN moves if UCI move parsing fails.
+
+It's the caller's responsibility to make sure all moves are legal. If a
+plain move is illegal, the consequences are undefined. If a move string cannot
+be parsed as an unambiguous legal move, the function throws an exception.
+
+There is also a destructive version of this version, named `domoves!`
+
+# Examples
+```julia-repl
+julia> b = startboard();
+
+julia> domoves(b, "d4", "Nf6", "c4", "e6", "Nc3", "Bb4")
+Board (rnbqk2r/pppp1ppp/4pn2/8/1bPP4/2N5/PP2PPPP/R1BQKBNR w KQkq -):
+ r  n  b  q  k  -  -  r
+ p  p  p  p  -  p  p  p
+ -  -  -  -  p  n  -  -
+ -  -  -  -  -  -  -  -
+ -  b  P  P  -  -  -  -
+ -  -  N  -  -  -  -  -
+ P  P  -  -  P  P  P  P
+ R  -  B  Q  K  B  N  R
+
+julia> domoves(b, "d4", "Nf6", "c5")
+ERROR: "Illegal or ambiguous move: c5"
+```
+"""
+function domoves(b::Board, moves::Vararg{Move})::Board
+    b = deepcopy(b)
+    domoves!(b, moves...)
+    b
+end
+
+function domoves(b::Board, moves::Vararg{String})::Board
+    b = deepcopy(b)
+    domoves!(b, moves...)
+    b
 end
 
 
