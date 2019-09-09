@@ -1451,6 +1451,12 @@ function Base.length(list::MoveList)
 end
 
 
+function Base.eltype(::Type{MoveList})
+    Move
+end
+
+
+
 function MoveList(capacity::Int)
     MoveList(Array{Move}(undef, capacity), 0)
 end
