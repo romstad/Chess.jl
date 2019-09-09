@@ -16,7 +16,7 @@
         along with this program.  If not, see <https://www.gnu.org/licenses/>.
 =#
 
-export dosanmove, dosanmove!, dosanmoves, dosanmoves!, movefromsan, movetosan
+export movefromsan, movetosan
 
 
 """
@@ -209,73 +209,4 @@ function movetosan(b::Board, m::Move)::String
     end
 
     String(take!(result))
-end
-
-
-"""
-    dosanmove(b::Board, sanmove::String)::Board
-
-Do the move represented by the SAN string, and return the new board.
-
-If the `sanmove` string does not represent an unambiguous legal move, the
-function throws an exception.
-"""
-function dosanmove(b::Board, sanmove::String)::Board
-    m = movefromsan(b, sanmove)
-    if m == nothing
-        throw("Illegal or ambiguous move: $sanmove")
-    else
-        domove(b, m)
-    end
-end
-
-
-"""
-    dosanmove!(b::Board, sanmove::String
-
-Destructively update the board `b` the move represented by the SAN string.
-
-The function returns an `UndoInfo` object that can be used to take back the
-move using `undomove!`.
-
-If the `sanmove` string does not represent an unambiguous legal move, the board
-is not updated, and an exception is thrown.
-"""
-function dosanmove!(b::Board, sanmove::String)::UndoInfo
-    m = movefromsan(b, sanmove)
-    if m == nothing
-        throw("Illegal or ambiguous move: $sanmove")
-    else
-        domove!(b, m)
-    end
-end
-
-
-"""
-    dosanmoves!(b::Board, sanmoves::Vararg{String})::Board
-
-Destructively update the board `b` with the provided SAN moves.
-
-If one of the SAN strings is not an unambiguous legal move, the function throws
-an exception.
-"""
-function dosanmoves!(b, sanmoves::Vararg{String})::Board
-    for sanmove in sanmoves
-        dosanmove!(b, sanmove)
-    end
-    b
-end
-
-
-"""
-    dosanmoves(b::Board, sanmoves::Vararg{String})::Board
-
-Do a sequence of SAN moves from the board, and return the resulting board.
-
-If one of the SAN strings is not an unambiguous legal move, the function throws
-an exception.
-"""
-function dosanmoves(b::Board, sanmoves::Vararg{String})::Board
-    b = deepcopy(b)
-    dosanmoves!(b, sanmoves...)
 end
