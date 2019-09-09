@@ -225,9 +225,64 @@ julia> sidetomove(b)
 BLACK
 ```
 
+A few other functions that are frequently useful when inspecting boards are
+`ischeck` (is the side to move in check?), `ischeckmate` (is the side to move
+checkmated?) and `isdraw` (is the position an immediate draw?).
 
 ### Generating Legal Moves
 
+The legal moves for a board can be obtained with the `moves` function:
+
+```julia-repl
+julia> b = fromfen("8/5P2/3k4/8/8/6N1/3B4/4KR2 w - -")
+Board (8/5P2/3k4/8/8/6N1/3B4/4KR2 w - -):
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  P  -  -
+ -  -  -  k  -  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  N  -
+ -  -  -  B  -  -  -  -
+ -  -  -  -  K  R  -  -
+
+julia> moves(b)
+27-element MoveList:
+ Move(f7f8q)
+ Move(f7f8r)
+ Move(f7f8b)
+ Move(f7f8n)
+ Move(g3e4)
+ Move(g3e2)
+ Move(g3f5)
+ Move(g3h5)
+ ⋮
+ Move(f1f4)
+ Move(f1f3)
+ Move(f1f2)
+ Move(f1g1)
+ Move(f1h1)
+ Move(e1d1)
+ Move(e1e2)
+ Move(e1f2)
+```
+
+The return value is a `MoveList`, a subtype of `AbstractArray`. It contains all
+the legal moves for the position.
+
+Here is an example of a simple way to find all moves that give check for the
+above board:
+
+```julia-repl
+julia> filter(m -> ischeck(domove(b, m)), moves(b))
+7-element Array{Move,1}:
+ Move(f7f8q)
+ Move(f7f8b)
+ Move(g3e4)
+ Move(g3f5)
+ Move(d2b4)
+ Move(d2f4)
+ Move(f1f6)
+```
 
 
 ## Games
@@ -247,8 +302,14 @@ To create a game from the standard chess position, use the parameterless `Game`
 constructor:
 
 ```julia-repl
-julia> g = Game();
+julia> g = Game()
+Game:
+  *
 ```
+
+The printed representation of the game consists of the moves in short algebraic
+notation (in this case, because we just constructed a game, there are no moves)
+and an asterisk (`*`) showing our current position in the game.
 
 There is also a version of this constructor that takes a string representing a
 board in [Forsyth-Edwards
@@ -256,91 +317,140 @@ Notation](https://en.wikipedia.org/wiki/Forsyth–Edwards_Notation), and uses th
 instead of the standard chess starting position as the root position of the
 game.
 
-You can pretty-print the current board position of the game as follows:
+You can obtain the current position board position of the game with the `board`
+function, which returns a value of type `Board`:
 
 ```julia-repl
-julia> pprint(board(g))
-+---|---|---|---|---|---|---|---+
-| r | n | b | q | k | b | n | r |
-+---|---|---|---|---|---|---|---+
-| p | p | p | p | p | p | p | p |
-+---|---|---|---|---|---|---|---+
-|   |   |   |   |   |   |   |   |
-+---|---|---|---|---|---|---|---+
-|   |   |   |   |   |   |   |   |
-+---|---|---|---|---|---|---|---+
-|   |   |   |   |   |   |   |   |
-+---|---|---|---|---|---|---|---+
-|   |   |   |   |   |   |   |   |
-+---|---|---|---|---|---|---|---+
-| P | P | P | P | P | P | P | P |
-+---|---|---|---|---|---|---|---+
-| R | N | B | Q | K | B | N | R |
-+---|---|---|---|---|---|---|---+
-rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -
+julia> board(g)
+Board (rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -):
+ r  n  b  q  k  b  n  r
+ p  p  p  p  p  p  p  p
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ P  P  P  P  P  P  P  P
+ R  N  B  Q  K  B  N  R
 ```
-
-In this example, `board` is a function that returns the current board position
-of the game, a value of type `Board`, which is described in detail later in this
-manual. The `pprint` function pretty-prints a board to the standard output.
 
 To update the game with a new move, use the `domove!` function:
 
 ```julia-repl
-julia> domove!(g, "e4");
+julia> domove!(g, "Nf3")
+Game:
+ Nf3 *
 
-julia> pprint(board(g))
-+---|---|---|---|---|---|---|---+
-| r | n | b | q | k | b | n | r |
-+---|---|---|---|---|---|---|---+
-| p | p | p | p | p | p | p | p |
-+---|---|---|---|---|---|---|---+
-|   |   |   |   |   |   |   |   |
-+---|---|---|---|---|---|---|---+
-|   |   |   |   |   |   |   |   |
-+---|---|---|---|---|---|---|---+
-|   |   |   |   | P |   |   |   |
-+---|---|---|---|---|---|---|---+
-|   |   |   |   |   |   |   |   |
-+---|---|---|---|---|---|---|---+
-| P | P | P | P |   | P | P | P |
-+---|---|---|---|---|---|---|---+
-| R | N | B | Q | K | B | N | R |
-+---|---|---|---|---|---|---|---+
-rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq -
+julia> domove!(g, "d5")
+Game:
+ Nf3 d5 *
+
+julia> domove!(g, "d4")
+Game:
+ Nf3 d5 d4 *
 ```
 
 A move can be taken back by the `back!` function:
 
 ```julia-repl
-julia> back!(g);
-
-julia> pprint(board(g))
-+---|---|---|---|---|---|---|---+
-| r | n | b | q | k | b | n | r
-+---|---|---|---|---|---|---|---+
-| p | p | p | p | p | p | p | p |
-+---|---|---|---|---|---|---|---+
-|   |   |   |   |   |   |   |   |
-+---|---|---|---|---|---|---|---+
-|   |   |   |   |   |   |   |   |
-+---|---|---|---|---|---|---|---+
-|   |   |   |   |   |   |   |   |
-+---|---|---|---|---|---|---|---+
-|   |   |   |   |   |   |   |   |
-+---|---|---|---|---|---|---|---+
-| P | P | P | P | P | P | P | P |
-+---|---|---|---|---|---|---|---+
-| R | N | B | Q | K | B | N | R |
-+---|---|---|---|---|---|---|---+
-rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -
+julia> back!(g)
+Game:
+ Nf3 d5 * d4
 ```
 
-The move we made earlier is not removed from the game, only our current position
-in the game is modified. It's possible to step forward again by executing
-`forward!(g)`. There are also functions `tobeginning!` and `toend!` that goes
-all the way to the beginning or the end of the game.
+Note that the last move, d4, is not removed from the game. It's still there, the
+only result of calling `back!` is that our *current location in the game*
+(indicated by the asterisk) moved one step back. The current board position is
+the one before the move `d4` was made:
 
+```julia-repl
+julia> board(g)
+Board (rnbqkbnr/ppp1pppp/8/3p4/8/5N2/PPPPPPPP/RNBQKB1R w KQkq -):
+ r  n  b  q  k  b  n  r
+ p  p  p  -  p  p  p  p
+ -  -  -  -  -  -  -  -
+ -  -  -  p  -  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  N  -  -
+ P  P  P  P  P  P  P  P
+ R  N  B  Q  K  B  -  R
+```
+
+It's possible to step forward again by executing `forward!(g)`:
+
+```julia-repl
+julia> forward!(g)
+Game:
+ Nf3 d5 d4 *
+
+julia> board(g)
+Board (rnbqkbnr/ppp1pppp/8/3p4/3P4/5N2/PPP1PPPP/RNBQKB1R b KQkq -):
+ r  n  b  q  k  b  n  r
+ p  p  p  -  p  p  p  p
+ -  -  -  -  -  -  -  -
+ -  -  -  p  -  -  -  -
+ -  -  -  P  -  -  -  -
+ -  -  -  -  -  N  -  -
+ P  P  P  -  P  P  P  P
+ R  N  B  Q  K  B  -  R
+```
+
+There are also functions `tobeginning!` and `toend!` that jump all the way to the beginning or
+the end of the game (notice the position of the asterisk indicating the current
+location in the game in both cases):
+
+```julia-repl
+julia> tobeginning!(g)
+Game:
+ * Nf3 d5 d4
+
+julia> toend!(g)
+Game:
+ Nf3 d5 d4 *
+```
+
+If you call `domove!` at any point other than the end of the game, the previous
+game continuation will be deleted:
+
+```julia-repl
+julia> toend!(g)
+Game:
+ Nf3 d5 d4 *
+
+julia> back!(g)
+Game:
+ Nf3 d5 * d4
+
+julia> domove!(g, "c4")
+Game:
+ Nf3 d5 c4 *
+```
+
+This is not always desirable. Sometimes what we want to do is not to overwrite
+the existing continuation, but to insert a new variation. When this is what we
+want, the solution is to use `addmove!` instead of `domove!`. The two functions
+behave identically when at the end of the game, but at any earlier point of the
+game, `addmove!` inserts the new move as an alternative variation, keeping the
+existing move (and any previously added variations).
+
+Let's add 1... Nf6 as an alternative to 1... d5 in our existing game. We first
+have to navigate to the place in the game where we want to insert the move, and
+then call `addmove!`:
+
+```julia-repl
+julia> tobeginning!(g)
+Game:
+ * Nf3 d5 c4
+
+julia> forward!(g)
+Game:
+ Nf3 * d5 c4
+
+julia> addmove!(g, "Nf6")
+Game:
+ Nf3 d5 (Nf6 *) c4
+```
+
+Alternative variations are printed in parens. Of course, variations can be nested.
 
 ## Squares, Moves and Pieces
 
