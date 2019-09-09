@@ -20,10 +20,11 @@ using UUIDs
 
 export Game, GameHeaders, GameNode, SimpleGame
 
-export board, addcomment!, adddata!, addmove!, addnag!, addprecomment!, back!,
-    comment, domove!, forward!, headervalue, isatbeginning, isatend, isleaf,
-    precomment, printboard, removeallchildren!, removenode!, replacemove!,
-    setheadervalue!, tobeginning!, tobeginningofvariation!, toend!, undomove!
+export board, addcomment!, adddata!, addmove!, addmoves!, addnag!,
+    addprecomment!, back!, comment, domove!, domoves!, forward!, headervalue,
+    isatbeginning, isatend, isleaf, precomment, printboard, removeallchildren!,
+    removenode!, replacemove!, setheadervalue!, tobeginning!,
+    tobeginningofvariation!, toend!, undomove!
 
 
 """
@@ -450,6 +451,36 @@ end
 
 
 """
+    domoves!(g::SimpleGame, moves::Vararg{Union{Move, String}})
+    domoves!(g::Game, moves::Vararg{Union{Move, String}})
+
+Adds a sequence of new moves at the current location in the game move list.
+
+The moves can be either `Move` values or strings. In the case of strings, the
+function tries to parse them first as UCI moves, then as SAN moves.
+
+If we are at the end of the game, all previous moves are kept, and the new moves
+are added at the end. If we are at any earlier point in the game (because we
+have taken back one or more moves), the existing game continuation will be
+deleted and replaced by the new moves. All variations starting at this point in
+the game will also be deleted. If you want to add the new moves as a variation
+instead, make sure you use the `Game` type instead of `SimpleGame`, and use
+`addmoves!` instead of `domoves!`.
+"""
+function domoves!(g::SimpleGame, moves::Vararg{Union{Move, String}})
+    for m in moves
+        domove!(g, m)
+    end
+end
+
+function domoves!(g::Game, moves::Vararg{Union{Move, String}})
+    for m in moves
+        domove!(g, m)
+    end
+end
+
+
+"""
     addmove!(g::Game, m::Move)
     addmove!(g::Game, m::String)
 
@@ -480,6 +511,24 @@ function addmove!(g::Game, m::String)
         mv = movefromsan(board(g), m)
     end
     addmove!(g, mv)
+end
+
+
+"""
+    addmoves!(g::Game, moves::Vararg{Union{Move, String}})
+
+Adds a sequence of moves to the game `g` at the current node.
+
+The moves can be either `Move` values or strings. In the case of strings, the
+function tries to parse them first as UCI moves, then as SAN moves.
+
+This function works by calling `addmove!` repeatedly for all input moves. It's
+the caller's responsibility to ensure that all moves are legal and unambiguous.
+"""
+function addmoves!(g::Game, moves::Vararg{Union{Move, String}})
+    for m in moves
+        addmove!(g, m)
+    end
 end
 
 
