@@ -1383,6 +1383,8 @@ end
 Return the board achieved from a starting board `b` by making a sequence of
 moves.
 
+The input board `b` is left unchanged.
+
 If the supplied moves are strings, this function tries to parse the moves
 as UCI moves first, and as SAN moves if UCI move parsing fails.
 
@@ -1420,7 +1422,6 @@ end
 function domoves(b::Board, moves::Vararg{String})::Board
     b = deepcopy(b)
     domoves!(b, moves...)
-    b
 end
 
 
