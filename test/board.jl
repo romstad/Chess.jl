@@ -173,13 +173,13 @@ begin
     b = fromfen("r3k2r/1P6/8/3Pp3/5p2/8/4P3/R3K2R w KQkq e6")
     @test keyisright(b)
 
-    sanmoves = ["bxa8=R+", "b8=N", "dxe6", "e4", "O-O", "Rxh8+"]
-    for m in sanmoves
-        @test keyisright(dosanmove(b, m))
+    ms = ["bxa8=R+", "b8=N", "dxe6", "e4", "O-O", "Rxh8+"]
+    for m in ms
+        @test keyisright(domove(b, m))
     end
 
-    for m in sanmoves
-        u = dosanmove!(b, m)
+    for m in ms
+        u = domove!(b, m)
         @test keyisright(b)
         undomove!(b, u)
         @test keyisright(b)
