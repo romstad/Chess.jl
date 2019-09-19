@@ -426,6 +426,10 @@ function readgame(p::PGNReader, annotations=false)
                     addcomment!(result, t.value)
                 end
             end
+        elseif t.ttype == nag
+            if annotations
+                addnag!(result, parse(Int, t.value))
+            end
         elseif t.ttype == symbol
             # Try to parse the symbol as a move in short algebraic notation,
             # and add it to the game if successful
@@ -526,6 +530,11 @@ function formatmoves(g::Game)::String
 
             # Move in SAN notation
             write(buffer, movetosan(node.board, lastmove(child.board)))
+
+            # Numeric Annotation Glyph
+            if Chess.nag(child) ≠ nothing
+                write(buffer, " \$", string(Chess.nag(child)))
+            end
 
             # Post-comment
             if Chess.comment(child) ≠ nothing

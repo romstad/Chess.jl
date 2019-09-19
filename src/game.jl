@@ -20,7 +20,7 @@ export Game, GameHeaders, GameNode, SimpleGame
 
 export board, addcomment!, adddata!, addmove!, addmoves!, addnag!,
     addprecomment!, back!, comment, continuations, domove!, domoves!, forward!,
-    headervalue, isatbeginning, isatend, isleaf, precomment, printboard,
+    headervalue, isatbeginning, isatend, isleaf, nag, precomment, printboard,
     removeallchildren!, removenode!, replacemove!, setheadervalue!,
     tobeginning!, tobeginningofvariation!, toend!, tonode!, undomove!
 
@@ -814,6 +814,16 @@ end
 
 
 """
+    nag(n::GameNode)
+
+The numeric annotation glyph for the move leading to this node, or `nothing`.
+"""
+function nag(n::GameNode)::Union{Int, Nothing}
+    get(n.data, "nag", nothing)
+end
+
+
+"""
     removeallchildren!(g::Game, node::GameNode = g.node)
 
 Recursively remove all children of the given node in the game.
@@ -931,7 +941,7 @@ end
 Adds a Numeric Annotation Glyph (NAG) to the current game node.
 """
 function addnag!(g::Game, nag::Int)
-    addata!(g, "nag", nag)
+    adddata!(g, "nag", nag)
 end
 
 
