@@ -24,7 +24,7 @@ export board, addcomment!, adddata!, addmove!, addmoves!, addnag!,
     addprecomment!, back!, comment, continuations, domove!, domoves!, forward!,
     headervalue, isatbeginning, isatend, isleaf, precomment, printboard,
     removeallchildren!, removenode!, replacemove!, setheadervalue!,
-    tobeginning!, tobeginningofvariation!, toend!, undomove!
+    tobeginning!, tobeginningofvariation!, toend!, tonode!, undomove!
 
 
 """
@@ -773,6 +773,20 @@ function tobeginningofvariation!(g::Game)
         if n ≠ first(g.node.children)
             break
         end
+    end
+    g
+end
+
+
+"""
+    tonode!(g::Game, id::UUID)
+
+Go to the game tree node with the given node id, if it exists.
+"""
+function tonode!(g::Game, id::UUID)
+    n = g.nodemap[id]
+    if n ≠ nothing
+        g.node = n
     end
     g
 end
