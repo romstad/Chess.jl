@@ -557,6 +557,7 @@ function addmoves!(g::Game, moves::Vararg{Union{Move, String}})
     for m in moves
         addmove!(g, m)
     end
+    g
 end
 
 
