@@ -16,8 +16,6 @@
         along with this program.  If not, see <https://www.gnu.org/licenses/>.
 =#
 
-using UUIDs
-
 export Game, GameHeaders, GameNode, SimpleGame
 
 export board, addcomment!, adddata!, addmove!, addmoves!, addnag!,
@@ -158,7 +156,7 @@ A `GameNode` is a mutable struct with the following slots:
 - `data`: A `Dict{String, Any}` used to store information about this node. This
   is used for comments and numeric annotation glyphs, but can also be used to
   store other data.
-- `id`: A UUID, used to look up this node in a `Game`, which contains a
+- `id`: An `Int`, used to look up this node in a `Game`, which contains a
   dictionary mapping ids to `GameNode`s.
 """
 mutable struct GameNode
@@ -166,48 +164,41 @@ mutable struct GameNode
     board::Board
     children::Vector{GameNode}
     data::Dict{String, Any}
-    id::UUID
+    id::Int
 end
 
 
 function Base.show(io::IO, n::GameNode)
-    print(io, "GameNode($(fen(n.board)))")
-end
-
-
-function GameNode(parent::Union{GameNode, Nothing},
-                  board::Board,
-                  children::Vector{GameNode},
-                  data::Dict{String, Any})
-    GameNode(parent, board, children, data, uuid1())
+    print(io, "GameNode(id = $(n.id), board = $(fen(n.board)))")
 end
 
 
 """
-    GameNode(parent::GameNode, move::Move)
+    GameNode(parent::GameNode, move::Move, id::Int)
 
 Constructor that creates a `GameNode` from a parent node and a move.
 
 The move must be a legal move from the board at the parent node.
 """
-function GameNode(parent::GameNode, move::Move)
+function GameNode(parent::GameNode, move::Move, id::Int)
     GameNode(parent,
              domove(parent.board, move),
              GameNode[],
-             Dict{String, Any}())
+             Dict{String, Any}(),
+             id)
 end
 
 
 """
-    GameNode(board::Board)
+    GameNode(board::Board, id::Int)
 
 Constructor that creates a root `GameNode` with the given board.
 
 The resulting `GameNode` has no parent. This constructor is used to create the
 root node of a game.
 """
-function GameNode(board::Board)
-    GameNode(nothing, deepcopy(board), GameNode[], Dict{String, Any}())
+function GameNode(board::Board, id::Int)
+    GameNode(nothing, deepcopy(board), GameNode[], Dict{String, Any}(), id)
 end
 
 
@@ -220,7 +211,8 @@ mutable struct Game
     headers::GameHeaders
     root::GameNode
     node::GameNode
-    nodemap::Dict{UUID, GameNode}
+    nodemap::Dict{Int, GameNode}
+    nodecounter::Int
 end
 
 
@@ -262,8 +254,8 @@ end
 Constructor that creates a `Game` from the provided starting position.
 """
 function Game(startboard::Board)
-    root = GameNode(startboard)
-    result = Game(GameHeaders(), root, root, Dict(root.id => root))
+    root = GameNode(startboard, 1)
+    result = Game(GameHeaders(), root, root, Dict(root.id => root), 1)
     if fen(startboard) ≠ START_FEN
         setheadervalue!(result, "FEN", fen(startboard))
     end
@@ -533,7 +525,8 @@ The move `m` is assumed to be a legal move. It's the caller's responsibility
 to ensure that this is the case.
 """
 function addmove!(g::Game, m::Move)
-    node = GameNode(g.node, m)
+    g.nodecounter += 1
+    node = GameNode(g.node, m, g.nodecounter)
     push!(g.node.children, node)
     g.nodemap[node.id] = node
     g.node = node
@@ -779,15 +772,12 @@ end
 
 
 """
-    tonode!(g::Game, id::UUID)
+    tonode!(g::Game, id::Int)
 
 Go to the game tree node with the given node id, if it exists.
 """
-function tonode!(g::Game, id::UUID)
-    n = g.nodemap[id]
-    if n ≠ nothing
-        g.node = n
-    end
+function tonode!(g::Game, id::Int)
+    g.node = g.nodemap[id]
     g
 end
 
