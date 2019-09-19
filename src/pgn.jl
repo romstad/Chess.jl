@@ -251,6 +251,37 @@ function readnag(p::PGNReader)::Token
 end
 
 
+function readfakenag(p::PGNReader)::Token
+    c = readchar(p)
+    @assert c == '!' || c == '?'
+    result = IOBuffer()
+    write(result, c)
+    c = readchar(p)
+    while c == '!' || c == '?'
+        write(result, c)
+        if eof(p.io)
+            break
+        end
+        c = readchar(p)
+    end
+    unread(p, c)
+    s = String(take!(result))
+    if startswith(s, "!!")
+        Token(nag, "3")
+    elseif startswith(s, "??")
+        Token(nag, "4")
+    elseif startswith(s, "!?")
+        Token(nag, "5")
+    elseif startswith(s, "?!")
+        Token(nag, "6")
+    elseif startswith(s, "!")
+        Token(nag, "1")
+    else
+        Token(nag, "2")
+    end
+end
+
+
 function readcomment(p::PGNReader)::Token
     c = readchar(p)
     @assert c == '{'
@@ -318,6 +349,8 @@ function readtoken(p::PGNReader)::Token
         readlinecomment(p)
     elseif c == '$'
         readnag(p)
+    elseif c == '!' || c == '?'
+        readfakenag(p)
     else
         throw(PGNException("Invalid character: " * c))
     end
