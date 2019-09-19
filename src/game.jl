@@ -21,10 +21,10 @@ using UUIDs
 export Game, GameHeaders, GameNode, SimpleGame
 
 export board, addcomment!, adddata!, addmove!, addmoves!, addnag!,
-    addprecomment!, back!, comment, domove!, domoves!, forward!, headervalue,
-    isatbeginning, isatend, isleaf, precomment, printboard, removeallchildren!,
-    removenode!, replacemove!, setheadervalue!, tobeginning!,
-    tobeginningofvariation!, toend!, undomove!
+    addprecomment!, back!, comment, continuations, domove!, domoves!, forward!,
+    headervalue, isatbeginning, isatend, isleaf, precomment, printboard,
+    removeallchildren!, removenode!, replacemove!, setheadervalue!,
+    tobeginning!, tobeginningofvariation!, toend!, undomove!
 
 
 """
@@ -397,6 +397,41 @@ function board(g::Game)::Board
     g.node.board
 end
 
+
+"""
+    continuations(n::GameNode)::Vector{Move}
+    continuations(g::Game)::Vector{Move}
+
+All moves at this node in the game tree.
+
+One move for each child node of the current node.
+
+# Examples
+
+```julia-repl
+julia> g = Game();
+
+julia> addmoves!(g, "e4", "e5");
+
+julia> back!(g);
+
+julia> addmove!(g, "c5");
+
+julia> back!(g);
+
+julia> continuations(g)
+2-element Array{Move,1}:
+ Move(e7e5)
+ Move(c7c5)
+```
+"""
+function continuations(n::GameNode)::Vector{Move}
+    map(ch -> lastmove(ch.board), n.children)
+end
+
+function continuations(g::Game)::Vector{Move}
+    continuations(g.node)
+end
 
 
 """
