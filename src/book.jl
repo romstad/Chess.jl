@@ -83,6 +83,6 @@ const SCORE_BLACK_DRAW = 5.0
 const SCORE_BLACk_LOSS = 1.0
 const YEARLY_DECAY = 0.85
 const HIGH_ELO_FACTOR = 6.0
-const MAX_PLY 60
+const MAX_PLY = 60
 const MIN_SCORE = 0
 const MIN_GAME_COUNT = 5
