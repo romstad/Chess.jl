@@ -28,5 +28,6 @@ include("san.jl")
 include("game.jl")
 include("pgn.jl")
 include("uci.jl")
+include("book.jl")
 
 end # module
