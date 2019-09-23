@@ -201,11 +201,6 @@ function addgamefile!(entries::Vector{BookEntry}, filename::String, count = 0)
         if count % 1000 == 0
             println("$count games added, $(length(entries)) entries.")
         end
-        if count % 50000 == 0
-            println("compressing...")
-            entries = compress!(sortentries!(entries))
-            println("done!")
-        end
     end
     count
 end
