@@ -16,6 +16,8 @@
         along with this program.  If not, see <https://www.gnu.org/licenses/>.
 =#
 
+using Dates
+
 export BookEntry
 
 mutable struct BookEntry
@@ -32,6 +34,20 @@ end
 
 function BookEntry()
     BookEntry(0, 0, 0, 0, 0, 0, 0, 0, 0)
+end
+
+
+function randomentry()::BookEntry
+    r = rand(1:3)
+    BookEntry(rand(1:20),
+              rand(101:120),
+              rand(1800:2800),
+              rand(1800:2800),
+              r == 1 ? 1 : 0,
+              r == 2 ? 1 : 0,
+              r == 3 ? 1 : 0,
+              rand(2000:2019),
+              rand())
 end
 
 
@@ -80,9 +96,89 @@ const SCORE_WHITE_DRAW = 4.0
 const SCORE_WHITE_LOSS = 1.0
 const SCORE_BLACK_WIN = 8.0
 const SCORE_BLACK_DRAW = 5.0
-const SCORE_BLACk_LOSS = 1.0
+const SCORE_BLACK_LOSS = 1.0
+const SCORE_UNKNOWN = 0.0
 const YEARLY_DECAY = 0.85
 const HIGH_ELO_FACTOR = 6.0
 const MAX_PLY = 60
 const MIN_SCORE = 0
 const MIN_GAME_COUNT = 5
+
+
+function computescore(result, color, elo, date)::Float32
+    base = if result == "1-0" && color == WHITE
+        SCORE_WHITE_WIN
+    elseif result == "1/2-1/2" && color == WHITE
+        SCORE_WHITE_DRAW
+    elseif result == "0-1" && color == WHITE
+        SCORE_WHITE_LOSS
+    elseif result == "0-1" && color == BLACK
+        SCORE_BLACK_WIN
+    elseif result == "1/2-1/2" && color == BLACK
+        SCORE_BLACK_DRAW
+    elseif result == "1-0" && color == BLACK
+        SCORE_BLACK_LOSS
+    else
+        SCORE_UNKNOWN
+    end
+    base *
+        max(1.0, 0.01 * HIGH_ELO_FACTOR * (2300 - elo)) *
+        exp(log(YEARLY_DECAY) *
+            (Dates.value(today() - date) / 365.25))
+end
+
+
+function mergeentries(entries::Vector{BookEntry})::BookEntry
+    BookEntry(
+        entries[1].key,
+        entries[1].move,
+        maximum(e -> e.elo, entries),
+        maximum(e -> e.oppelo, entries),
+        sum(e -> e.wins, entries),
+        sum(e -> e.draws, entries),
+        sum(e -> e.losses, entries),
+        maximum(e -> e.year, entries),
+        sum(e -> e.score, entries)
+    )
+end
+
+
+function mergeable(e1::BookEntry, e2::BookEntry)::Bool
+    e1.key == e2.key && e1.move == e2.move
+end
+
+
+function merge(e1::BookEntry, e2::BookEntry)::BookEntry
+    BookEntry(e1.key, e1.move, max(e1.elo, e2.elo), max(e1.oppelo, e2.oppelo),
+              e1.wins + e2.wins, e2.draws + e2.draws, e1.losses + e2.losses,
+              max(e1.year, e2.year), e1.score + e2.score)
+end
+
+
+function compress!(entries::Vector{BookEntry})
+    i = 1; j = 1; n = length(entries)
+    iterations = 0
+    while j + 1 < n
+        for k ∈ j + 1 : n
+            if !mergeable(entries[i], entries[k]) || k == n
+                j = k
+                i += 1
+                entries[i] = entries[k]
+                break
+            end
+            entries[i] = merge(entries[i], entries[k])
+        end
+    end
+    entries[1 : i - 1]
+end
+
+
+
+function compareentries(e1::BookEntry, e2::BookEntry)::Bool
+    e1.key < e2.key || (e1.key == e2.key && e1.move < e2.move)
+end
+
+
+function sortentries!(entries::Vector{BookEntry})
+    sort!(entries, lt = compareentries)
+end
