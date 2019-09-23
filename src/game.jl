@@ -20,12 +20,12 @@ using Dates;
 
 export Game, GameHeaders, GameNode, SimpleGame
 
-export board, addcomment!, adddata!, addmove!, addmoves!, addnag!,
-    addprecomment!, back!, comment, continuations, dateplayed, domove!,
+export addcomment!, adddata!, addmove!, addmoves!, addnag!, addprecomment!,
+    back!, blackelo, board, comment, continuations, dateplayed, domove!,
     domoves!, forward!, headervalue, isatbeginning, isatend, isleaf, nag,
     precomment, printboard, removeallchildren!, removenode!, replacemove!,
     setheadervalue!, tobeginning!, tobeginningofvariation!, toend!, tonode!,
-    undomove!
+    undomove!, whiteelo
 
 
 """
@@ -315,7 +315,7 @@ function headervalue(ghs::GameHeaders, name::String)::Union{String, Nothing}
     elseif name == "FEN" || name == "Fen"
         ghs.fen
     else
-        for gh in ghs
+        for gh in ghs.othertags
             if gh.name == name
                 return gh.value
             end
@@ -398,6 +398,40 @@ end
 
 function dateplayed(g::Game)::Date
     parsedate(headervalue(g, "Date"))
+end
+
+
+"""
+    whiteelo(g::SimpeGame)
+    whiteelo(g::Game)
+
+The Elo of the white player (as given by the "WhiteElo" tag), or `nothing`.
+"""
+function whiteelo(g::SimpleGame)::Union{Int, Nothing}
+    elo = headervalue(g, "WhiteElo")
+    elo ≠ nothing ? tryparse(Int, elo) : nothing
+end
+
+function whiteelo(g::Game)::Union{Int, Nothing}
+    elo = headervalue(g, "WhiteElo")
+    elo ≠ nothing ? tryparse(Int, elo) : nothing
+end
+
+
+"""
+    blackelo(g::SimpeGame)
+    blackelo(g::Game)
+
+The Elo of the black player (as given by the "BlackElo" tag), or `nothing`.
+"""
+function blackelo(g::SimpleGame)::Union{Int, Nothing}
+    elo = headervalue(g, "BlackElo")
+    elo ≠ nothing ? tryparse(Int, elo) : nothing
+end
+
+function blackelo(g::Game)::Union{Int, Nothing}
+    elo = headervalue(g, "BlackElo")
+    elo ≠ nothing ? tryparse(Int, elo) : nothing
 end
 
 
