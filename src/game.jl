@@ -23,9 +23,9 @@ export Game, GameHeaders, GameNode, SimpleGame
 export addcomment!, adddata!, addmove!, addmoves!, addnag!, addprecomment!,
     back!, blackelo, board, comment, continuations, dateplayed, domove!,
     domoves!, forward!, headervalue, isatbeginning, isatend, isleaf, nag,
-    precomment, printboard, removeallchildren!, removenode!, replacemove!,
-    setheadervalue!, tobeginning!, tobeginningofvariation!, toend!, tonode!,
-    undomove!, whiteelo
+    nextmove, precomment, printboard, removeallchildren!, removenode!,
+    replacemove!, setheadervalue!, tobeginning!, tobeginningofvariation!,
+    toend!, tonode!, undomove!, whiteelo
 
 
 """
@@ -338,7 +338,7 @@ const PGN_DATE_FORMAT_2 = DateFormat("y-m")
 const PGN_DATE_FORMAT_3 = DateFormat("y")
 
 
-function parsedate(datestr::String)::Date
+function parsedate(datestr::String)::Union{Date, Nothing}
     datestr = replace(datestr, "." => "-")
     try
         Date(datestr[1:10], PGN_DATE_FORMAT)
@@ -349,7 +349,7 @@ function parsedate(datestr::String)::Date
             try
                 Date(datestr[1:4], PGN_DATE_FORMAT_3)
             catch _
-                Date("1900", PGN_DATE_FORMAT_3)
+                nothing
             end
         end
     end
@@ -357,16 +357,16 @@ end
 
 
 """
-    dateplayed(g::SimpleGame)::Date
-    dateplayed(g::Game)::Date
+    dateplayed(g::SimpleGame)::Union{Date, Nothing}
+    dateplayed(g::Game)::Union{Date, Nothing}
 
-The date at which the game was played.
+The date at which the game was played, or `nothing`.
 
 This function makes use of the PGN date tag, trying to behave robustly with
 sensible defaults when the date is incomplete or incorrectly formatted. It
 handles both ISO format YYYY-MM-DD dates and PGN format YYYY.MM.DD dates. If
 either the month or the day is missing, they are replaced with 1. On failure,
-returns Jan 1, 1990.
+returns `nothing`.
 
 # Examples
 
@@ -389,14 +389,14 @@ julia> dateplayed(g)
 
 julia> setheadervalue!(g, "Date", "*");
 
-julia> dateplayed(g)
-1900-01-01
+julia> dateplayed(g) == nothing
+true
 """
-function dateplayed(g::SimpleGame)::Date
+function dateplayed(g::SimpleGame)::Union{Date, Nothing}
     parsedate(headervalue(g, "Date"))
 end
 
-function dateplayed(g::Game)::Date
+function dateplayed(g::Game)::Union{Date, Nothing}
     parsedate(headervalue(g, "Date"))
 end
 
@@ -663,6 +663,24 @@ function addmoves!(g::Game, moves::Vararg{Union{Move, String}})
     end
     g
 end
+
+
+"""
+    nextmove(g::SimpleGame)
+    nextmove(g::Game)
+
+The next move in the game, or `nothing` if we're at the end of the game.
+"""
+function nextmove(g::SimpleGame)::Union{Move, Nothing}
+    g.history[g.ply].move
+end
+
+function nextmove(g::Game)::Union{Move, Nothing}
+    if !isleaf(g.node)
+        lastmove(first(g.node.children).board)
+    end
+end
+
 
 
 """

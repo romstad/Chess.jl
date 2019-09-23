@@ -20,6 +20,9 @@ using Dates
 
 export BookEntry
 
+export createbook
+
+
 mutable struct BookEntry
     key::UInt64
     move::Int32
@@ -181,4 +184,54 @@ end
 
 function sortentries!(entries::Vector{BookEntry})
     sort!(entries, lt = compareentries)
+end
+
+
+function addgame!(entries::Vector{BookEntry}, g::SimpleGame)
+    result = headervalue(g, "Result")
+    if result ≠ "*"
+        w = result == "1-0" ? 1 : 0
+        d = result == "1/2-1/2" ? 1 : 0
+        l = result == "0-1" ? 1 : 0
+        welo = whiteelo(g) ≠ nothing ? whiteelo(g) : 0
+        belo = blackelo(g) ≠ nothing ? blackelo(g) : 0
+        date = dateplayed(g) ≠ nothing ? dateplayed(g) : Date(1900, 1, 1)
+        year = Dates.year(date)
+        wscore = computescore(result, WHITE, welo, date)
+        bscore = computescore(result, BLACK, belo, date)
+
+        tobeginning!(g)
+        while !isatend(g) && g.ply <= MAX_PLY
+            b = board(g)
+            wtm = sidetomove(b) == WHITE
+            m = nextmove(g)
+            push!(entries, BookEntry(b.key, m.val,
+                                     wtm ? welo : belo, wtm ? belo : welo,
+                                     wtm ? w : l, d, wtm ? l : w, year,
+                                     wtm ? wscore : bscore))
+            forward!(g)
+        end
+    end
+end
+
+
+function addgamefile!(entries::Vector{BookEntry}, filename::String, count = 0)
+    for g ∈ PGN.gamesinfile(filename)
+        addgame!(entries, g)
+        count += 1
+        if count % 1000 == 0
+            println("$count games added.")
+        end
+    end
+    count
+end
+
+
+function createbook(filenames::Vararg{String})
+    result = Vector{BookEntry}()
+    count = 0
+    for filename ∈ filenames
+        count = addgamefile!(result, filename, count)
+    end
+    compress!(sortentries!(result))
 end
