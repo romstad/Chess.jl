@@ -39,20 +39,6 @@ function BookEntry()
     BookEntry(0, 0, 0, 0, 0, 0, 0, 0, 0)
 end
 
-
-function randomentry()::BookEntry
-    r = rand(1:3)
-    BookEntry(rand(1:20),
-              rand(101:120),
-              rand(1800:2800),
-              rand(1800:2800),
-              r == 1 ? 1 : 0,
-              r == 2 ? 1 : 0,
-              r == 3 ? 1 : 0,
-              rand(2000:2019),
-              rand())
-end
-
 const ENTRY_SIZE = 34
 const COMPACT_ENTRY_SIZE = 16
 
@@ -127,21 +113,6 @@ function computescore(result, color, elo, date)::Float32
         max(1.0, 0.01 * HIGH_ELO_FACTOR * (2300 - elo)) *
         exp(log(YEARLY_DECAY) *
             (Dates.value(today() - date) / 365.25))
-end
-
-
-function mergeentries(entries::Vector{BookEntry})::BookEntry
-    BookEntry(
-        entries[1].key,
-        entries[1].move,
-        maximum(e -> e.elo, entries),
-        maximum(e -> e.oppelo, entries),
-        sum(e -> e.wins, entries),
-        sum(e -> e.draws, entries),
-        sum(e -> e.losses, entries),
-        maximum(e -> e.year, entries),
-        sum(e -> e.score, entries)
-    )
 end
 
 
