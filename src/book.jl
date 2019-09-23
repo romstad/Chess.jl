@@ -16,11 +16,11 @@
         along with this program.  If not, see <https://www.gnu.org/licenses/>.
 =#
 
-using Dates
+using Dates, Printf
 
 export BookEntry
 
-export createbook
+export createbook, findbookentries, writetofile
 
 
 mutable struct BookEntry
@@ -37,6 +37,15 @@ end
 
 function BookEntry()
     BookEntry(0, 0, 0, 0, 0, 0, 0, 0, 0)
+end
+
+function Base.show(io::IO, e::BookEntry)
+    println(io, "BookEntry:")
+    println(io, " key: $(e.key)")
+    println(io, " move: $(Move(e.move))")
+    println(io, " (w, d, l): ($(e.wins), $(e.draws), $(e.losses))")
+    println(io, " year: $(e.year)")
+    print(io, " score: $(e.score)")
 end
 
 const ENTRY_SIZE = 34
@@ -123,7 +132,7 @@ end
 
 function merge(e1::BookEntry, e2::BookEntry)::BookEntry
     BookEntry(e1.key, e1.move, max(e1.elo, e2.elo), max(e1.oppelo, e2.oppelo),
-              e1.wins + e2.wins, e2.draws + e2.draws, e1.losses + e2.losses,
+              e1.wins + e2.wins, e1.draws + e2.draws, e1.losses + e2.losses,
               max(e1.year, e2.year), e1.score + e2.score)
 end
 
@@ -208,5 +217,85 @@ function createbook(filenames::Vararg{String})
     for filename ∈ filenames
         count = addgamefile!(result, filename, count)
     end
-    compress!(sortentries!(result))
+    result = compress!(sortentries!(result))
+    result
+end
+
+
+function writetofile(entries::Vector{BookEntry}, filename::String, compact = false)
+    open(filename, "w") do f
+        write(f, UInt8(compact ? 1 : 0))
+        for e ∈ entries
+            write(f, entrytobytes(e, compact))
+        end
+    end
+end
+
+
+function readkey(f::IO, index::Int, entrysize::Int)::UInt64
+    seek(f, 1 + entrysize * index)
+    read(f, UInt64)
+end
+
+
+function findkey(f::IO, key::UInt64, left::Int, right::Int,
+                 entrysize::Int)::Union{Int, Nothing}
+    while left <= right
+        middle = div(left + right, 2)
+        midkey = readkey(f, middle, entrysize)
+        if key == midkey && (middle == 0 ||
+                             key ≠ readkey(f, middle - 1, entrysize))
+            return middle
+        elseif midkey < key
+            left = middle + 1
+        else
+            right = middle - 1
+        end
+    end
+end
+
+
+function readentry(f::IO, index::Int, compact = false)::Union{BookEntry, Nothing}
+    entrysize = compact ? COMPACT_ENTRY_SIZE : ENTRY_SIZE
+    seek(f, 1 + entrysize * index)
+    e = entryfrombytes(read(f, entrysize), compact)
+end
+
+
+function findbookentries(key::UInt64, filename::String)::Vector{BookEntry}
+    result = Vector{BookEntry}()
+    open(filename, "r") do f
+        compact = read(f, UInt8) == 1
+        entrysize = compact ? COMPACT_ENTRY_SIZE : ENTRY_SIZE
+        entrycount = div(filesize(filename) - 1, entrysize)
+        i = findkey(f, key, 0, entrycount - 1, entrysize)
+        if i ≠ nothing
+            for j in i:entrycount
+                e = readentry(f, j, compact)
+                if e.key == key
+                    push!(result, e)
+                else
+                    break
+                end
+            end
+        end
+    end
+    sort(result, by = e -> -e.score)
+end
+
+
+function findbookentries(b::Board, filename::String)::Vector{BookEntry}
+    findbookentries(b.key, filename)
+end
+
+
+function printbookentries(b::Board, filename::String)
+    entries = findbookentries(b, filename)
+    for e ∈ entries
+        @printf("%s %.1f (+%d, =%d, -%d) %d %d %d\n",
+                movetosan(b, Move(e.move)),
+                100 * ((e.wins + 0.5 * e.draws) / (e.wins + e.draws + e.losses)),
+                e.wins, e.draws, e.losses,
+                e.elo, e.oppelo, e.year)
+    end
 end
