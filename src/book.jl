@@ -53,7 +53,6 @@ function randomentry()::BookEntry
               rand())
 end
 
-
 const ENTRY_SIZE = 34
 const COMPACT_ENTRY_SIZE = 16
 
@@ -220,7 +219,12 @@ function addgamefile!(entries::Vector{BookEntry}, filename::String, count = 0)
         addgame!(entries, g)
         count += 1
         if count % 1000 == 0
-            println("$count games added.")
+            println("$count games added, $(length(entries)) entries.")
+        end
+        if count % 50000 == 0
+            println("compressing...")
+            entries = compress!(sortentries!(entries))
+            println("done!")
         end
     end
     count

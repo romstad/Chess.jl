@@ -63,6 +63,7 @@ PGNReader(io::IO) = PGNReader(io, nothing)
     symbol
     comment
     linecomment
+    nullmove
     endoffile
 end
 
@@ -314,6 +315,16 @@ function readlinecomment(p::PGNReader)::Token
 end
 
 
+function readnullmove(p::PGNReader)::Token
+    c = readchar(p)
+    @assert c == '-'
+    while c == '-'
+        c = readchar(p)
+    end
+    Token(nullmove, "--")
+end
+
+
 function readtoken(p::PGNReader)::Token
     skipwhitespace(p)
 
@@ -325,6 +336,8 @@ function readtoken(p::PGNReader)::Token
 
     if c == '"'
         readstring(p)
+    elseif c == '-'
+        readnullmove(p)
     elseif issymbolstart(c)
         readsymbol(p)
     elseif c == '.'
@@ -437,10 +450,13 @@ function readgame(p::PGNReader, annotations=false)
     end
     result.headers = headers
     precomment = nothing
+    nullmoveseen = false
     while true
         t = readtoken(p)
         if terminatesgame(t) || t.ttype == endoffile
             break
+        elseif t.ttype == nullmove
+            nullmoveseen = true
         elseif t.ttype == leftparen
             if !annotations
                 skipvariation(p)
@@ -463,7 +479,7 @@ function readgame(p::PGNReader, annotations=false)
             if annotations
                 addnag!(result, parse(Int, t.value))
             end
-        elseif t.ttype == symbol
+        elseif t.ttype == symbol && !nullmoveseen
             # Try to parse the symbol as a move in short algebraic notation,
             # and add it to the game if successful
             m = movefromsan(board(result), t.value)
