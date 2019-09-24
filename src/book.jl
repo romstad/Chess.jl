@@ -16,11 +16,12 @@
         along with this program.  If not, see <https://www.gnu.org/licenses/>.
 =#
 
-using Dates, Printf
+using Dates, Printf, StatsBase
 
 export BookEntry
 
-export createbook, findbookentries, writetofile
+export createbook, findbookentries, pickmove, printbookentries, purgebook,
+    writetofile
 
 
 mutable struct BookEntry
@@ -47,6 +48,7 @@ function Base.show(io::IO, e::BookEntry)
     println(io, " year: $(e.year)")
     print(io, " score: $(e.score)")
 end
+
 
 const ENTRY_SIZE = 34
 const COMPACT_ENTRY_SIZE = 16
@@ -88,39 +90,28 @@ function entryfrombytes(bytes::Vector{UInt8}, compact::Bool)::BookEntry
 end
 
 
-const SCORE_WHITE_WIN = 8.0
-const SCORE_WHITE_DRAW = 4.0
-const SCORE_WHITE_LOSS = 1.0
-const SCORE_BLACK_WIN = 8.0
-const SCORE_BLACK_DRAW = 5.0
-const SCORE_BLACK_LOSS = 1.0
-const SCORE_UNKNOWN = 0.0
-const YEARLY_DECAY = 0.85
-const HIGH_ELO_FACTOR = 6.0
-const MAX_PLY = 60
-const MIN_SCORE = 0
-const MIN_GAME_COUNT = 5
-
-
-function computescore(result, color, elo, date)::Float32
+function computescore(result, color, elo, date,
+                      scorewhitewin, scorewhitedraw, scorewhiteloss,
+                      scoreblackwin, scoreblackdraw, scoreblackloss,
+                      scoreunknown, highelofactor, yearlydecay)::Float32
     base = if result == "1-0" && color == WHITE
-        SCORE_WHITE_WIN
+        scorewhitewin
     elseif result == "1/2-1/2" && color == WHITE
-        SCORE_WHITE_DRAW
+        scorewhitedraw
     elseif result == "0-1" && color == WHITE
-        SCORE_WHITE_LOSS
+        scorewhiteloss
     elseif result == "0-1" && color == BLACK
-        SCORE_BLACK_WIN
+        scoreblackwin
     elseif result == "1/2-1/2" && color == BLACK
-        SCORE_BLACK_DRAW
+        scoreblackdraw
     elseif result == "1-0" && color == BLACK
-        SCORE_BLACK_LOSS
+        scoreblackloss
     else
-        SCORE_UNKNOWN
+        scoreunknown
     end
     base *
-        max(1.0, 0.01 * HIGH_ELO_FACTOR * (2300 - elo)) *
-        exp(log(YEARLY_DECAY) *
+        max(1.0, 0.01 * highelofactor * (2300 - elo)) *
+        exp(log(yearlydecay) *
             (Dates.value(today() - date) / 365.25))
 end
 
@@ -166,7 +157,10 @@ function sortentries!(entries::Vector{BookEntry})
 end
 
 
-function addgame!(entries::Vector{BookEntry}, g::SimpleGame)
+function addgame!(entries::Vector{BookEntry}, g::SimpleGame,
+                  scorewhitewin, scorewhitedraw, scorewhiteloss,
+                  scoreblackwin, scoreblackdraw, scoreblackloss,
+                  scoreunknown, highelofactor, yearlydecay, maxply, minelo)
     result = headervalue(g, "Result")
     if result ≠ "*"
         w = result == "1-0" ? 1 : 0
@@ -176,27 +170,41 @@ function addgame!(entries::Vector{BookEntry}, g::SimpleGame)
         belo = blackelo(g) ≠ nothing ? blackelo(g) : 0
         date = dateplayed(g) ≠ nothing ? dateplayed(g) : Date(1900, 1, 1)
         year = Dates.year(date)
-        wscore = computescore(result, WHITE, welo, date)
-        bscore = computescore(result, BLACK, belo, date)
+        wscore = computescore(result, WHITE, welo, date,
+                              scorewhitewin, scorewhitedraw, scorewhiteloss,
+                              scoreblackwin, scoreblackdraw, scoreblackloss,
+                              scoreunknown, highelofactor, yearlydecay)
+        bscore = computescore(result, BLACK, belo, date,
+                              scorewhitewin, scorewhitedraw, scorewhiteloss,
+                              scoreblackwin, scoreblackdraw, scoreblackloss,
+                              scoreunknown, highelofactor, yearlydecay)
 
         tobeginning!(g)
-        while !isatend(g) && g.ply <= MAX_PLY
+        while !isatend(g) && g.ply <= maxply
             b = board(g)
             wtm = sidetomove(b) == WHITE
             m = nextmove(g)
-            push!(entries, BookEntry(b.key, m.val,
-                                     wtm ? welo : belo, wtm ? belo : welo,
-                                     wtm ? w : l, d, wtm ? l : w, year,
-                                     wtm ? wscore : bscore))
+            if wtm && welo >= minelo || !wtm && belo >= minelo
+                push!(entries, BookEntry(b.key, m.val,
+                                         wtm ? welo : belo, wtm ? belo : welo,
+                                         wtm ? w : l, d, wtm ? l : w, year,
+                                         wtm ? wscore : bscore))
+            end
             forward!(g)
         end
     end
 end
 
 
-function addgamefile!(entries::Vector{BookEntry}, filename::String, count = 0)
+function addgamefile!(entries::Vector{BookEntry}, filename::String,
+                      scorewhitewin, scorewhitedraw, scorewhiteloss,
+                      scoreblackwin, scoreblackdraw, scoreblackloss,
+                      scoreunknown, highelofactor, yearlydecay, maxply,
+                      minelo, count)
     for g ∈ PGN.gamesinfile(filename)
-        addgame!(entries, g)
+        addgame!(entries, g, scorewhitewin, scorewhitedraw, scorewhiteloss,
+                 scoreblackwin, scoreblackdraw, scoreblackloss, scoreunknown,
+                 highelofactor, yearlydecay, maxply, minelo)
         count += 1
         if count % 1000 == 0
             println("$count games added, $(length(entries)) entries.")
@@ -206,22 +214,61 @@ function addgamefile!(entries::Vector{BookEntry}, filename::String, count = 0)
 end
 
 
-function createbook(filenames::Vararg{String})
+function createbook(filenames::Vararg{String};
+                    scorewhitewin = 8.0,
+                    scorewhitedraw = 4.0,
+                    scorewhiteloss = 1.0,
+                    scoreblackwin = 8.0,
+                    scoreblackdraw = 5.0,
+                    scoreblackloss = 1.0,
+                    scoreunknown = 0.0,
+                    highelofactor = 6.0,
+                    yearlydecay = 0.85,
+                    maxply = 60,
+                    minelo = 0)
     result = Vector{BookEntry}()
     count = 0
     for filename ∈ filenames
-        count = addgamefile!(result, filename, count)
+        count = addgamefile!(result, filename, scorewhitewin, scorewhitedraw,
+                             scorewhiteloss, scoreblackwin, scoreblackdraw,
+                             scoreblackloss, scoreunknown, highelofactor,
+                             yearlydecay, maxply, minelo, count)
     end
     result = compress!(sortentries!(result))
     result
 end
 
 
-function writetofile(entries::Vector{BookEntry}, filename::String, compact = false)
+function writetofile(entries::Vector{BookEntry}, filename::String,
+                     compact = false)
     open(filename, "w") do f
         write(f, UInt8(compact ? 1 : 0))
         for e ∈ entries
             write(f, entrytobytes(e, compact))
+        end
+    end
+end
+
+
+function purgebook(infile::String, outfile::String;
+                   minscore = 0, mingamecount = 5,
+                   compact = false)
+    open(infile, "r") do inf
+        open(outfile, "w") do outf
+            write(outf, UInt8(compact ? 1 : 0))
+            incompact = read(inf, UInt8) == 1
+            entrysize = incompact ? COMPACT_ENTRY_SIZE : ENTRY_SIZE
+            entrycount = div(filesize(infile) - 1, entrysize)
+            for i in 1 : entrycount
+                e = readentry(inf, i - 1, incompact)
+                if e.wins + e.draws + e.losses ≥ mingamecount && e.score > minscore
+                    write(outf, entrytobytes(e, compact))
+                end
+                if i % 100000 == 0
+                    @printf("%d/%d (%.1f%%) entries processed.\n",
+                            i, entrycount, 100 * i / entrycount)
+                end
+            end
         end
     end
 end
@@ -286,11 +333,27 @@ end
 
 function printbookentries(b::Board, filename::String)
     entries = findbookentries(b, filename)
+    scoresum = sum(map(e -> e.score, entries))
     for e ∈ entries
-        @printf("%s %.1f (+%d, =%d, -%d) %d %d %d\n",
+        @printf("%s %.2f %.1f%% (+%d, =%d, -%d) %d %d %d\n",
                 movetosan(b, Move(e.move)),
+                e.score / scoresum,
                 100 * ((e.wins + 0.5 * e.draws) / (e.wins + e.draws + e.losses)),
                 e.wins, e.draws, e.losses,
                 e.elo, e.oppelo, e.year)
+    end
+end
+
+
+function pickmove(b::Board, filename::String;
+                  minscore = 0, mingamecount = 1)::Union{Move, Nothing}
+    entries = filter(e -> e.wins + e.draws + e.losses >= mingamecount
+                     && e.score >= minscore,
+                     findbookentries(b, filename))
+    if length(entries) == 0
+        nothing
+    else
+        w = Weights(map(e -> e.score, entries))
+        Move(sample(entries, w).move)
     end
 end
