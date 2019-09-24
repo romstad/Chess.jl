@@ -16,7 +16,9 @@
         along with this program.  If not, see <https://www.gnu.org/licenses/>.
 =#
 
-using Dates, Printf, StatsBase
+module Book
+
+using Chess, Dates, Printf, StatsBase
 
 export BookEntry
 
@@ -175,7 +177,6 @@ function compress!(entries::Vector{BookEntry})
     end
     entries[1 : i - 1]
 end
-
 
 
 function compareentries(e1::BookEntry, e2::BookEntry)::Bool
@@ -480,3 +481,6 @@ function pickbookmove(b::Board, bookfilename::String;
         Move(sample(entries, w).move)
     end
 end
+
+
+end # module
