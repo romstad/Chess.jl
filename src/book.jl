@@ -44,8 +44,10 @@ function Base.show(io::IO, e::BookEntry)
     println(io, "BookEntry:")
     println(io, " key: $(e.key)")
     println(io, " move: $(Move(e.move))")
+    println(io, " top elo: $(e.elo)")
+    println(io, " top opponent elo: $(e.oppelo)")
     println(io, " (w, d, l): ($(e.wins), $(e.draws), $(e.losses))")
-    println(io, " year: $(e.year)")
+    println(io, " last played: $(e.year)")
     print(io, " score: $(e.score)")
 end
 
@@ -304,12 +306,12 @@ function readentry(f::IO, index::Int, compact = false)::Union{BookEntry, Nothing
 end
 
 
-function findbookentries(key::UInt64, filename::String)::Vector{BookEntry}
+function findbookentries(key::UInt64, bookfilename::String)::Vector{BookEntry}
     result = Vector{BookEntry}()
-    open(filename, "r") do f
+    open(bookfilename, "r") do f
         compact = read(f, UInt8) == 1
         entrysize = compact ? COMPACT_ENTRY_SIZE : ENTRY_SIZE
-        entrycount = div(filesize(filename) - 1, entrysize)
+        entrycount = div(filesize(bookfilename) - 1, entrysize)
         i = findkey(f, key, 0, entrycount - 1, entrysize)
         if i ≠ nothing
             for j in i:entrycount
@@ -326,13 +328,13 @@ function findbookentries(key::UInt64, filename::String)::Vector{BookEntry}
 end
 
 
-function findbookentries(b::Board, filename::String)::Vector{BookEntry}
-    findbookentries(b.key, filename)
+function findbookentries(b::Board, bookfilename::String)::Vector{BookEntry}
+    findbookentries(b.key, bookfilename)
 end
 
 
-function printbookentries(b::Board, filename::String)
-    entries = findbookentries(b, filename)
+function printbookentries(b::Board, bookfilename::String)
+    entries = findbookentries(b, bookfilename)
     scoresum = sum(map(e -> e.score, entries))
     for e ∈ entries
         @printf("%s %.2f %.1f%% (+%d, =%d, -%d) %d %d %d\n",
@@ -345,11 +347,11 @@ function printbookentries(b::Board, filename::String)
 end
 
 
-function pickmove(b::Board, filename::String;
+function pickmove(b::Board, bookfilename::String;
                   minscore = 0, mingamecount = 1)::Union{Move, Nothing}
     entries = filter(e -> e.wins + e.draws + e.losses >= mingamecount
                      && e.score >= minscore,
-                     findbookentries(b, filename))
+                     findbookentries(b, bookfilename))
     if length(entries) == 0
         nothing
     else
