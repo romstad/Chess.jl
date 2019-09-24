@@ -20,10 +20,34 @@ using Dates, Printf, StatsBase
 
 export BookEntry
 
-export createbook, findbookentries, pickmove, printbookentries, purgebook,
-    writetofile
+export createbook, findbookentries, pickbookmove, printbookentries, purgebook,
+    writebooktofile
 
 
+"""
+    BookEntry
+
+A struct representing an opening book entry.
+
+Book entries contain the following slots:
+
+- `key`: The hash key of the board position this book entry represents.
+- `move`: The move played, encoded as an `Int32`. In order to get the actual
+  `Move` value representing the move stored in a book entry `e`, you should do
+  `Move(e.move)`.
+- `elo`: The highest Elo rating of a player who played this move.
+- `oppelo`: The highest Elo of the opponent in a game where this move was
+  played.
+- `wins`: The number of times the player who played this move won the game.
+- `draws`: The number of times the player who played this move drew the game.
+- `losses`: The number of times the player who played this move lost the game.
+- `firstyear`: The year this move was first played.
+- `lastyear`: The year this move was last played.
+- `score`: The score of this move, used to obtain a probability distribution
+  when picking a book move for a position. The score is computed based on the
+  W/L/D stats for the move, the ratings of the players who have played it, and
+  on its popularity in more recent games.
+"""
 mutable struct BookEntry
     key::UInt64
     move::Int32
@@ -32,12 +56,13 @@ mutable struct BookEntry
     wins::Int32
     draws::Int32
     losses::Int32
-    year::Int16
+    firstyear::Int16
+    lastyear::Int16
     score::Float32
 end
 
 function BookEntry()
-    BookEntry(0, 0, 0, 0, 0, 0, 0, 0, 0)
+    BookEntry(0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 end
 
 function Base.show(io::IO, e::BookEntry)
@@ -47,12 +72,13 @@ function Base.show(io::IO, e::BookEntry)
     println(io, " top elo: $(e.elo)")
     println(io, " top opponent elo: $(e.oppelo)")
     println(io, " (w, d, l): ($(e.wins), $(e.draws), $(e.losses))")
-    println(io, " last played: $(e.year)")
+    println(io, " first played: $(e.firstyear)")
+    println(io, " last played: $(e.lastyear)")
     print(io, " score: $(e.score)")
 end
 
 
-const ENTRY_SIZE = 34
+const ENTRY_SIZE = 36
 const COMPACT_ENTRY_SIZE = 16
 
 
@@ -68,7 +94,8 @@ function entrytobytes(entry::BookEntry, compact::Bool)::Vector{UInt8}
         write(io, entry.wins)
         write(io, entry.draws)
         write(io, entry.losses)
-        write(io, entry.year)
+        write(io, entry.firstyear)
+        write(io, entry.lastyear)
     end
     take!(io)
 end
@@ -86,7 +113,8 @@ function entryfrombytes(bytes::Vector{UInt8}, compact::Bool)::BookEntry
         result.wins = read(io, Int32)
         result.draws = read(io, Int32)
         result.losses = read(io, Int32)
-        result.year = read(io, Int16)
+        result.firstyear = read(io, Int16)
+        result.lastyear = read(io, Int16)
     end
     result
 end
@@ -126,7 +154,8 @@ end
 function merge(e1::BookEntry, e2::BookEntry)::BookEntry
     BookEntry(e1.key, e1.move, max(e1.elo, e2.elo), max(e1.oppelo, e2.oppelo),
               e1.wins + e2.wins, e1.draws + e2.draws, e1.losses + e2.losses,
-              max(e1.year, e2.year), e1.score + e2.score)
+              min(e1.firstyear, e2.firstyear), max(e1.lastyear, e2.lastyear),
+              e1.score + e2.score)
 end
 
 
@@ -189,7 +218,7 @@ function addgame!(entries::Vector{BookEntry}, g::SimpleGame,
             if wtm && welo >= minelo || !wtm && belo >= minelo
                 push!(entries, BookEntry(b.key, m.val,
                                          wtm ? welo : belo, wtm ? belo : welo,
-                                         wtm ? w : l, d, wtm ? l : w, year,
+                                         wtm ? w : l, d, wtm ? l : w, year, year,
                                          wtm ? wscore : bscore))
             end
             forward!(g)
@@ -216,7 +245,54 @@ function addgamefile!(entries::Vector{BookEntry}, filename::String,
 end
 
 
-function createbook(filenames::Vararg{String};
+"""
+    createbook(pgnfiles::Vararg{String};
+               scorewhitewin = 8.0,
+               scorewhitedraw = 4.0,
+               scorewhiteloss = 1.0,
+               scoreblackwin = 8.0,
+               scoreblackdraw = 5.0,
+               scoreblackloss = 1.0,
+               scoreunknown = 0.0,
+               highelofactor = 6.0,
+               yearlydecay = 0.85,
+               maxply = 60,
+               minelo = 0)
+
+Creates an opening book tree from one or more PGN files.
+
+The opening tree is stored in RAM. You will probably want to save it to disk
+using `writebooktofile` afterwards, for instance like this:
+
+```julia-repl
+julia> bk = createbook("my-pgn-file.pgn");
+
+julia> writebooktofile(bk, "my-book.obk")
+```
+
+The createbook function takes a number of optional named parameters that
+can be used to control what moves are included in the opening tree, and the
+scoring of the moves (which is used to produce move probabilities when picking
+a move using `pickbookmove`). These are:
+
+- `scorewhitewin`: The base score for all white moves in a game won by white.
+- `scorewhitedraw`: The base score for all white moves in a drawn game.
+- `scorewhiteloss`: The base score for all black moves in a game won by black.
+- `scoreblackwin`: The base score for all black moves in a game won by black.
+- `scoreblackdraw`: The base score for all black moves in a drawn game.
+- `scoreblackloss`: The base score for all black moves in a game won by white.
+- `scoreunknown`: The base score for all moves in a game with an unknown result.
+- `highelofactor`: Score multiplier for moves played by a player with high
+  rating. The base score is multiplied by
+  `max(1.0 0.01 * highelofactor * (2300 - elo))`
+- `yearlydecay`: Controls exponential yearly reduction of scores. If a game was
+  played `n` years ago, all scores are multiplied by `n^yearlydecay`.
+- `maxply`: Maximum depth of the opening tree. If `maxply` equals 60 (the
+  default), no moves after move 30 are included in the opening tree.
+- `minelo`: Minimum Elo for book moves. Moves played by players below this
+  number are not included in the opening tree.
+"""
+function createbook(pgnfiles::Vararg{String};
                     scorewhitewin = 8.0,
                     scorewhitedraw = 4.0,
                     scorewhiteloss = 1.0,
@@ -230,7 +306,7 @@ function createbook(filenames::Vararg{String};
                     minelo = 0)
     result = Vector{BookEntry}()
     count = 0
-    for filename ∈ filenames
+    for filename ∈ pgnfiles
         count = addgamefile!(result, filename, scorewhitewin, scorewhitedraw,
                              scorewhiteloss, scoreblackwin, scoreblackdraw,
                              scoreblackloss, scoreunknown, highelofactor,
@@ -241,8 +317,17 @@ function createbook(filenames::Vararg{String};
 end
 
 
-function writetofile(entries::Vector{BookEntry}, filename::String,
-                     compact = false)
+"""
+    writebooktofile(entries::Vector{BookEntry}, filename::String,
+                    compact = false)
+
+Writes a book (as created by `createbookfile`) to a binary file.
+
+If the optional parameter `compact` is `true`, the book is written in a more
+compact format that does not include W/L/D counts, Elo numbers and years.
+"""
+function writebooktofile(entries::Vector{BookEntry}, filename::String,
+                         compact = false)
     open(filename, "w") do f
         write(f, UInt8(compact ? 1 : 0))
         for e ∈ entries
@@ -252,15 +337,27 @@ function writetofile(entries::Vector{BookEntry}, filename::String,
 end
 
 
-function purgebook(infile::String, outfile::String;
+"""
+    purgebook(infilename::String, outfilenime::String;
+              minscore = 0, mingamecount = 5, compact = false)
+
+Creates a smaller version of an opening book file by removing unimportant lines.
+
+Book moves with score lower than `minscore` or which have been played in fewer
+than `mingamecount` games are not included in the output file.
+
+If the optional parameter `compact` is `true`, the output file is written in a
+more compact format that does not include W/L/D counts, Elo numbers and years.
+"""
+function purgebook(infilename::String, outfilename::String;
                    minscore = 0, mingamecount = 5,
                    compact = false)
-    open(infile, "r") do inf
-        open(outfile, "w") do outf
+    open(infilename, "r") do inf
+        open(outfilename, "w") do outf
             write(outf, UInt8(compact ? 1 : 0))
             incompact = read(inf, UInt8) == 1
             entrysize = incompact ? COMPACT_ENTRY_SIZE : ENTRY_SIZE
-            entrycount = div(filesize(infile) - 1, entrysize)
+            entrycount = div(filesize(infilename) - 1, entrysize)
             for i in 1 : entrycount
                 e = readentry(inf, i - 1, incompact)
                 if e.wins + e.draws + e.losses ≥ mingamecount && e.score > minscore
@@ -306,6 +403,15 @@ function readentry(f::IO, index::Int, compact = false)::Union{BookEntry, Nothing
 end
 
 
+"""
+    findbookentries(b::Board, bookfilename::String)
+    findbookentries(key::UInt64, bookfilename::String)
+
+Returns all book entries for the given board or key.
+
+The return value is a (possibly empty) `Vector{BookEntry}`, sorted by
+descending scores.
+"""
 function findbookentries(key::UInt64, bookfilename::String)::Vector{BookEntry}
     result = Vector{BookEntry}()
     open(bookfilename, "r") do f
@@ -327,28 +433,43 @@ function findbookentries(key::UInt64, bookfilename::String)::Vector{BookEntry}
     sort(result, by = e -> -e.score)
 end
 
-
 function findbookentries(b::Board, bookfilename::String)::Vector{BookEntry}
     findbookentries(b.key, bookfilename)
 end
 
 
+"""
+    printbookentries(b::Board, bookfilename::String)
+
+
+Pretty-print the move entries for the provided board.
+"""
 function printbookentries(b::Board, bookfilename::String)
     entries = findbookentries(b, bookfilename)
     scoresum = sum(map(e -> e.score, entries))
     for e ∈ entries
-        @printf("%s %.2f %.1f%% (+%d, =%d, -%d) %d %d %d\n",
+        @printf("%s %.2f %.1f%% (+%d, =%d, -%d) %d %d %d %d\n",
                 movetosan(b, Move(e.move)),
                 e.score / scoresum,
                 100 * ((e.wins + 0.5 * e.draws) / (e.wins + e.draws + e.losses)),
                 e.wins, e.draws, e.losses,
-                e.elo, e.oppelo, e.year)
+                e.elo, e.oppelo, e.firstyear, e.lastyear)
     end
 end
 
 
-function pickmove(b::Board, bookfilename::String;
-                  minscore = 0, mingamecount = 1)::Union{Move, Nothing}
+"""
+    pickbookmove(b::Board, bookfilename::String;
+                 minscore = 0, mingamecount = 1)
+
+Picks a book move for the board `b`, returning `nothing` when out of book.
+
+The move is selected with probabilities given by the `score` slots in the
+`BookEntry` objects. The `minscore` and `mingamecount` parameters can be used
+to exclude moves with low score or low play counts.
+"""
+function pickbookmove(b::Board, bookfilename::String;
+                      minscore = 0, mingamecount = 1)::Union{Move, Nothing}
     entries = filter(e -> e.wins + e.draws + e.losses >= mingamecount
                      && e.score >= minscore,
                      findbookentries(b, bookfilename))
