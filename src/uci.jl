@@ -20,10 +20,11 @@ module UCI
 
 using Chess
 
-export BoundType, Engine, Option, OptionType, OptionValue, Score, SearchInfo
+export BestMoveInfo, BoundType, Engine, Option, OptionType, OptionValue, Score,
+    SearchInfo
 
-export parsesearchinfo, quit, runengine, search, sendcommand, setboard,
-    setoption, touci
+export parsebestmove, parsesearchinfo, quit, runengine, search, sendcommand,
+    setboard, setoption, touci
 
 
 """
@@ -361,6 +362,50 @@ end
 
 
 """
+    BestMoveInfo
+
+A struct representing the contents of a UCI engine's `bestmove` output.
+
+Contains the following slots:
+
+- `bestmove`: The `Move` returned by the engine as the best move.
+- `ponder`: The engine's expected reply to the best move, a `Move` or
+  `nothing`.
+"""
+struct BestMoveInfo
+    bestmove::Move
+    ponder::Union{Move, Nothing}
+end
+
+
+function Base.show(io::IO, bmi::BestMoveInfo)
+    if bmi.ponder == nothing
+        print(io, "BestMoveInfo (best=$(tostring(bmi.bestmove)))")
+    else
+        print(io, "BestMoveInfo (best=$(tostring(bmi.bestmove)), ponder=$(tostring(bmi.ponder)))")
+    end
+end
+
+
+"""
+    parsebestmove(line::String)::BestMoveInfo
+
+Parses a `bestmove` line printed by a UCI engine to a `BestMoveInfo` object.
+"""
+function parsebestmove(line::String)::BestMoveInfo
+    @assert startswith(line, "bestmove")
+    tokens = split(line, r"\s+")
+    bestmove = movefromstring(String(tokens[2]))
+    ponder = if length(tokens) >= 4 && tokens[3] == "ponder"
+        movefromstring(String(tokens[4]))
+    else
+        nothing
+    end
+    BestMoveInfo(bestmove, ponder)
+end
+
+
+"""
     SearchInfo
 
 A struct representing the contents of a UCI engine's `info` output.
@@ -372,11 +417,10 @@ of search output:
 - `seldepth`: The current selective search depth.
 - `time`: The time spent searching so far, in milliseconds.
 - `nodes`: The number of nodes searched so far.
-- `pv`: The main line, given of a vector of move strings in coordinate
-  notation.
+- `pv`: The main line, as a vector of `Move` values.
 - `multipv`: The multipv index of the line currently printed.
 - `score`: The score, a value of type `Score`.
-- `currmove`: The move currently searched, in coordinate notation.
+- `currmove`: The move currently searched, a value of type `Move`.
 - `currmovenumber`: The index of the move currently searched in the move list.
 - `hashfull`: A number in the range 0--100, indicating the transposition table
   saturation percentage.
@@ -390,10 +434,10 @@ mutable struct SearchInfo
     seldepth::Union{Nothing, Int}
     time::Union{Nothing, Int}
     nodes::Union{Nothing, Int}
-    pv::Union{Nothing, Vector{String}}
+    pv::Union{Nothing, Vector{Move}}
     multipv::Union{Nothing, Int}
     score::Union{Nothing, Score}
-    currmove::Union{Nothing, String}
+    currmove::Union{Nothing, Move}
     currmovenumber::Union{Nothing, Int}
     hashfull::Union{Nothing, Int}
     nps::Union{Nothing, Int}
@@ -405,7 +449,58 @@ end
 
 function SearchInfo()
     SearchInfo(nothing, nothing, nothing, nothing, nothing, nothing, nothing,
-               nothing, nothing, nothing, nothing, nothing, nothing, nothing)
+               nothing, nothing, nothing, nothing, nothing, nothing, nothing,)
+end
+
+
+function Base.show(io::IO, si::SearchInfo)
+    println(io, "SearchInfo:")
+    if si.depth != nothing
+        println(io, " depth: $(si.depth)")
+    end
+    if si.seldepth != nothing
+        println(io, " seldepth: $(si.seldepth)")
+    end
+    if si.time != nothing
+        println(io, " time: $(si.time)")
+    end
+    if si.nodes != nothing
+        println(io, " nodes: $(si.nodes)")
+    end
+    if si.nps != nothing
+        println(io, " nps: $(si.nps)")
+    end
+    if si.score != nothing
+        println(io, " score: $(si.score)")
+    end
+    if si.currmove != nothing
+        println(io, " currmove: $(tostring(si.currmove))")
+    end
+    if si.currmovenumber != nothing
+        println(io, " currmovenumber: $(si.currmovenumber)")
+    end
+    if si.hashfull != nothing
+        println(io, " hashfull: $(si.hashfull)")
+    end
+    if si.tbhits != nothing
+        println(io, " tbhits: $(si.tbhits)")
+    end
+    if si.cpuload != nothing
+        println(io, " cpuload: $(si.cpuload)")
+    end
+    if si.string != nothing
+        println(io, " string: $(si.string)")
+    end
+    if si.multipv != nothing
+        println(io, " multipv: $(si.multipv)")
+    end
+    if si.pv != nothing
+        print(io, " pv:")
+        for m ∈ si.pv
+            print(io, " $(tostring(m))")
+        end
+        print(io, "\n")
+    end
 end
 
 
@@ -414,6 +509,11 @@ const TokenList = Vector{SubString{String}}
 
 function parseinfoint(tokens::TokenList)::Tuple{Int, TokenList}
     (parse(Int, tokens[2]), tokens[3:end])
+end
+
+
+function parseinfocurrmove(tokens::TokenList)::Tuple{Move, TokenList}
+    (movefromstring(String(tokens[2])), tokens[3:end])
 end
 
 
@@ -432,11 +532,11 @@ function parseinfoscore(tokens::TokenList)::Tuple{Score, TokenList}
 end
 
 
-function parseinfopv(tokens::TokenList)::Vector{String}
-    result = String[]
+function parseinfopv(tokens::TokenList)::Vector{Move}
+    result = Move[]
     for t in tokens
         if !isempty(t)
-            push!(result, t)
+            push!(result, movefromstring(String(t)))
         end
     end
     result
@@ -466,6 +566,8 @@ function parsesearchinfo(line::String)::SearchInfo
             (result.nodes, tokens) = parseinfoint(tokens)
         elseif tokens[1] == "multipv"
             (result.multipv, tokens) = parseinfoint(tokens)
+        elseif tokens[1] == "currmove"
+            (result.currmove, tokens) = parseinfocurrmove(tokens)
         elseif tokens[1] == "currmovenumber"
             (result.currmovenumber, tokens) = parseinfoint(tokens)
         elseif tokens[1] == "hashfull"
@@ -498,8 +600,9 @@ The parameter `gocmd` is the actual command you want to send to the engine;
 e.g. `"go movetime 10000"` or `"go infinite"`. The parameters `bestmoveaction`
 and `infoaction` are functions accepting the output of the engine's
 `"bestmove"` and `"info"` commands, respectively, and doing something with
-the output. Usually, `infoaction` will be some function making internal use of
-`parsesearchinfo()`.
+the output. Usually, `bestmoveaction` will be some function making internal use
+of `parsebestmove`, while `infoaction` will be some function making internal use
+of `parsesearchinfo()`.
 """
 function search(e::Engine, gocmd::String, bestmoveaction, infoaction = nothing)
     sendcommand(e, gocmd)
