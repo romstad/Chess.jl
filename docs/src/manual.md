@@ -551,6 +551,8 @@ julia> domoves!(g, "f4", "e5", "fxe5", "d6", "exd6", "Bxd6", "Nc3")
 julia> setboard(sf, g)
 ```
 
+The second parameter to `setboard` can also be a `Board` or a `Game`.
+
 To ask the engine to search the position you just sent to it, use the `search`
 function. `search` takes 4 parameters: The engine, the UCI `go` command we
 want to send to it, a function to use on the UCI `bestmove` output, and a
