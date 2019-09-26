@@ -1,4 +1,4 @@
-using Documenter, Chess, Chess.PGN, Chess.UCI
+using Documenter, Chess, Chess.Book, Chess.PGN, Chess.UCI
 
 makedocs(;
     modules=[Chess, Chess.Book, Chess.PGN, Chess.UCI],
