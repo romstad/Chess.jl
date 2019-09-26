@@ -43,18 +43,25 @@ export DELTA_NW, DELTA_NE, DELTA_SW, DELTA_SE
 
 """
     SquareFile
-    SquareRank
 
-Types representing the file and the rank of a square on a chess board.
+Type representing the file of a square on a chess board.
 
-Usually, a `SquareFile` or a `SquareRank` is obtained either by calling
-the function `file()` or `rank()` on a `Square` or through one of the constants
-`FILE_A`, `FILE_B`, ..., `FILE_H` or `RANK_1`, `RANK_2`, ..., `RANK_8`.
+Usually, a `SquareFile` is obtained either by calling the function `file()` on a
+`Square` or through one of the constants `FILE_A`, `FILE_B`, ..., `FILE_H`.
 """
 struct SquareFile
     val::Int
-end,
+end
 
+
+"""
+    SquareRank
+
+Type representing the rank of a square on a chess board.
+
+Usually, a `SquareRank` is obtained either by calling the function `rank()` on a
+`Square` or through one of the constants `RANK_1`, `RANK_2`, ..., `RANK_8`.
+"""
 struct SquareRank
     val::Int
 end
@@ -152,13 +159,11 @@ end
 
 """
     filefromchar(c::Char)
-    rankfromchar(c::Char)
 
-Tries to convert a character to a file or rank.
+Tries to convert a character to a file.
 
-The return value is a `Union{SquareFile, Nothing}` or a
-`Union{SquareRank, Nothing}`. The `nothing` is returned in case the character
-does not represent a valid file or rank.
+The return value is a `Union{SquareFile, Nothing}`. The `nothing` is returned
+in case the character does not represent a valid file.
 
 # Examples
 
@@ -166,24 +171,34 @@ does not represent a valid file or rank.
 julia> filefromchar('c')
 FILE_C
 
-julia> rankfromchar('2')
-RANK_2
-
 julia> filefromchar('2') == nothing
-true
-
-julia> rankfromchar('9') == nothing
-true
-
-julia> rankfromchar('x') == nothing
 true
 ```
 """
 function filefromchar(c::Char)::Union{SquareFile, Nothing}
     result = SquareFile(Int(c) - Int('a') + 1)
     isok(result) ? result : nothing
-end,
+end
 
+
+"""
+    rankfromchar(c::Char)
+
+Tries to convert a character to a rank.
+
+The return value is a `Union{SquareRank, Nothing}`. The `nothing` is returned
+in case the character does not represent a valid rank.
+
+# Examples
+
+```julia-repl
+julia> rankfromchar('2')
+RANK_2
+
+julia> rankfromchar('x') == nothing
+true
+```
+"""
 function rankfromchar(c::Char)::Union{SquareRank, Nothing}
     result = SquareRank(8 - Int(c) + Int('1'))
     isok(result) ? result : nothing
@@ -192,24 +207,33 @@ end
 
 """
     tochar(f::SquareFile)
-    tochar(r::SquareRank)
 
-Converts a `SquareFile` or a `SquareRank` to a character.
+Converts a `SquareFile` to a character.
 
 # Examples
 
 ```julia-repl
 julia> tochar(FILE_E)
 'e': ASCII/Unicode U+0065 (category Ll: Letter, lowercase)
-
-julia> tochar(RANK_3)
-'3': ASCII/Unicode U+0033 (category Nd: Number, decimal digit)
 ```
 """
 function tochar(f::SquareFile)
     Char(f.val - 1 + Int('a'))
-end,
+end
 
+
+"""
+    tochar(r::SquareRank)
+
+Converts `SquareRank` to a character.
+
+# Examples
+
+```julia-repl
+julia> tochar(RANK_3)
+'3': ASCII/Unicode U+0033 (category Nd: Number, decimal digit)
+```
+"""
 function tochar(r::SquareRank)
     Char(8 - r.val + Int('1'))
 end
@@ -251,31 +275,50 @@ function Base.show(io::IO, s::Square)
 end
 
 
+"""
+    Square(f::SquareFile, r::SquareRank)
+
+Construct a square with the given file and rank.
+
+# Examples
+
+```julia-repl
+julia> Square(FILE_D, RANK_5)
+SQ_D5
+```
+"""
 Square(f::SquareFile, r::SquareRank) = Square(r.val + 8 * (f.val - 1))
 
 
 """
     file(s::Square)
-    rank(s::Square)
 
-Compute the file or rank of the square `s`.
-
-The return value is of one of the types `SquareFile` or `SquareRank`.
+Compute the file of the square `s`.
 
 # Examples
 
 ```julia-repl
 julia> file(SQ_C4)
 FILE_C
-
-julia> rank(SQ_C4)
-RANK_4
 ```
 """
 function file(s::Square)
     SquareFile(fld1(s.val, 8))
-end,
+end
 
+
+"""
+    rank(s::Square)
+
+Compute the rank of the square `s`.
+
+# Examples
+
+```julia-repl
+julia> rank(SQ_C4)
+RANK_4
+```
+"""
 function rank(s::Square)
     SquareRank(mod1(s.val, 8))
 end

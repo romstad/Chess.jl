@@ -27,13 +27,14 @@ export START_FEN
 
 export Board, MoveList, UndoInfo
 
-export attacksto, bishopattacks, bishoplike, bishops, copyto!, divide, domove,
-    domove!, domoves, domoves!, emptyboard, emptysquares, epsquare, fen,
-    fromfen, haslegalmoves, isattacked, ischeck, ischeckmate, isdraw,
-    ismaterialdraw, isrule50draw, isstalemate, isterminal, kings, kingsquare,
-    knights, lastmove, movecount, moves, occupiedsquares, pawns, perft, pieceon,
-    pieces, pinned, pprint, queenattacks, queens, rooklike, rookattacks, rooks,
-    sidetomove, startboard, undomove!
+export attacksto, bishopattacks, bishoplike, bishops, cancastlekingside,
+    cancastlequeenside, copyto!, divide, domove, domove!, domoves, domoves!,
+    emptyboard, emptysquares, epsquare, fen, fromfen, haslegalmoves, isattacked,
+    ischeck, ischeckmate, isdraw, ismaterialdraw, isrule50draw, isstalemate,
+    isterminal, kings, kingsquare, knights, lastmove, movecount, moves,
+    occupiedsquares, pawns, perft, pieceon, pieces, pinned, pprint,
+    queenattacks, queens, recycle!, rooklike, rookattacks, rooks, sidetomove,
+    startboard, undomove!
 
 
 """

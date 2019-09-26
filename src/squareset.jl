@@ -90,6 +90,26 @@ function Base.show(io::IO, ss::SquareSet)
 end
 
 
+"""
+    SquareSet(ss::Vararg{Square})
+
+Construct a square set with the provided squares.
+
+# Examples
+
+```julia-repl
+julia> SquareSet(SQ_A1, SQ_A2, SQ_A3, SQ_A4)
+SquareSet:
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ #  -  -  -  -  -  -  -
+ #  -  -  -  -  -  -  -
+ #  -  -  -  -  -  -  -
+ #  -  -  -  -  -  -  -
+```
+"""
 function SquareSet(ss::Vararg{Square})
     result = UInt64(0)
     for s in ss
@@ -248,24 +268,33 @@ const RANK_SQUARES = SVector(
 
 """
     filesquares(f::SquareFile)
-    ranksquares(r::SquareRank)
 
-The set of all squares on the provided file or rank.
+The set of all squares on the provided file.
 
 # Examples
 
 ```julia-repl
 julia> filesquares(FILE_G) == SS_FILE_G
 true
-
-julia> ranksquares(RANK_2) == SS_RANK_2
-true
 ```
 """
 function filesquares(f::SquareFile)::SquareSet
     FILE_SQUARES[f.val]
-end,
+end
 
+
+"""
+    ranksquares(r::SquareRank)
+
+The set of all squares on the provided rank.
+
+# Examples
+
+```julia-repl
+julia> ranksquares(RANK_2) == SS_RANK_2
+true
+```
+"""
 function ranksquares(r::SquareRank)::SquareSet
     RANK_SQUARES[r.val]
 end
@@ -297,35 +326,54 @@ end
 """
     union(ss1::SquareSet, ss2::SquareSet)
     ∪(ss1::SquareSet, ss2::SquareSet)
-    intersect(ss1::SquareSet, ss2::SquareSet)
-    ∩(ss1::SquareSet, ss2::SquareSet)
 
-Compute the union or intersection of two square sets.
+Compute the union of two square sets.
 
-The binary operators `∪` and `∩` can be used instead of the named functions.
+The binary operator `∪` can be used instead of the named function.
 
 # Examples
 
 ```julia-repl
-julia> SS_FILE_D ∩ SS_RANK_3 == SquareSet(SQ_D3)
-true
+julia> SS_FILE_C ∪ SS_RANK_3
+SquareSet:
+ -  -  #  -  -  -  -  -
+ -  -  #  -  -  -  -  -
+ -  -  #  -  -  -  -  -
+ -  -  #  -  -  -  -  -
+ -  -  #  -  -  -  -  -
+ #  #  #  #  #  #  #  #
+ -  -  #  -  -  -  -  -
+ -  -  #  -  -  -  -  -
+```
+"""
+function union(ss1::SquareSet, ss2::SquareSet)
+    SquareSet(ss1.val | ss2.val)
+end
 
-julia> (SS_FILE_D ∪ SS_FILE_E) ∩ (SS_RANK_4 ∪ SS_RANK_5)
+
+"""
+    intersect(ss1::SquareSet, ss2::SquareSet)
+    ∩(ss1::SquareSet, ss2::SquareSet)
+
+Compute the intersection of two square sets.
+
+The binary operator `∩` can be used instead of the named function.
+
+# Examples
+
+```julia-repl
+julia> SS_FILE_D ∩ SS_RANK_7
 SquareSet:
  -  -  -  -  -  -  -  -
+ -  -  -  #  -  -  -  -
  -  -  -  -  -  -  -  -
  -  -  -  -  -  -  -  -
- -  -  -  #  #  -  -  -
- -  -  -  #  #  -  -  -
+ -  -  -  -  -  -  -  -
  -  -  -  -  -  -  -  -
  -  -  -  -  -  -  -  -
  -  -  -  -  -  -  -  -
 ```
 """
-function union(ss1::SquareSet, ss2::SquareSet)
-    SquareSet(ss1.val | ss2.val)
-end,
-
 function intersect(ss1::SquareSet, ss2::SquareSet)
     SquareSet(ss1.val & ss2.val)
 end
@@ -339,8 +387,7 @@ The complement of a square set.
 # Examples
 
 ```julia-repl
-julia> ss = SquareSet(SQ_C4)
-SquareSet(0x0000000000100000)
+julia> ss = SquareSet(SQ_C4);
 
 julia> SQ_C4 ∈ ss
 true
@@ -392,12 +439,11 @@ end
 
 """
     +(ss::SquareSet, s::Square)
-    -(ss::SquareSet, s::Square)
 
-Add or subtracts a square to a square set.
+Add a square to a square set.
 
-If a square is added that is already a member is added to the set, or if a
-square is removed that is not a member, the set is returned unchanged.
+If a square is added that is already a member is added to the set, the set is
+returned unchanged.
 
 # Examples
 
@@ -405,20 +451,32 @@ square is removed that is not a member, the set is returned unchanged.
 julia> SquareSet(SQ_A1) + SQ_H8 == SquareSet(SQ_A1, SQ_H8)
 true
 
-julia> SquareSet(SQ_A1, SQ_B1) - SQ_B1 == SquareSet(SQ_A1)
-true
-
 julia> SS_FILE_A + SQ_A1 == SS_FILE_A
+true
+```
+"""
+function +(ss::SquareSet, s::Square)
+    SquareSet(ss.val | (UInt64(1) << (s.val - 1)))
+end
+
+
+"""
+    -(ss::SquareSet, s::Square)
+
+Remove a square from a square set.
+
+If a non-member square is removed, the set is returned unchanged.
+
+# Examples
+
+```julia-repl
+julia> SquareSet(SQ_A1, SQ_B1) - SQ_B1 == SquareSet(SQ_A1)
 true
 
 julia> SS_FILE_A - SQ_H8 == SS_FILE_A
 true
 ```
 """
-function +(ss::SquareSet, s::Square)
-    SquareSet(ss.val | (UInt64(1) << (s.val - 1)))
-end,
-
 function -(ss::SquareSet, s::Square)
     SquareSet(ss.val & ~(UInt64(1) << (s.val - 1)))
 end
@@ -649,7 +707,7 @@ true
 ```
 """
 function shift_s(ss::SquareSet)::SquareSet
-    SquareSet(ss.val << 1) - SS_RANK_8
+    (SquareSet)(ss.val << 1) - SS_RANK_8
 end
 
 
@@ -961,24 +1019,16 @@ on `s1` from attacking `s2`.
 julia> squaresbetween(SQ_A4, SQ_D4) == SquareSet(SQ_B4, SQ_C4)
 true
 
-julia> pprint(squaresbetween(SQ_F7, SQ_A2))
-+---+---+---+---+---+---+---+---+
-|   |   |   |   |   |   |   |   |
-+---+---+---+---+---+---+---+---+
-|   |   |   |   |   |   |   |   |
-+---+---+---+---+---+---+---+---+
-|   |   |   |   | # |   |   |   |
-+---+---+---+---+---+---+---+---+
-|   |   |   | # |   |   |   |   |
-+---+---+---+---+---+---+---+---+
-|   |   | # |   |   |   |   |   |
-+---+---+---+---+---+---+---+---+
-|   | # |   |   |   |   |   |   |
-+---+---+---+---+---+---+---+---+
-|   |   |   |   |   |   |   |   |
-+---+---+---+---+---+---+---+---+
-|   |   |   |   |   |   |   |   |
-+---+---+---+---+---+---+---+---+
+julia> squaresbetween(SQ_F7, SQ_A2)
+SquareSet:
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  -  -  #  -  -  -
+ -  -  -  #  -  -  -  -
+ -  -  #  -  -  -  -  -
+ -  #  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
 ```
 """
 function squaresbetween(s1::Square, s2::Square)::SquareSet

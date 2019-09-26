@@ -20,7 +20,7 @@ import Base.<, Base.>
 
 export PieceColor, PieceType, Piece
 
-export ppcolor, colorfromchar, coloropp, isok, isslider, pcolor, piecefromchar,
+export colorfromchar, coloropp, isok, isslider, pcolor, piecefromchar,
     piecetypefromchar, ptype, tochar, tounicode
 export BISHOP, BLACK, COLOR_NONE, EMPTY, KING, KNIGHT, PAWN, PIECE_BB, PIECE_BK,
     PIECE_BN, PIECE_BP, PIECE_BQ, PIECE_BR, PIECE_TYPE_NONE, PIECE_WB, PIECE_WK,
@@ -326,6 +326,17 @@ struct Piece
 end
 
 
+"""
+    Piece(c::PieceColor, t::PieceType)
+
+Construct a piece with the given color and type.
+
+# Examples
+```julia-repl
+julia> Piece(BLACK, QUEEN)
+PIECE_BQ
+```
+"""
 Piece(c::PieceColor, t::PieceType) = Piece(((c.val - 1) << 3) | t.val)
 
 
@@ -357,9 +368,8 @@ end
 
 """
     pcolor(p::Piece)
-    ptype(p::Piece)
 
-Find the color or the type of a `Piece`.
+Find the color of a `Piece`.
 
 # Examples
 
@@ -367,20 +377,30 @@ Find the color or the type of a `Piece`.
 julia> pcolor(PIECE_WB)
 WHITE
 
-julia> ptype(PIECE_BQ)
-QUEEN
-
 julia> pcolor(EMPTY)
 COLOR_NONE
+```
+"""
+function pcolor(p::Piece)::PieceColor
+    PieceColor(p.val >> 3 + 1)
+end
+
+
+"""
+    ptype(p::Piece)
+
+Find the type of a `Piece`.
+
+# Examples
+
+```julia-repl
+julia> ptype(PIECE_BQ)
+QUEEN
 
 julia> ptype(EMPTY)
 PIECE_TYPE_NONE
 ```
 """
-function pcolor(p::Piece)::PieceColor
-    PieceColor(p.val >> 3 + 1)
-end,
-
 function ptype(p::Piece)::PieceType
     PieceType(p.val & 7)
 end

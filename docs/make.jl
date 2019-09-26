@@ -6,6 +6,8 @@ makedocs(;
     pages=[
         "Home" => "index.md",
         "User Guide" => "manual.md",
+        "API Reference" => "api.md",
+        "Index" => "api-index.md"
     ],
     repo="https://github.com/romstad/Chess.jl/blob/{commit}{path}#L{line}",
     sitename="Chess.jl",

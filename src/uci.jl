@@ -22,7 +22,8 @@ using Chess
 
 export BoundType, Engine, Option, OptionType, OptionValue, Score, SearchInfo
 
-export parsesearchinfo, quit, runengine, search, sendcommand, setoption, touci
+export parsesearchinfo, quit, runengine, search, sendcommand, setboard,
+    setoption, touci
 
 
 """
@@ -194,6 +195,43 @@ This is a struct with the following slots:
 - `options`: The UCI options for this engine. This is a dictionary mapping
   option names (`String`s) to options (instances of the `Option` type).
 - `io`: A `Base.Process` object used to communicate with the engine.
+
+Engines are created by calling the `runengine` function, which takes a pathname
+for an UCI engine as input, runs the engine, and returns an `Engine` object.
+
+# Examples
+
+The below is a typical interaction with a UCI engine. The example assumes that
+you have a UCI engine with the file name `stockfish` somewhere in your `PATH`.
+
+```julia-repl
+julia> sf = runengine("stockfish");
+
+julia> setoption(sf, "Hash", 128)
+
+julia> setboard(sf, fromfen("1kbr3r/pp6/8/P1n2ppq/2N3n1/R3Q1P1/3B1P2/2R2BK1 w - -"))
+
+julia> search(sf, "go depth 18", println, println)
+info depth 1 seldepth 1 multipv 1 score cp -842 nodes 88 nps 44000 tbhits 0 time 2 pv f1g2 g4e3 d2e3
+info depth 2 seldepth 2 multipv 1 score cp -842 nodes 207 nps 103500 tbhits 0 time 2 pv f1g2 g4e3
+info depth 3 seldepth 3 multipv 1 score cp -844 nodes 270 nps 135000 tbhits 0 time 2 pv f1g2 g4e3 d2e3 d8d1 c1d1 h5d1 g2f1
+info depth 4 seldepth 5 multipv 1 score cp -844 nodes 367 nps 183500 tbhits 0 time 2 pv f1g2 g4e3 d2e3 d8d1 c1d1
+info depth 5 seldepth 7 multipv 1 score cp -953 nodes 866 nps 433000 tbhits 0 time 2 pv f1g2 h5h2 g1f1 g4e3 d2e3 c5d3 e3g5
+info depth 6 seldepth 8 multipv 1 score cp -1060 nodes 1507 nps 502333 tbhits 0 time 3 pv f1g2 g4e3 d2e3 c5d3 e3d2 d3c1
+info depth 7 seldepth 11 multipv 1 score cp -876 nodes 1995 nps 665000 tbhits 0 time 3 pv f1g2 g4e3
+info depth 8 seldepth 10 multipv 1 score cp -882 nodes 2771 nps 923666 tbhits 0 time 3 pv f1g2 g4e3 d2e3 c8e6 e3c5 d8d1 c1d1 h5d1 g2f1 e6c4
+info depth 9 seldepth 15 multipv 1 score cp -1068 nodes 12059 nps 1339888 tbhits 0 time 9 pv f1g2 g4e3 a3e3 c8e6 e3e6 c5e6 d2e1 d8d1 c1d1 h5d1
+info depth 10 seldepth 15 multipv 1 score cp -1050 nodes 17558 nps 1463166 tbhits 0 time 12 pv f1g2 g4e3 a3e3 c8e6 g1f1 h5g4 e3e6 c5e6 c4e3 g4a4 d2c3
+info depth 11 seldepth 17 multipv 1 score cp -1013 nodes 23543 nps 1471437 tbhits 0 time 16 pv f1g2 g4e3 a3e3 c8e6 g1f1 h5g4 e3e6 c5e6 c4e3 g4a4 d2c3
+info depth 12 seldepth 20 multipv 1 score cp -995 nodes 48497 nps 1672310 tbhits 0 time 29 pv f1g2 g4e3 a3e3 c8e6 g1f1 c5e4 d2e1 d8c8 g3g4 h5g4 c4e5 g4h4 c1c8 h8c8
+info depth 13 seldepth 29 multipv 1 score cp -1116 nodes 205726 nps 1959295 tbhits 0 time 105 pv f1g2 g4e3 f2e3 c5e4 a3a2 h5h2 g1f1 e4g3 f1f2 g3e4 f2f1 e4d2 c4d2 h2g3 d2f3 d8d3 f1g1 d3e3 f3d4 e3e8 a2e2
+info depth 14 seldepth 28 multipv 1 score cp -148 nodes 247247 nps 1977976 tbhits 0 time 125 pv e3f4 g5f4 d2f4 b8a8 c4b6 a7b6 a5b6 c5a6
+info depth 15 seldepth 16 multipv 1 score cp 120 nodes 248911 nps 1975484 tbhits 0 time 126 pv e3f4 g5f4 d2f4 g4e5 f4e5 d8d6 e5d6 b8a8 f1g2 c8e6 d6c5
+info depth 16 seldepth 24 multipv 1 score cp 1117 nodes 251829 nps 1982905 tbhits 0 time 127 pv e3f4 g4e5 f4e5 d8d6 e5d6 b8a8 f1g2 h5h2 g1f1 c5e4 g2e4 f5e4 d2g5 c8h3 f1e2
+info depth 17 seldepth 22 multipv 1 score cp 1500 nodes 258707 nps 1974862 tbhits 0 time 131 pv e3f4 g4e5 f4e5 d8d6 e5d6 b8a8 f1g2 h5h2 g1f1 c5e4 g2e4 h2h3 e4g2
+info depth 18 seldepth 22 multipv 1 score mate 11 nodes 281736 nps 1984056 tbhits 0 time 142 pv e3f4 g5f4 d2f4 g4e5 f4e5 d8d6 e5d6 b8a8 c4b6 a7b6 a5b6 c5a6 c1c8 h8c8
+bestmove e3f4 ponder g5f4
+```
 """
 mutable struct Engine
     name::String
@@ -474,6 +512,26 @@ function search(e::Engine, gocmd::String, bestmoveaction, infoaction = nothing)
             infoaction(line)
         end
     end
+end
+
+
+"""
+    setboard(e::Engine, b::Board)
+    setboard(e::Engine, g::SimpleGame)
+    setboard(e::Engine, g::Game)
+
+Set the engine's current board position to the given board/game state.
+"""
+function setboard(e::Engine, b::Board)
+    sendcommand(e, touci(b))
+end
+
+function setboard(e::Engine, g::SimpleGame)
+    sendcommand(e, touci(g))
+end
+
+function setboard(e::Engine, g::Game)
+    sendcommand(e, touci(g))
 end
 
 

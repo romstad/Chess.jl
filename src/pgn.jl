@@ -430,9 +430,13 @@ end
 
 
 """
-    readgame(p::PGNReader, annotations=false)
+    readgame(p::PGNReader; annotations=false)
 
 Attempts to parse a PGN game and use it to create a `Game` or a `SimpleGame`.
+
+If the optional parameter `annotations` is `true`, the return value will be a
+`Game` containing all comments, variations and numeric annotation glyphs in the
+PGN. Otherwise, it will be a `SimpleGame` with only the game moves.
 
 This function assumes that the `PGNReader` is pointed at the beginning of a
 game. If you are not sure this is the case, call `gotonextgame!` on the
@@ -441,7 +445,7 @@ game. If you are not sure this is the case, call `gotonextgame!` on the
 If parsing fails or the notation contains illegal or ambiguous moves, the
 function raises a `PGNException`.
 """
-function readgame(p::PGNReader, annotations=false)
+function readgame(p::PGNReader; annotations=false)
     headers = readheaders(p)
     if headers.fen == nothing
         result = annotations ? Game() : SimpleGame()
@@ -502,17 +506,22 @@ end
 
 
 """
-    gamesinfile(filename::String, annotations=false)
+    gamesinfile(filename::String; annotations=false)
 
 Creates a `Channel` of `Game`/`SimpleGame` objects read from the PGN file with
 the provided file name.
+
+If the optional parameter `annotations` is `true`, the return value will be a
+channel of `Game` objects containing all comments, variations and numeric
+annotation glyphs in the PGN. Otherwise, it will consist of `SimpleGame` objects
+with only the game moves.
 """
-function gamesinfile(filename::String, annotations=false)
+function gamesinfile(filename::String; annotations=false)
     function createchannel(ch::Channel)
         open(filename, "r") do io
             pgnr = PGNReader(io)
             while !eof(pgnr.io)
-                put!(ch, readgame(pgnr, annotations))
+                put!(ch, readgame(pgnr, annotations = annotations))
                 gotonextgame!(pgnr)
             end
         end
@@ -522,15 +531,19 @@ end
 
 
 """
-    gamefromstring(s::String, annotations=false)
+    gamefromstring(s::String; annotations=false)
 
 Attempts to create a `Game` or `SimpleGame` object from the provided PGN string.
+
+If the optional parameter `annotations` is `true`, the return value will be a
+`Game` containing all comments, variations and numeric annotation glyphs in the
+PGN. Otherwise, it will be a `SimpleGame` with only the game moves.
 
 If the string does not parse as valid PGN, or if the notation contains illegal
 or ambiguous moves, the function raises a `PGNException`
 """
-function gamefromstring(s::String, annotations=false)
-    readgame(PGNReader(IOBuffer(s)), annotations)
+function gamefromstring(s::String; annotations=false)
+    readgame(PGNReader(IOBuffer(s)), annotations = annotations)
 end
 
 

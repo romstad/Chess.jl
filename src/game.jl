@@ -18,12 +18,12 @@
 
 using Dates;
 
-export Game, GameHeaders, GameNode, SimpleGame
+export Game, GameHeader, GameHeaders, GameNode, SimpleGame
 
 export addcomment!, adddata!, addmove!, addmoves!, addnag!, addprecomment!,
     back!, blackelo, board, comment, continuations, dateplayed, domove!,
-    domoves!, forward!, headervalue, isatbeginning, isatend, isleaf, nag,
-    nextmove, precomment, printboard, removeallchildren!, removenode!,
+    domoves!, forward!, headervalue, isatbeginning, isatend, isleaf, isterminal,
+    nag, nextmove, precomment, removeallchildren!, removedata!, removenode!,
     replacemove!, setheadervalue!, tobeginning!, tobeginningofvariation!,
     toend!, tonode!, undomove!, whiteelo
 
@@ -267,7 +267,7 @@ end
 
 
 """
-    Game(startboard::Board)
+    Game(startfen::String)
 
 Constructor that creates a `Game` from the position given by the provided FEN
 string.
@@ -370,6 +370,7 @@ returns `nothing`.
 
 # Examples
 
+```julia-repl
 julia> g = Game();
 
 julia> setheadervalue!(g, "Date", "2019.09.20");
@@ -391,6 +392,7 @@ julia> setheadervalue!(g, "Date", "*");
 
 julia> dateplayed(g) == nothing
 true
+```
 """
 function dateplayed(g::SimpleGame)::Union{Date, Nothing}
     parsedate(headervalue(g, "Date"))
@@ -1143,19 +1145,4 @@ end
 
 function isterminal(g::Game)
     isterminal(board(g)) || isrepetitiondraw(g)
-end
-
-
-"""
-    printboard(g::SimpleGame)
-    printboard(g::Game)
-
-Pretty-print the current board position to the standard output.
-"""
-function printboard(g::SimpleGame)
-    pprint(board(g))
-end
-
-function printboard(g::Game)
-    pprint(board(g))
 end

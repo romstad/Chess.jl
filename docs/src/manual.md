@@ -34,31 +34,6 @@ Board (rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -):
  R  N  B  Q  K  B  N  R
 ```
 
-An even more readable way to print a chess board at the REPL is by using the
-`pprint` function:
-
-```julia-repl
-julia> pprint(startboard());
-+---|---|---|---|---|---|---|---+
-| r | n | b | q | k | b | n | r |
-+---|---|---|---|---|---|---|---+
-| p | p | p | p | p | p | p | p |
-+---|---|---|---|---|---|---|---+
-|   |   |   |   |   |   |   |   |
-+---|---|---|---|---|---|---|---+
-|   |   |   |   |   |   |   |   |
-+---|---|---|---|---|---|---|---+
-|   |   |   |   |   |   |   |   |
-+---|---|---|---|---|---|---|---+
-|   |   |   |   |   |   |   |   |
-+---|---|---|---|---|---|---|---+
-| P | P | P | P | P | P | P | P |
-+---|---|---|---|---|---|---|---+
-| R | N | B | Q | K | B | N | R |
-+---|---|---|---|---|---|---|---+
-rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -
-```
-
 ### Making and Unmaking Moves
 
 Given a chess board, you will usually want to modify the board by making some
@@ -66,8 +41,8 @@ moves. The most straightforward way to do this is with the `domove` function,
 which takes two parameters: A chess board and a move. The move can be either a
 value of the `Move` type or a string representing a move in UCI or SAN notation.
 
-The `Move` type is described in more detail later. For now, let's see how to use
-`domove` to make a move given by short algebraic notation (SAN):
+The `Move` type is described in more detail in the API reference. For now, let's
+see how to use `domove` to make a move given in short algebraic notation (SAN):
 
 ```julia-repl
 julia> domove(b, "e4")
@@ -165,11 +140,10 @@ Board (r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQ1RK1 b kq -):
 
 To ask what piece occupies a given square, use the `pieceon` function, which
 takes two arguments: A board and a square. The square can be either a `Square`
-value (discussed in the "Low-level Types" section of this manual) or a string.
-The return value is a `Piece`, which can have one of the values `EMPTY` (for an
-empty square), `PIECE_WP`, `PIECE_WN`, `PIECE_WB`, `PIECE_WR`, `PIECE_WQ`,
-`PIECE_WK`, `PIECE_BP`, `PIECE_BN`, `PIECE_BB`, `PIECE_BR`, `PIECE_BQ` or
-`PIECE_BK`:
+value (discussed in the API reference) or a string. The return value is a
+`Piece`, which can have one of the values `EMPTY` (for an empty square),
+`PIECE_WP`, `PIECE_WN`, `PIECE_WB`, `PIECE_WR`, `PIECE_WQ`, `PIECE_WK`,
+`PIECE_BP`, `PIECE_BN`, `PIECE_BB`, `PIECE_BR`, `PIECE_BQ` or `PIECE_BK`:
 
 ```julia-repl
 julia> pieceon(b, "e4")
@@ -196,8 +170,8 @@ SquareSet:
  -  -  -  -  -  -  -  -
 ```
 
-The return value is of type `SquareSet`, which will be discussed in depth later
-in this manual.
+The return value is of type `SquareSet`, which is discussed in depth in the API
+reference.
 
 Here is a similar example that returns all squares occupied by black pieces:
 
@@ -283,7 +257,6 @@ julia> filter(m -> ischeck(domove(b, m)), moves(b))
  Move(d2f4)
  Move(f1f6)
 ```
-
 
 ## Games
 
@@ -452,8 +425,149 @@ Game:
 
 Alternative variations are printed in parens. Of course, variations can be nested.
 
-## Squares, Moves and Pieces
-
 ## PGN Import and Export
 
+This section describes import and export of chess games in the popular
+[PGN format](https://www.chessclub.com/help/PGN-spec). PGN is a rather awkward
+and complicated format, and a lot of the "PGN files" out there on the Internet
+don't quite follow the standard, and are broken in various ways. The functions
+described in this section does a fairly good job of handling correct PGNs
+(although bugs are possible), but will often fail on the various not-quite-PGNs
+found on the Internet.
+
+### Creating a game from a PGN string
+
+Given a PGN string, the `gamefrompgn` function creates a game object from the
+string (throwing a `PGNException` on failure). By default, the return value is
+a `SimpleGame` containing only the moves of the game, without any comments,
+variations or numeric annotatin glyphs. If the optional named parameter
+`annotations` is `true`, the return value is a `Game` with all annotations
+included:
+
+```julia-repl
+julia> pgnstring = """
+       [Event "F/S Return Match"]
+       [Site "Belgrade, Serbia JUG"]
+       [Date "1992.11.04"]
+       [Round "29"]
+       [White "Fischer, Robert J."]
+       [Black "Spassky, Boris V."]
+       [Result "1/2-1/2"]
+
+       1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O Be7 6. Re1 b5 7. Bb3 d6 8. c3
+       O-O 9. h3 Nb8 10. d4 Nbd7 11. c4 c6 12. cxb5 axb5 13. Nc3 Bb7 14. Bg5 b4 15.
+       Nb1 h6 16. Bh4 c5 17. dxe5 Nxe4 18. Bxe7 Qxe7 19. exd6 Qf6 20. Nbd2 Nxd6 21.
+       Nc4 Nxc4 22. Bxc4 Nb6 23. Ne5 Rae8 24. Bxf7+ Rxf7 25. Nxf7 Rxe1+ 26. Qxe1 Kxf7
+       27. Qe3 Qg5 28. Qxg5 hxg5 29. b3 Ke6 30. a3 Kd6 31. axb4 cxb4 32. Ra5 Nd5 33.
+       f3 Bc8 34. Kf2 Bf5 35. Ra7 g6 36. Ra6+ Kc5 37. Ke1 Nf4 38. g3 Nxh3 39. Kd2 Kb5
+       40. Rd6 Kc5 41. Ra6 Nf2 42. g4 Bd3 43. Re6 1/2-1/2
+       """;
+
+julia> sg = gamefromstring(pgnstring)
+SimpleGame:
+ * e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O Be7 Re1 b5 Bb3 d6 c3 O-O h3 Nb8 d4 Nbd7 c4 c6 cxb5 axb5 Nc3 Bb7 Bg5 b4 Nb1 h6 Bh4 c5 dxe5 Nxe4 Bxe7 Qxe7 exd6 Qf6 Nbd2 Nxd6 Nc4 Nxc4 Bxc4 Nb6 Ne5 Rae8 Bxf7+ Rxf7 Nxf7 Rxe1+ Qxe1 Kxf7 Qe3 Qg5 Qxg5 hxg5 b3 Ke6 a3 Kd6 axb4 cxb4 Ra5 Nd5 f3 Bc8 Kf2 Bf5 Ra7 g6 Ra6+ Kc5 Ke1 Nf4 g3 Nxh3 Kd2 Kb5 Rd6 Kc5 Ra6 Nf2 g4 Bd3 Re6
+
+julia> g = gamefromstring(pgnstring, annotations=true)
+Game:
+ * e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O Be7 Re1 b5 Bb3 d6 c3 O-O h3 Nb8 d4 Nbd7 c4 c6 cxb5 axb5 Nc3 Bb7 Bg5 b4 Nb1 h6 Bh4 c5 dxe5 Nxe4 Bxe7 Qxe7 exd6 Qf6 Nbd2 Nxd6 Nc4 Nxc4 Bxc4 Nb6 Ne5 Rae8 Bxf7+ Rxf7 Nxf7 Rxe1+ Qxe1 Kxf7 Qe3 Qg5 Qxg5 hxg5 b3 Ke6 a3 Kd6 axb4 cxb4 Ra5 Nd5 f3 Bc8 Kf2 Bf5 Ra7 g6 Ra6+ Kc5 Ke1 Nf4 g3 Nxh3 Kd2 Kb5 Rd6 Kc5 Ra6 Nf2 g4 Bd3 Re6
+```
+
+Unless you really need the annotations, importing to a `SimpleGame` is the
+preferred choice. A `SimpleGame` is much faster to create and consumes less
+memory.
+
+Converting a game to a PGN string is done by the `gametopgn` function. This
+works for both `SimpleGame` and `Game` objects:
+
+```julia-repl
+julia> gametopgn(sg)
+"[Event \"F/S Return Match\"]\n[Site \"Belgrade, Serbia JUG\"]\n[Date \"1992.11.04\"]\n[Round \"29\"]\n[White \"Fischer, Robert J.\"]\n[Black \"Spassky, Boris V.\"]\n[Result \"1/2-1/2\"]\n\n1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O Be7 6. Re1 b5 7. Bb3 d6 8. c3 O-O 9. h3 Nb8 10. d4 Nbd7 11. c4 c6 12. cxb5 axb5 13. Nc3 Bb7 14. Bg5 b4 15. Nb1 h6 16. Bh4 c5 17. dxe5 Nxe4 18. Bxe7 Qxe7 19. exd6 Qf6 20. Nbd2 Nxd6 21. Nc4 Nxc4 22. Bxc4 Nb6 23. Ne5 Rae8 24. Bxf7+ Rxf7 25. Nxf7 Rxe1+ 26. Qxe1 Kxf7 27. Qe3 Qg5 28. Qxg5 hxg5 29. b3 Ke6 30. a3 Kd6 31. axb4 cxb4 32. Ra5 Nd5 33. f3 Bc8 34. Kf2 Bf5 35. Ra7 g6 36. Ra6+ Kc5 37. Ke1 Nf4 38. g3 Nxh3 39. Kd2 Kb5 40. Rd6 Kc5 41. Ra6 Nf2 42. g4 Bd3 43. Re6 1/2-1/2\n"
+
+julia> gametopgn(g)
+"[Event \"F/S Return Match\"]\n[Site \"Belgrade, Serbia JUG\"]\n[Date \"1992.11.04\"]\n[Round \"29\"]\n[White \"Fischer, Robert J.\"]\n[Black \"Spassky, Boris V.\"]\n[Result \"1/2-1/2\"]\n\n1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O Be7 6. Re1 b5 7. Bb3 d6 8. c3 O-O 9. h3 Nb8 10. d4 Nbd7 11. c4 c6 12. cxb5 axb5 13. Nc3 Bb7 14. Bg5 b4 15. Nb1 h6 16. Bh4 c5 17. dxe5 Nxe4 18. Bxe7 Qxe7 19. exd6 Qf6 20. Nbd2 Nxd6 21. Nc4 Nxc4 22. Bxc4 Nb6 23. Ne5 Rae8 24. Bxf7+ Rxf7 25. Nxf7 Rxe1+ 26. Qxe1 Kxf7 27. Qe3 Qg5 28. Qxg5 hxg5 29. b3 Ke6 30. a3 Kd6 31. axb4 cxb4 32. Ra5 Nd5 33. f3 Bc8 34. Kf2 Bf5 35. Ra7 g6 36. Ra6+ Kc5 37. Ke1 Nf4 38. g3 Nxh3 39. Kd2 Kb5 40. Rd6 Kc5 41. Ra6 Nf2 42. g4 Bd3 43. Re6 1/2-1/2\n"
+```
+
+### Working with PGN files
+
+Given a file with one or more PGN games, the function `gamesinfile` returns a
+`Channel` of game objects, one for each game in the file. Like `gamefromstring`,
+`gamesinfile` takes an optional named parameter `annotations`. If `annotations`
+is `false` (the default), you get a channel of `SimpleGame`s. If it's `true`,
+you get a channel of `Game`s with the annotations (comments, variations and
+numeric annotation glyphs) included in the PGN games.
+
+As an example, here's a function that scans a PGN file and returns a vector
+of all games that end in checkmate:
+
+```julia
+function checkmategames(pgnfilename::String)
+    result = Vector{SimpleGame}()
+    for g in gamesinfile(pgnfilename)
+        toend!(g)
+        if ischeckmate(g)
+            push!(result, g)
+        end
+    end
+    result
+end
+```
+
 ## Interacting with UCI Engines
+
+This section describes how to run and interact with chess engines using the
+[Universal Chess Interface](http://wbec-ridderkerk.nl/html/UCIProtocol.html)
+protocol. There are hundreds of UCI chess engines out there. A free, strong
+and popular choice is [Stockfish](https://stockfishchess.org). Stockfish is
+used as an example in this section, but any other engine should work just as
+well.
+
+For the remainder of this section, it is assumed that you know the basics of
+how the UCI protocol works, and that `stockfish` is found somewhere in your
+`PATH` environment variable
+
+An engine is started by calling the `runengine` command, which takes the path
+to the engine as a parameter:
+
+```julia-repl
+julia> using Chess, Chess.UCI
+
+julia> sf = runengine("stockfish");
+```
+
+The first thing you want to do after starting a chess engine is probably to
+set some UCI parameter values. This can be done with `setoption`:
+
+```julia-repl
+julia> setoption(sf, "Hash", 256)
+```
+
+You can send a game to the engine with `setboard`:
+
+```julia-repl
+julia> g = SimpleGame();
+
+julia> domoves!(g, "f4", "e5", "fxe5", "d6", "exd6", "Bxd6", "Nc3")
+
+julia> setboard(sf, g)
+```
+
+To ask the engine to search the position you just sent to it, use the `search`
+function. `search` takes 4 parameters: The engine, the UCI `go` command we
+want to send to it, a function to use on the UCI `bestmove` output, and a
+function to use on the UCI `info` output lines. As an example, here is how
+it looks if we use `println` for both functions:
+
+```julia-repl
+julia> search(sf, "go depth 10", println, println)
+info depth 1 seldepth 1 multipv 1 score cp 331 nodes 42 nps 14000 tbhits 0 time 3 pv d6c5
+info depth 2 seldepth 2 multipv 1 score cp 122 nodes 100 nps 33333 tbhits 0 time 3 pv d6c5 g2g3
+info depth 3 seldepth 3 multipv 1 score cp 200 nodes 185 nps 61666 tbhits 0 time 3 pv c8g4 g2g3 d6c5
+info depth 4 seldepth 4 multipv 1 score cp -15 nodes 646 nps 215333 tbhits 0 time 3 pv c8g4 d2d4 a7a6 g2g3
+info depth 5 seldepth 5 multipv 1 score mate 3 nodes 1010 nps 252500 tbhits 0 time 4 pv d8h4 g2g3 d6g3 h2g3
+info depth 6 seldepth 6 multipv 1 score mate 3 nodes 1056 nps 264000 tbhits 0 time 4 pv d8h4 g2g3 d6g3 h2g3 h4g3
+info depth 7 seldepth 6 multipv 1 score mate 3 nodes 1102 nps 275500 tbhits 0 time 4 pv d8h4 g2g3 d6g3 h2g3 h4g3
+info depth 8 seldepth 6 multipv 1 score mate 3 nodes 1156 nps 289000 tbhits 0 time 4 pv d8h4 g2g3 d6g3 h2g3 h4g3
+info depth 9 seldepth 6 multipv 1 score mate 3 nodes 1213 nps 303250 tbhits 0 time 4 pv d8h4 g2g3 d6g3 h2g3 h4g3
+info depth 10 seldepth 6 multipv 1 score mate 3 nodes 1284 nps 321000 tbhits 0 time 4 pv d8h4 g2g3 d6g3 h2g3 h4g3
+bestmove d8h4 ponder g2g3
+```
