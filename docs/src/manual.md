@@ -501,7 +501,7 @@ of all games that end in checkmate:
 
 ```julia
 function checkmategames(pgnfilename::String)
-    result = Vector{SimpleGame}()
+    result = SimpleGame[]
     for g in gamesinfile(pgnfilename)
         toend!(g)
         if ischeckmate(g)
