@@ -339,7 +339,7 @@ end
 
 
 """
-    purgebook(infilename::String, outfilenime::String;
+    purgebook(infilename::String, outfilename::String;
               minscore = 0, mingamecount = 5, compact = false)
 
 Creates a smaller version of an opening book file by removing unimportant lines.

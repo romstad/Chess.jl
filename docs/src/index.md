@@ -17,10 +17,11 @@ computer chess software.
 
 ## Installation
 
-`Chess` is a registered package and can be installed via
+`Chess` is not yet a registered package and needs to be installed via its GitHub
+URL:
 
 ```julia
-Pkg.add("Chess")
+(v1.2) pkg> add https://github.com/romstad/Chess.jl
 ```
 
 ## Usage

@@ -1,7 +1,7 @@
 using Documenter, Chess, Chess.PGN, Chess.UCI
 
 makedocs(;
-    modules=[Chess, Chess.PGN, Chess.UCI],
+    modules=[Chess, Chess.Book, Chess.PGN, Chess.UCI],
     format=Documenter.HTML(assets=String[]),
     pages=[
         "Home" => "index.md",
