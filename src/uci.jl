@@ -242,6 +242,8 @@ mutable struct Engine
 end
 
 
+Base.show(io::IO, engine::Engine) = println(io, "Engine: $(engine.name)")
+
 """
     function runengine(path::String)::Engine
 
