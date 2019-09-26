@@ -13,3 +13,7 @@ makedocs(;
     sitename="Chess.jl",
     authors="Tord Romstad",
 )
+
+deploydocs(
+    repo = "github.com/romstad/Chess.jl.git",
+)
