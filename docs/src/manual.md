@@ -633,7 +633,7 @@ To pick a book move, use `pickbookmove`:
 ```julia-repl
 julia> b = domoves(startboard(), "e4", "c5");
 
-julia> pickbookmove(b, "/Users/tord/kb-new.obk", minscore=0.01, mingamecount=10)
+julia> pickbookmove(b, "/path/to/mybook.obk", minscore=0.01, mingamecount=10)
 Move(g1f3)
 ```
 
