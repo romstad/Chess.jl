@@ -20,6 +20,6 @@ software.
 `Chess` is not yet a registered package and needs to be installed via its GitHub
 URL:
 
-```julia
+```
 (v1.2) pkg> add https://github.com/romstad/Chess.jl
 ```
