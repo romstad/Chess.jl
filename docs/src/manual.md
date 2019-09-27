@@ -599,7 +599,7 @@ following slots:
 To print out the stats for all moves for a position, use `printbookentries`:
 
 ```julia-repl
-julia> printbookentries(startboard(), "/path/tord/mybook.obk")
+julia> printbookentries(startboard(), "/path/to/mybook.obk")
 e4 0.479 53.5% (+359254, =342397, -290198) 2881 2881 1990 2018
 d4 0.343 55.1% (+283148, =280733, -204292) 2881 2881 1990 2018
 Nf3 0.092 55.9% (+79513, =82970, -54128) 2881 2881 1990 2018
