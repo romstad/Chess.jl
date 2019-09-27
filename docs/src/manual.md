@@ -686,22 +686,34 @@ julia> setboard(sf, g)
 The second parameter to `setboard` can also be a `Board` or a `Game`.
 
 To ask the engine to search the position you just sent to it, use the `search`
-function. `search` takes 4 parameters: The engine, the UCI `go` command we
-want to send to it, a function to use on the UCI `bestmove` output, and a
-function to use on the UCI `info` output lines. As an example, here is how
-it looks if we use `println` for both functions:
+function. `search` has two required parameters: The engine and the UCI `go`
+command we want to send to it. There is also an optional named parameter
+`infoaction`. This parameter is a function that takes each of the engine's
+`info` output lines and does something to them. Here's an example where we just
+print the engine output with `println` as our `infoaction`:
 
 ```julia-repl
-julia> search(sf, "go depth 10", println, println)
-info depth 1 seldepth 1 multipv 1 score cp 331 nodes 42 nps 14000 tbhits 0 time 3 pv d6c5
-info depth 2 seldepth 2 multipv 1 score cp 122 nodes 100 nps 33333 tbhits 0 time 3 pv d6c5 g2g3
-info depth 3 seldepth 3 multipv 1 score cp 200 nodes 185 nps 61666 tbhits 0 time 3 pv c8g4 g2g3 d6c5
-info depth 4 seldepth 4 multipv 1 score cp -15 nodes 646 nps 215333 tbhits 0 time 3 pv c8g4 d2d4 a7a6 g2g3
-info depth 5 seldepth 5 multipv 1 score mate 3 nodes 1010 nps 252500 tbhits 0 time 4 pv d8h4 g2g3 d6g3 h2g3
-info depth 6 seldepth 6 multipv 1 score mate 3 nodes 1056 nps 264000 tbhits 0 time 4 pv d8h4 g2g3 d6g3 h2g3 h4g3
-info depth 7 seldepth 6 multipv 1 score mate 3 nodes 1102 nps 275500 tbhits 0 time 4 pv d8h4 g2g3 d6g3 h2g3 h4g3
-info depth 8 seldepth 6 multipv 1 score mate 3 nodes 1156 nps 289000 tbhits 0 time 4 pv d8h4 g2g3 d6g3 h2g3 h4g3
-info depth 9 seldepth 6 multipv 1 score mate 3 nodes 1213 nps 303250 tbhits 0 time 4 pv d8h4 g2g3 d6g3 h2g3 h4g3
-info depth 10 seldepth 6 multipv 1 score mate 3 nodes 1284 nps 321000 tbhits 0 time 4 pv d8h4 g2g3 d6g3 h2g3 h4g3
-bestmove d8h4 ponder g2g3
+julia> search(sf, "go depth 10", infoaction=println)
+info depth 1 seldepth 1 multipv 1 score cp 275 nodes 42 nps 21000 tbhits 0 time 2 pv d6c5
+info depth 2 seldepth 2 multipv 1 score cp 93 nodes 118 nps 59000 tbhits 0 time 2 pv d6c5 g2g3
+info depth 3 seldepth 3 multipv 1 score cp 83 nodes 207 nps 103500 tbhits 0 time 2 pv a7a6 g2g3 d6c5
+info depth 4 seldepth 4 multipv 1 score cp 23 nodes 809 nps 404500 tbhits 0 time 2 pv g8h6 d2d4 h6g4 g2g3
+info depth 5 seldepth 6 multipv 1 score cp -22 nodes 1669 nps 556333 tbhits 0 time 3 pv g8e7 e2e3 e8g8 g1f3 f8e8 d2d4
+info depth 6 seldepth 7 multipv 1 score mate 3 nodes 2293 nps 764333 tbhits 0 time 3 pv d8h4 g2g3 d6g3 h2g3
+info depth 7 seldepth 6 multipv 1 score mate 3 nodes 2337 nps 779000 tbhits 0 time 3 pv d8h4 g2g3 d6g3 h2g3 h4g3
+info depth 8 seldepth 6 multipv 1 score mate 3 nodes 2387 nps 795666 tbhits 0 time 3 pv d8h4 g2g3 d6g3 h2g3 h4g3
+info depth 9 seldepth 6 multipv 1 score mate 3 nodes 2436 nps 812000 tbhits 0 time 3 pv d8h4 g2g3 d6g3 h2g3 h4g3
+info depth 10 seldepth 6 multipv 1 score mate 3 nodes 2502 nps 625500 tbhits 0 time 4 pv d8h4 g2g3 d6g3 h2g3 h4g3
+BestMoveInfo (best=d8h4, ponder=g2g3)
 ```
+
+The return value is a `BestMoveInfo`, a struct containing the two slots
+`bestmove` (the best move returned by the engine, a `Move`) and `ponder` (the
+ponder move returned by the engine, a `Move` or `nothing`).
+
+In most cases, we want something more easily manipulatable than the raw string
+values sent by the engine's `info` lines in our `infoaction` function. The
+function `parseinfoline` takes care of this. It takes an `info` string as input
+and returns a `SearchInfo` value, a struct that contains the various components
+of the `info` line as its slots. See the documentation for `SearchInfo` in the
+API reference for details.
