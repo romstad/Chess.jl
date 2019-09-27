@@ -264,15 +264,15 @@ julia&gt; sf = runengine(&quot;stockfish&quot;);</code></pre><p>The first thing 
 
 julia&gt; domoves!(g, &quot;f4&quot;, &quot;e5&quot;, &quot;fxe5&quot;, &quot;d6&quot;, &quot;exd6&quot;, &quot;Bxd6&quot;, &quot;Nc3&quot;)
 
-julia&gt; setboard(sf, g)</code></pre><p>The second parameter to <code>setboard</code> can also be a <code>Board</code> or a <code>Game</code>.</p><p>To ask the engine to search the position you just sent to it, use the <code>search</code> function. <code>search</code> takes 4 parameters: The engine, the UCI <code>go</code> command we want to send to it, a function to use on the UCI <code>bestmove</code> output, and a function to use on the UCI <code>info</code> output lines. As an example, here is how it looks if we use <code>println</code> for both functions:</p><pre><code class="language-julia-repl">julia&gt; search(sf, &quot;go depth 10&quot;, println, println)
-info depth 1 seldepth 1 multipv 1 score cp 331 nodes 42 nps 14000 tbhits 0 time 3 pv d6c5
-info depth 2 seldepth 2 multipv 1 score cp 122 nodes 100 nps 33333 tbhits 0 time 3 pv d6c5 g2g3
-info depth 3 seldepth 3 multipv 1 score cp 200 nodes 185 nps 61666 tbhits 0 time 3 pv c8g4 g2g3 d6c5
-info depth 4 seldepth 4 multipv 1 score cp -15 nodes 646 nps 215333 tbhits 0 time 3 pv c8g4 d2d4 a7a6 g2g3
-info depth 5 seldepth 5 multipv 1 score mate 3 nodes 1010 nps 252500 tbhits 0 time 4 pv d8h4 g2g3 d6g3 h2g3
-info depth 6 seldepth 6 multipv 1 score mate 3 nodes 1056 nps 264000 tbhits 0 time 4 pv d8h4 g2g3 d6g3 h2g3 h4g3
-info depth 7 seldepth 6 multipv 1 score mate 3 nodes 1102 nps 275500 tbhits 0 time 4 pv d8h4 g2g3 d6g3 h2g3 h4g3
-info depth 8 seldepth 6 multipv 1 score mate 3 nodes 1156 nps 289000 tbhits 0 time 4 pv d8h4 g2g3 d6g3 h2g3 h4g3
-info depth 9 seldepth 6 multipv 1 score mate 3 nodes 1213 nps 303250 tbhits 0 time 4 pv d8h4 g2g3 d6g3 h2g3 h4g3
-info depth 10 seldepth 6 multipv 1 score mate 3 nodes 1284 nps 321000 tbhits 0 time 4 pv d8h4 g2g3 d6g3 h2g3 h4g3
-bestmove d8h4 ponder g2g3</code></pre><footer><hr/><a class="previous" href="../"><span class="direction">Previous</span><span class="title">Home</span></a><a class="next" href="../api/"><span class="direction">Next</span><span class="title">API Reference</span></a></footer></article></body></html>
+julia&gt; setboard(sf, g)</code></pre><p>The second parameter to <code>setboard</code> can also be a <code>Board</code> or a <code>Game</code>.</p><p>To ask the engine to search the position you just sent to it, use the <code>search</code> function. <code>search</code> has two required parameters: The engine and the UCI <code>go</code> command we want to send to it. There is also an optional named parameter <code>infoaction</code>. This parameter is a function that takes each of the engine&#39;s <code>info</code> output lines and does something to them. Here&#39;s an example where we just print the engine output with <code>println</code> as our <code>infoaction</code>:</p><pre><code class="language-julia-repl">julia&gt; search(sf, &quot;go depth 10&quot;, infoaction=println)
+info depth 1 seldepth 1 multipv 1 score cp 275 nodes 42 nps 21000 tbhits 0 time 2 pv d6c5
+info depth 2 seldepth 2 multipv 1 score cp 93 nodes 118 nps 59000 tbhits 0 time 2 pv d6c5 g2g3
+info depth 3 seldepth 3 multipv 1 score cp 83 nodes 207 nps 103500 tbhits 0 time 2 pv a7a6 g2g3 d6c5
+info depth 4 seldepth 4 multipv 1 score cp 23 nodes 809 nps 404500 tbhits 0 time 2 pv g8h6 d2d4 h6g4 g2g3
+info depth 5 seldepth 6 multipv 1 score cp -22 nodes 1669 nps 556333 tbhits 0 time 3 pv g8e7 e2e3 e8g8 g1f3 f8e8 d2d4
+info depth 6 seldepth 7 multipv 1 score mate 3 nodes 2293 nps 764333 tbhits 0 time 3 pv d8h4 g2g3 d6g3 h2g3
+info depth 7 seldepth 6 multipv 1 score mate 3 nodes 2337 nps 779000 tbhits 0 time 3 pv d8h4 g2g3 d6g3 h2g3 h4g3
+info depth 8 seldepth 6 multipv 1 score mate 3 nodes 2387 nps 795666 tbhits 0 time 3 pv d8h4 g2g3 d6g3 h2g3 h4g3
+info depth 9 seldepth 6 multipv 1 score mate 3 nodes 2436 nps 812000 tbhits 0 time 3 pv d8h4 g2g3 d6g3 h2g3 h4g3
+info depth 10 seldepth 6 multipv 1 score mate 3 nodes 2502 nps 625500 tbhits 0 time 4 pv d8h4 g2g3 d6g3 h2g3 h4g3
+BestMoveInfo (best=d8h4, ponder=g2g3)</code></pre><p>The return value is a <code>BestMoveInfo</code>, a struct containing the two slots <code>bestmove</code> (the best move returned by the engine, a <code>Move</code>) and <code>ponder</code> (the ponder move returned by the engine, a <code>Move</code> or <code>nothing</code>).</p><p>In most cases, we want something more easily manipulatable than the raw string values sent by the engine&#39;s <code>info</code> lines in our <code>infoaction</code> function. The function <code>parseinfoline</code> takes care of this. It takes an <code>info</code> string as input and returns a <code>SearchInfo</code> value, a struct that contains the various components of the <code>info</code> line as its slots. See the documentation for <code>SearchInfo</code> in the API reference for details.</p><footer><hr/><a class="previous" href="../"><span class="direction">Previous</span><span class="title">Home</span></a><a class="next" href="../api/"><span class="direction">Next</span><span class="title">API Reference</span></a></footer></article></body></html>
