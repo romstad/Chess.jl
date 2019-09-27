@@ -2906,7 +2906,7 @@ function startboard()::Board
 end
 
 
-function colorpprint(b::Board, highlight = SS_EMPTY)
+function colorpprint(b::Board, highlight = SS_EMPTY, unicode = false)
     for ri in 1:8
         r = SquareRank(ri)
         for fi in 1:8
@@ -2914,13 +2914,15 @@ function colorpprint(b::Board, highlight = SS_EMPTY)
             p = pieceon(b, f, r)
             fg = pcolor(p) == WHITE ? 0xffff88 : 0x000000
             bg = (ri + fi) % 2 == 0 ? 0x8accc0 : 0x66b0a3
+            ch = unicode ?
+                tounicode(Piece(WHITE, ptype(p))) : tochar(ptype(p))
             if Square(f, r) ∈ highlight
                 hc = 0xff1654
                 if p == EMPTY
                     print(Crayon(background = bg, foreground = hc), " * ")
                 else
                     print(Crayon(background = bg, foreground = hc), "*",
-                          Crayon(background = bg, foreground = fg), tochar(ptype(p), true),
+                          Crayon(background = bg, foreground = fg), ch,
                           Crayon(background = bg, foreground = hc), "*")
                 end
             else
@@ -2928,7 +2930,7 @@ function colorpprint(b::Board, highlight = SS_EMPTY)
                     print(Crayon(background = bg, foreground = fg), "   ")
                 else
                     print(Crayon(background = bg, foreground = fg),
-                          " $(tochar(ptype(p), true)) ")
+                          " $ch ")
                 end
             end
         end
@@ -2938,13 +2940,16 @@ end
 
 
 """
-    pprint(b::Board, color = false, highlight = SS_EMPTY)
+    pprint(b::Board, color = false, highlight = SS_EMPTY, unicode = false)
 
 Pretty-print a `Board` to the standard output.
 
 On terminals with 24-bit color support, use `color = true` for a colored board.
 Use the parameter `highlight` to include a `SquareSet` you want to be
 highlighted.
+
+Use `unicode = true` for Unicode piece output, if your font and terminal
+supports it.
 
 # Examples
 
@@ -2970,24 +2975,26 @@ julia> pprint(startboard(), highlight = SquareSet(SQ_D4, SQ_E4, SQ_D5, SQ_E5))
 rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -
 ```
 """
-function pprint(b::Board; color = false, highlight = SS_EMPTY)
+function pprint(b::Board; color = false, highlight = SS_EMPTY, unicode = false)
     if color
-        colorpprint(b, highlight)
+        colorpprint(b, highlight, unicode)
     else
         for ri in 1:8
             r = SquareRank(ri)
             println("+---+---+---+---+---+---+---+---+")
             for fi in 1:8
                 f = SquareFile(fi)
+                ch = unicode ?
+                    tounicode(pieceon(b, f, r)) : tochar(pieceon(b, f, r))
                 if Square(f, r) ∈ highlight
                     if pieceon(b, f, r) ≠ EMPTY
-                        print("|*$(tochar(pieceon(b, f, r)))*")
+                        print("|*$ch*")
                     else
                         print("| * ")
                     end
                 else
                     if pieceon(b, f, r) ≠ EMPTY
-                        print("| $(tochar(pieceon(b, f, r))) ")
+                        print("| $ch ")
                     else
                         print("|   ")
                     end
