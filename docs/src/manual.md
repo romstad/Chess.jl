@@ -512,6 +512,138 @@ function checkmategames(pgnfilename::String)
 end
 ```
 
+## Opening Books
+
+The `Chess.Book` module contains utilities for processing PGN game files and
+building opening trees with move statistics, and for looking up board positions
+in an opening tree.
+
+### Creating Book Files
+
+To create an opening book, use the `createbook` function, and supply it with
+one or more PGN files:
+
+```julia-repl
+julia> using Chess, Chess.Book
+
+julia> bk = createbook("/path/to/SomeGameDatabase.pgn");
+```
+
+`createbook` also accepts a number of optional named parameters that configure
+the scoring of the book moves and what moves are included and excluded. See the
+function documentation for details.
+
+Please note that while Chess.jl's PGN parser works pretty well for processing
+correct PGN, it's not very robust when it comes to parsing "PGN files" that fail
+to follow the standard. Annoyingly, even popular software like ChessBase
+sometimes generate broken PGN files (failing to escape quotes in strings is a
+particularly frequent problem). If you feed `createbook` with a non-standard PGN
+file, it will often fail.
+
+For large databases with millions of games, creating a book consumes a lot of
+memory, since all the data is stored in RAM.
+
+The first thing you want to do after creating an opening book is probably to
+write it to disk. Assuming that we stored the result of `createbook` in a
+variable `bk`, like above, we save the book like this:
+
+```julia-repl
+julia> writebooktofile(bk, "/path/to/mybook.obk")
+```
+
+Opening book files can be very large, because they contain every move that has
+been played even once in the input PGN databases. The function `purgebook` can
+create a smaller book from a large book by only including moves which have been
+played several times and/or have high scores (the *score* of a move is computed
+based on how well it has been formed and by how popular it is, with more weight
+being given to recent games and games played by strong players). `purgebook` has
+two required parameters, an input file name and an output file name. The
+optional named parameters `minscore` (default 0) and `mingamecount` (default 5)
+control what moves are included in the output file.
+
+Example usage:
+
+```julia-repl
+julia> purgebook("/path/to/mybook.obk", "/path/to/mybook-small.obk", minscore=0.01, mingamecount=10)
+```
+
+### Looking Up Positions in a Book File
+
+Given a `Board` value and an opening book file, the function `findbookentries`
+find all the opening book entries for that board position. For instance, this
+gives us all book moves for the standard opening position:
+
+```julia-repl
+julia> b = startboard();
+
+julia> entries = findbookentries(b, "/path/to/mybook.obk");
+```
+The return value is a vector of `BookEntry` structs. This struct contains the
+following slots:
+
+- `move`: The move played. For space reasons, the move is stored as an `Int32`
+  value. To get the actual `Move`, do `Move(entry.move)`.
+- `wins`: The number of times the player who played this move won the game.
+- `draws`: The number of times the game was drawn when this move was played.
+- `losses`: The number of times the player who played this move lost the game.
+- `elo`: The Elo rating of the highest rated player who played this move.
+- `oppelo`: The Elo rating of the highest rated opponent against whom this move
+  was played.
+- `firstyear`: The first year this move was played.
+- `lastyear`: The last year this move was played.
+- `score`: The score of the move, used to decide the probability that this move
+  is played when picking a book move to play. The score is computed based on the
+  move's win/loss/draw statistics and its popularity, especially in recent games
+  and games with strong players.
+
+To print out the stats for all moves for a position, use `printbookentries`:
+
+```julia-repl
+julia> printbookentries(startboard(), "/path/tord/mybook.obk")
+e4 0.479 53.5% (+359254, =342397, -290198) 2881 2881 1990 2018
+d4 0.343 55.1% (+283148, =280733, -204292) 2881 2881 1990 2018
+Nf3 0.092 55.9% (+79513, =82970, -54128) 2881 2881 1990 2018
+c4 0.064 55.6% (+53691, =52039, -37534) 2881 2881 1990 2018
+g3 0.007 56.0% (+6639, =5986, -4584) 2868 2851 1990 2018
+b3 0.006 51.9% (+3532, =3060, -3154) 2857 2881 1990 2018
+f4 0.004 45.0% (+2093, =1974, -2775) 2837 2843 1990 2018
+Nc3 0.002 49.1% (+1247, =991, -1309) 2834 2851 1990 2018
+b4 0.001 44.9% (+535, =431, -704) 2834 2795 1990 2018
+e3 0.001 43.6% (+269, =219, -381) 2857 2843 1990 2018
+d3 0.000 47.3% (+242, =216, -282) 2843 2819 1990 2018
+a3 0.000 48.2% (+223, =182, -246) 2834 2771 1991 2018
+c3 0.000 44.0% (+98, =100, -138) 2773 2767 1991 2018
+g4 0.000 38.6% (+55, =43, -100) 2795 2795 1991 2018
+h3 0.000 48.4% (+47, =30, -51) 2834 2782 1990 2018
+h4 0.000 32.6% (+10, =8, -25) 2545 2722 1994 2018
+Nh3 0.000 47.5% (+13, =12, -15) 2834 2653 1993 2018
+Na3 0.000 68.8% (+9, =4, -3) 2834 2528 1992 2018
+a4 0.000 59.4% (+7, =5, -4) 2843 2788 1996 2018
+f3 0.000 36.7% (+4, =3, -8) 2834 2843 1999 2018
+```
+
+On each output line, we see the move, the probability that this move will be
+picked (by `pickbookmove`, described below), the percentage score from the point
+of view of the side to move, the number of wins, draws and losses, the maximum
+rating, the maximum opponent rating, the first year played, and the last year
+played.
+
+To pick a book move, use `pickbookmove`:
+
+```julia-repl
+julia> b = domoves(startboard(), "e4", "c5");
+
+julia> pickbookmove(b, "/Users/tord/kb-new.obk", minscore=0.01, mingamecount=10)
+Move(g1f3)
+```
+
+The optional parameters `minscore` and `mingamecount` are used when you want to
+prevent moves that have almost never been played or have a very low score from
+being picked.
+
+If no book moves is found for the input position, `pickbookmove` returns
+`nothing`.
+
 ## Interacting with UCI Engines
 
 This section describes how to run and interact with chess engines using the

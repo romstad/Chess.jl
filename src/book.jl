@@ -18,7 +18,7 @@
 
 module Book
 
-using Chess, Dates, Printf, StatsBase
+using Chess, Chess.PGN, Dates, Printf, StatsBase
 
 export BookEntry
 
@@ -69,14 +69,14 @@ end
 
 function Base.show(io::IO, e::BookEntry)
     println(io, "BookEntry:")
-    println(io, " key: $(e.key)")
-    println(io, " move: $(Move(e.move))")
-    println(io, " top elo: $(e.elo)")
-    println(io, " top opponent elo: $(e.oppelo)")
-    println(io, " (w, d, l): ($(e.wins), $(e.draws), $(e.losses))")
-    println(io, " first played: $(e.firstyear)")
-    println(io, " last played: $(e.lastyear)")
-    print(io, " score: $(e.score)")
+    println(io, "  key: $(e.key)")
+    println(io, "  move: $(Move(e.move))")
+    println(io, "  top elo: $(e.elo)")
+    println(io, "  top opponent elo: $(e.oppelo)")
+    println(io, "  (w, d, l): ($(e.wins), $(e.draws), $(e.losses))")
+    println(io, "  first played: $(e.firstyear)")
+    println(io, "  last played: $(e.lastyear)")
+    println(io, "  score: $(e.score)")
 end
 
 
@@ -449,7 +449,7 @@ function printbookentries(b::Board, bookfilename::String)
     entries = findbookentries(b, bookfilename)
     scoresum = sum(map(e -> e.score, entries))
     for e ∈ entries
-        @printf("%s %.2f %.1f%% (+%d, =%d, -%d) %d %d %d %d\n",
+        @printf("%s %.3f %.1f%% (+%d, =%d, -%d) %d %d %d %d\n",
                 movetosan(b, Move(e.move)),
                 e.score / scoresum,
                 100 * ((e.wins + 0.5 * e.draws) / (e.wins + e.draws + e.losses)),
