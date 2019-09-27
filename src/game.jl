@@ -216,6 +216,7 @@ mutable struct Game
     node::GameNode
     nodemap::Dict{Int, GameNode}
     nodecounter::Int
+    ply::Int
 end
 
 
@@ -258,7 +259,7 @@ Constructor that creates a `Game` from the provided starting position.
 """
 function Game(startboard::Board)
     root = GameNode(startboard, 1)
-    result = Game(GameHeaders(), root, root, Dict(root.id => root), 1)
+    result = Game(GameHeaders(), root, root, Dict(root.id => root), 1, 1)
     if fen(startboard) ≠ START_FEN
         setheadervalue!(result, "FEN", fen(startboard))
     end
@@ -636,6 +637,7 @@ function addmove!(g::Game, m::Move)
     push!(g.node.children, node)
     g.nodemap[node.id] = node
     g.node = node
+    g.ply += 1
     g
 end
 
@@ -775,6 +777,7 @@ end
 function back!(g::Game)
     if !isatbeginning(g)
         g.node = g.node.parent
+        g.ply -= 1
     end
     g
 end
@@ -805,6 +808,7 @@ end
 function forward!(g::Game)
     if !isatend(g)
         g.node = first(g.node.children)
+        g.ply += 1
     end
     g
 end
@@ -903,6 +907,13 @@ Go to the game tree node with the given node id, if it exists.
 """
 function tonode!(g::Game, id::Int)
     g.node = g.nodemap[id]
+    i = 1
+    n = g.node
+    while n.parent ≠ nothing
+        ply += 1
+        n = n.parent
+    end
+    g.ply = i
     g
 end
 

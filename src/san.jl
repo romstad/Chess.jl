@@ -16,7 +16,7 @@
         along with this program.  If not, see <https://www.gnu.org/licenses/>.
 =#
 
-export movefromsan, movetosan
+export movefromsan, movetosan, variationtosan
 
 
 """
@@ -209,4 +209,74 @@ function movetosan(b::Board, m::Move)::String
     end
 
     String(take!(result))
+end
+
+
+"""
+    variationtosan(board::Board, v::Vector{Move};
+                   startply=1, movenumbers=true)::String
+
+Converts a variation to a string in short algebraic notation.
+
+The vector of moves `v` should be a sequence of legal moves from the board
+position. If `movenumbers` is `true`, move numbers will be included in the
+string. The moves are numbered from 1, unless some other variable is supplied
+through the `startply` parameter.
+
+# Examples
+```julia-repl
+julia> b = startboard();
+
+julia> variationtosan(b, map(movefromstring, ["e2e4", "e7e5", "g1f3", "b8c6"]))
+"1. e4 e5 2. Nf3 Nc6"
+```
+"""
+function variationtosan(board::Board, v::Vector{Move};
+                        startply=1, movenumbers=true)::String
+    result = IOBuffer()
+    b = deepcopy(board)
+    ply = startply
+    if movenumbers && sidetomove(b) == BLACK
+        write(result, string(div(startply, 2)))
+        write(result, "... ")
+    end
+    for m ∈ v
+        if movenumbers && sidetomove(b) == WHITE
+            write(result, string(1 + div(ply, 2)))
+            write(result, ". ")
+        end
+        write(result, movetosan(b, m))
+        write(result, " ")
+        ply += 1
+        domove!(b, m)
+    end
+    rstrip(String(take!(result)))
+end
+
+
+"""
+    variationtosan(g::SimpleGame, v::Vector{Move}; movenumbers=true)::String
+    variationtosan(g::Game, v::Vector{Move}; movenumbers=true)::String
+
+Converts a variation to a string in short algebraic notation.
+
+The vector of moves `v` should be a sequence of legal moves from the current
+board position of the game. If `movenumbers` is `true`, move numbers will be
+included in the string.
+# Examples
+```julia-repl
+julia> g = Game();
+
+julia> domoves!(g, "d4", "Nf6", "c4", "e6", "Nf3");
+
+julia> variationtosan(g, map(movefromstring, ["f8b4", "c1d2", "d8e7"]))
+"3... Bb4+ 4. Bd2 Qe7"
+```
+"""
+function variationtosan(g::SimpleGame, v::Vector{Move}; movenumbers=true)::String
+    variationtosan(board(g), v, movenumbers = movenumbers, startply = g.ply)
+end
+
+function variationtosan(g::Game, v::Vector{Move}; movenumbers=true)::String
+    variationtosan(board(g), v, movenumbers = movenumbers, startply = g.ply)
 end

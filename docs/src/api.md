@@ -204,6 +204,8 @@ tostring(m::Move)
 movefromstring(s::String)
 movefromsan
 movetosan
+variationtosan(board::Board, v::Vector{Move}; startply=1, movenumbers=true)
+variationtosan(g::SimpleGame, v::Vector{Move}; movenumbers=true)
 ```
 
 ## Square Sets
