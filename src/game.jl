@@ -23,7 +23,7 @@ export Game, GameHeader, GameHeaders, GameNode, SimpleGame
 export addcomment!, adddata!, addmove!, addmoves!, addnag!, addprecomment!,
     back!, blackelo, board, comment, continuations, dateplayed, domove!,
     domoves!, forward!, headervalue, isatbeginning, isatend, isleaf, isterminal,
-    nag, nextmove, precomment, removeallchildren!, removedata!, removenode!,
+    nag, nextmove, ply, precomment, removeallchildren!, removedata!, removenode!,
     replacemove!, setheadervalue!, tobeginning!, tobeginningofvariation!,
     toend!, tonode!, undomove!, whiteelo
 
@@ -168,6 +168,7 @@ mutable struct GameNode
     children::Vector{GameNode}
     data::Dict{String, Any}
     id::Int
+    ply::Int
 end
 
 
@@ -188,7 +189,8 @@ function GameNode(parent::GameNode, move::Move, id::Int)
              domove(parent.board, move),
              GameNode[],
              Dict{String, Any}(),
-             id)
+             id,
+             parent.ply + 1)
 end
 
 
@@ -200,8 +202,8 @@ Constructor that creates a root `GameNode` with the given board.
 The resulting `GameNode` has no parent. This constructor is used to create the
 root node of a game.
 """
-function GameNode(board::Board, id::Int)
-    GameNode(nothing, deepcopy(board), GameNode[], Dict{String, Any}(), id)
+function GameNode(board::Board, id::Int, ply::Int = 1)
+    GameNode(nothing, deepcopy(board), GameNode[], Dict{String, Any}(), id, ply)
 end
 
 
@@ -216,7 +218,6 @@ mutable struct Game
     node::GameNode
     nodemap::Dict{Int, GameNode}
     nodecounter::Int
-    ply::Int
 end
 
 
@@ -259,7 +260,7 @@ Constructor that creates a `Game` from the provided starting position.
 """
 function Game(startboard::Board)
     root = GameNode(startboard, 1)
-    result = Game(GameHeaders(), root, root, Dict(root.id => root), 1, 1)
+    result = Game(GameHeaders(), root, root, Dict(root.id => root), 1)
     if fen(startboard) ≠ START_FEN
         setheadervalue!(result, "FEN", fen(startboard))
     end
@@ -498,6 +499,43 @@ end
 
 
 """
+    ply(g::SimpleGame)
+    ply(g::Game)
+
+The ply count of the current node.
+
+Returns 1 for the root node, 2 for children of the root node, etc.
+
+# Examples
+```julia-repl
+julia> g = Game();
+
+julia> addmoves!(g, "d4", "Nf6", "c4", "g6", "Nc3", "Bg7");
+
+julia> ply(g)
+7
+
+julia> back!(g);
+
+julia> ply(g)
+6
+
+julia> tobeginning!(g);
+
+julia> ply(g)
+1
+```
+"""
+function ply(g::SimpleGame)::Int
+    g.ply
+end
+
+function ply(g::Game)::Int
+    g.node.ply
+end
+
+
+"""
     continuations(n::GameNode)::Vector{Move}
     continuations(g::Game)::Vector{Move}
 
@@ -637,7 +675,6 @@ function addmove!(g::Game, m::Move)
     push!(g.node.children, node)
     g.nodemap[node.id] = node
     g.node = node
-    g.ply += 1
     g
 end
 
@@ -777,7 +814,6 @@ end
 function back!(g::Game)
     if !isatbeginning(g)
         g.node = g.node.parent
-        g.ply -= 1
     end
     g
 end
@@ -808,7 +844,6 @@ end
 function forward!(g::Game)
     if !isatend(g)
         g.node = first(g.node.children)
-        g.ply += 1
     end
     g
 end
@@ -907,13 +942,6 @@ Go to the game tree node with the given node id, if it exists.
 """
 function tonode!(g::Game, id::Int)
     g.node = g.nodemap[id]
-    i = 1
-    n = g.node
-    while n.parent ≠ nothing
-        ply += 1
-        n = n.parent
-    end
-    g.ply = i
     g
 end
 

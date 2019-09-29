@@ -274,9 +274,9 @@ julia> variationtosan(g, map(movefromstring, ["f8b4", "c1d2", "d8e7"]))
 ```
 """
 function variationtosan(g::SimpleGame, v::Vector{Move}; movenumbers=true)::String
-    variationtosan(board(g), v, movenumbers = movenumbers, startply = g.ply)
+    variationtosan(board(g), v, movenumbers = movenumbers, startply = ply(g))
 end
 
 function variationtosan(g::Game, v::Vector{Move}; movenumbers=true)::String
-    variationtosan(board(g), v, movenumbers = movenumbers, startply = g.ply)
+    variationtosan(board(g), v, movenumbers = movenumbers, startply = ply(g))
 end
