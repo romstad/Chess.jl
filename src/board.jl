@@ -2725,7 +2725,7 @@ function perftinternal(b::Board, depth::Int, ply::Int, lists)::Int
         movelist = lists[ply + 1]
         moves(b, movelist)
         result = 0
-        for m in moves(b)
+        for m in movelist
             u = domove!(b, m)
             result += perftinternal(b, depth - 1, ply + 1, lists)
             undomove!(b, u)

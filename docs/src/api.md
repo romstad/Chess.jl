@@ -79,6 +79,7 @@ domoves!(g::SimpleGame, moves::Vararg{Union{Move, String}})
 addmove!
 addmoves!
 nextmove
+ply
 isatbeginning
 isatend
 back!
