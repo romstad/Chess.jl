@@ -1,3 +1,4 @@
+
 #=
         Chess.jl: A Julia chess programming library
         Copyright (C) 2019 Tord Romstad
@@ -29,10 +30,10 @@ export Board, MoveList, UndoInfo
 
 export attacksto, bishopattacks, bishoplike, bishops, cancastlekingside,
     cancastlequeenside, copyto!, divide, domove, domove!, domoves, domoves!,
-    emptyboard, emptysquares, epsquare, fen, fromfen, haslegalmoves, isattacked,
-    ischeck, ischeckmate, isdraw, ismaterialdraw, isrule50draw, isstalemate,
-    isterminal, kings, kingsquare, knights, lastmove, movecount, moves,
-    occupiedsquares, pawns, perft, pieceon, pieces, pinned, pprint,
+    emptyboard, emptysquares, epsquare, fen, flip, fromfen, haslegalmoves,
+    isattacked, ischeck, ischeckmate, isdraw, ismaterialdraw, isrule50draw,
+    isstalemate, isterminal, kings, kingsquare, knights, lastmove, movecount,
+    moves, occupiedsquares, pawns, perft, pieceon, pieces, pinned, pprint,
     queenattacks, queens, recycle!, rooklike, rookattacks, rooks, sidetomove,
     startboard, undomove!
 
@@ -2811,7 +2812,7 @@ function fromfen(fen::String)::Union{Board, Nothing}
     if isok(c)
         result.side = UInt8(c.val)
         if c == BLACK
-            result.key ⊻ zobsidetomove()
+            result.key ⊻= zobsidetomove()
         end
     end
 
@@ -2903,6 +2904,84 @@ Gives a `Board` object with the standard chess initial position.
 """
 function startboard()::Board
     fromfen(START_FEN)
+end
+
+
+"""
+    flip(b::Board)
+
+Returns an identical board, but flipped horizontally, and with the opposite
+side to move.
+
+# Examples
+```julia-repl
+julia> b = domoves!(startboard(), "d4", "Nf6", "c4", "e6", "Nc3", "Bb4", "e3", "O-O")
+Board (rnbq1rk1/pppp1ppp/4pn2/8/1bPP4/2N1P3/PP3PPP/R1BQKBNR w KQ -):
+ r  n  b  q  -  r  k  -
+ p  p  p  p  -  p  p  p
+ -  -  -  -  p  n  -  -
+ -  -  -  -  -  -  -  -
+ -  b  P  P  -  -  -  -
+ -  -  N  -  P  -  -  -
+ P  P  -  -  -  P  P  P
+ R  -  B  Q  K  B  N  R
+
+julia> flip(b)
+Board (r1bqkbnr/pp3ppp/2n1p3/1Bpp4/8/4PN2/PPPP1PPP/RNBQ1RK1 b kq -):
+ r  -  b  q  k  b  n  r
+ p  p  -  -  -  p  p  p
+ -  -  n  -  p  -  -  -
+ -  B  p  p  -  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  -  -  P  N  -  -
+ P  P  P  P  -  P  P  P
+ R  N  B  Q  -  R  K  -
+```
+"""
+function flip(b::Board)::Board
+
+    function flipsquare(s::Square)::Square
+        Square(((s.val - 1) ⊻ 7) + 1)
+    end
+
+    function flipcolor(p::Piece)::Piece
+        Piece(coloropp(pcolor(p)), ptype(p))
+    end
+
+    result = emptyboard()
+    for s ∈ occupiedsquares(b)
+        p = pieceon(b, s)
+        putpiece!(result, flipcolor(p), flipsquare(s))
+    end
+
+    result.side = UInt8(coloropp(sidetomove(b)).val)
+    if result.side == BLACK
+        result.key ⊻= zobsidetomove()
+    end
+
+    if cancastlekingside(b, WHITE)
+        result.castlerights |= 4
+    end
+    if cancastlequeenside(b, WHITE)
+        result.castlerights |= 8
+    end
+    if cancastlekingside(b, BLACK)
+        result.castlerights |= 1
+    end
+    if cancastlequeenside(b, BLACK)
+        result.castlerights |= 2
+    end
+    result.key ⊻= zobcastle(result.castlerights)
+
+    if epsquare(b) != SQ_NONE
+        s = flipsquare(epsquare(b))
+        result.epsq = s.val
+        result.key ⊻= zobep(s)
+    end
+
+    initboard!(result)
+
+    result
 end
 
 
