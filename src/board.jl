@@ -2948,6 +2948,16 @@ function flip(b::Board)::Board
         Piece(coloropp(pcolor(p)), ptype(p))
     end
 
+    function flipmove(m::Move)::Move
+        f = from(m)
+        t = to(m)
+        if ispromotion(m)
+            Move(flipsquare(f), flipsquare(t), promotion(m))
+        else
+            Move(flipsquare(f), flipsquare(t))
+        end
+    end
+
     result = emptyboard()
     for s ∈ occupiedsquares(b)
         p = pieceon(b, s)
@@ -2978,6 +2988,9 @@ function flip(b::Board)::Board
         result.epsq = s.val
         result.key ⊻= zobep(s)
     end
+
+    result.r50 = b.r50
+    result.move = UInt16(flipmove(lastmove(b)).val)
 
     initboard!(result)
 
