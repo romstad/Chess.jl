@@ -1,4 +1,3 @@
-
 #=
         Chess.jl: A Julia chess programming library
         Copyright (C) 2019 Tord Romstad
