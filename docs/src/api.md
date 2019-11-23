@@ -30,6 +30,7 @@ rookattacks(b::Board, s::Square)
 queenattacks(b::Board, s::Square)
 isattacked
 attacksto
+attacksfrom
 lastmove
 ischeck
 ischeckmate(b::Board)
@@ -52,6 +53,7 @@ movecount
 haslegalmoves
 perft
 divide
+flip
 START_FEN
 ```
 

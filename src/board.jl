@@ -27,14 +27,14 @@ export START_FEN
 
 export Board, MoveList, UndoInfo
 
-export attacksto, bishopattacks, bishoplike, bishops, cancastlekingside,
-    cancastlequeenside, copyto!, divide, domove, domove!, domoves, domoves!,
-    emptyboard, emptysquares, epsquare, fen, flip, fromfen, haslegalmoves,
-    isattacked, ischeck, ischeckmate, isdraw, ismaterialdraw, isrule50draw,
-    isstalemate, isterminal, kings, kingsquare, knights, lastmove, movecount,
-    moves, occupiedsquares, pawns, perft, pieceon, pieces, pinned, pprint,
-    queenattacks, queens, recycle!, rooklike, rookattacks, rooks, sidetomove,
-    startboard, undomove!
+export attacksto, attacksfrom, bishopattacks, bishoplike, bishops,
+    cancastlekingside, cancastlequeenside, copyto!, divide, domove, domove!,
+    domoves, domoves!, emptyboard, emptysquares, epsquare, fen, flip, fromfen,
+    haslegalmoves, isattacked, ischeck, ischeckmate, isdraw, ismaterialdraw,
+    isrule50draw, isstalemate, isterminal, kings, kingsquare, knights, lastmove,
+    movecount, moves, occupiedsquares, pawns, perft, pieceon, pieces, pinned,
+    pprint, queenattacks, queens, recycle!, rooklike, rookattacks, rooks,
+    sidetomove, startboard, undomove!
 
 
 """
@@ -841,6 +841,61 @@ function attacksto(b::Board, s::Square)::SquareSet
         (bishopattacks(b, s) ∩ bishoplike(b)) ∪
         (rookattacks(b, s) ∩ rooklike(b)) ∪
         (kingattacks(s) ∩ kings(b))
+end
+
+
+"""
+    attacksfrom(b::Board, s::Square)
+
+The set of squares attacked by the piece on `s`.
+
+Both empty squares, squares containing enemy pieces, and squares containing
+friendly pieces are included.
+
+# Examples
+
+```julia-repl
+julia> b = fromfen("r1bqkbnr/pppp1ppp/2n5/4p3/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 3");
+
+julia> pprint(b, highlight=attacksfrom(b, SQ_F1))
++---+---+---+---+---+---+---+---+
+| r |   | b | q | k | b | n | r |
++---+---+---+---+---+---+---+---+
+| p | p | p | p |   | p | p | p |
++---+---+---+---+---+---+---+---+
+| * |   | n |   |   |   |   |   |
++---+---+---+---+---+---+---+---+
+|   | * |   |   | p |   |   |   |
++---+---+---+---+---+---+---+---+
+|   |   | * | P | P |   |   |   |
++---+---+---+---+---+---+---+---+
+|   |   |   | * |   | N |   |   |
++---+---+---+---+---+---+---+---+
+| P | P | P |   | * | P |*P*| P |
++---+---+---+---+---+---+---+---+
+| R | N | B | Q | K | B |   | R |
++---+---+---+---+---+---+---+---+
+r1bqkbnr/pppp1ppp/2n5/4p3/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq -
+```
+"""
+function attacksfrom(b::Board, s::Square)::SquareSet
+    p = pieceon(b, s)
+    pt = ptype(p)
+    if pt == PAWN
+        pawnattacks(pcolor(p), s)
+    elseif pt == KNIGHT
+        knightattacks(s)
+    elseif pt == BISHOP
+        bishopattacks(b, s)
+    elseif pt == ROOK
+        rookattacks(b, s)
+    elseif pt == QUEEN
+        queenattacks(b, s)
+    elseif pt == KING
+        kingattacks(s)
+    else
+        SS_EMPTY
+    end
 end
 
 
