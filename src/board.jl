@@ -1218,10 +1218,6 @@ Board (rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq -):
 """
 function domove!(b::Board, m::Move)::UndoInfo
     f = from(m)
-    if pieceon(b, f) == EMPTY
-        pprint(b)
-        println(tostring(m))
-    end
     t = to(m)
     capture = pieceon(b, t)
     us = sidetomove(b)
