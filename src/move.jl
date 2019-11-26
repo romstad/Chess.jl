@@ -18,7 +18,7 @@
 
 export Move
 
-export from, ispromotion, movefromstring, promotion, to, tostring
+export MOVE_NULL, from, ispromotion, movefromstring, promotion, to, tostring
 
 """
     Move
@@ -57,6 +57,9 @@ squares and promotion piece type.
 function Move(from::Square, to::Square, promotion::PieceType)
     Move((to.val - 1) | ((from.val - 1) << 6) | (promotion.val << 12))
 end
+
+
+const MOVE_NULL = Move(SQ_A1, SQ_A1)
 
 
 """
@@ -162,7 +165,11 @@ julia> tostring(Move(SQ_E2, SQ_E1, KNIGHT))
 ```
 """
 function tostring(m::Move)::String
-    tostring(from(m)) * tostring(to(m)) * (ispromotion(m) ? tochar(promotion(m)) : "")
+    if m == MOVE_NULL
+        "0000"
+    else
+        tostring(from(m)) * tostring(to(m)) * (ispromotion(m) ? tochar(promotion(m)) : "")
+    end
 end
 
 

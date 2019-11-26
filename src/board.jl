@@ -29,12 +29,12 @@ export Board, MoveList, UndoInfo
 
 export attacksto, attacksfrom, bishopattacks, bishoplike, bishops,
     cancastlekingside, cancastlequeenside, copyto!, divide, domove, domove!,
-    domoves, domoves!, emptyboard, emptysquares, epsquare, fen, flip, fromfen,
-    haslegalmoves, isattacked, ischeck, ischeckmate, isdraw, ismaterialdraw,
-    isrule50draw, isstalemate, isterminal, kings, kingsquare, knights, lastmove,
-    movecount, moves, occupiedsquares, pawns, perft, pieceon, pieces, pinned,
-    pprint, queenattacks, queens, recycle!, rooklike, rookattacks, rooks,
-    sidetomove, startboard, undomove!
+    domoves, domoves!, donullmove, donullmove!, emptyboard, emptysquares,
+    epsquare, fen, flip, fromfen, haslegalmoves, isattacked, ischeck,
+    ischeckmate, isdraw, ismaterialdraw, isrule50draw, isstalemate, isterminal,
+    kings, kingsquare, knights, lastmove, movecount, moves, occupiedsquares,
+    pawns, perft, pieceon, pieces, pinned, pprint, queenattacks, queens,
+    recycle!, rooklike, rookattacks, rooks, sidetomove, startboard, undomove!
 
 
 """
@@ -1224,7 +1224,8 @@ function domove!(b::Board, m::Move)::UndoInfo
     pt = ptype(pieceon(b, f))
     ep = epsquare(b)
 
-    result = UndoInfo(b.castlerights, b.epsq, b.r50, b.move, b.checkers, b.pin, capture, b.key)
+    result = UndoInfo(b.castlerights, b.epsq, b.r50, b.move, b.checkers, b.pin,
+                      capture, b.key)
 
     b.side = coloropp(us).val
     b.r50 += 1
@@ -1340,7 +1341,9 @@ function undomove!(b::Board, u::UndoInfo)
     b.pin = u.pin
     b.side = us.val
 
-    if ispromotion(m)
+    if m == MOVE_NULL
+       # Do nothing
+    elseif ispromotion(m)
         removepiece!(b, t)
         putpiece!(b, Piece(us, PAWN), f)
         if capture ≠ EMPTY
@@ -1474,6 +1477,76 @@ end
 function domoves(b::Board, moves::Vararg{String})::Board
     b = deepcopy(b)
     domoves!(b, moves...)
+end
+
+
+"""
+    donullmove(b::Board)
+
+Returns an identical board with the side to move switched.
+
+The board `b` itself is left unchanged. A new board is returned that is
+identical in every way except that the side to move is the opposite. In other
+words, the function has the effect of "passing" and giving the other player the
+chance to move.
+
+Note that this will result in an illegal position if the side to move at `b` is
+in check. It's the caller's responsibility to make sure `donullmove` is not
+used in that case.
+
+There is a much faster destructive function `donullmove!` that should be called
+instead when high performance is required.
+"""
+function donullmove(b::Board)::Board
+    result = deepcopy(b)
+    us = sidetomove(b)
+    result.side = coloropp(us).val
+    result.r50 += 1
+    result.epsq = SQ_NONE.val
+    result.move = MOVE_NULL.val
+    result.key ⊻= zobsidetomove()
+    if epsquare(b) ≠ SQ_NONE
+        result.key ⊻= zobep(epsquare(b))
+    end
+    result.pin = findpinned(result)
+
+    result
+end
+
+
+"""
+    donullmove!(b::Board)
+
+Destructively modify the board `b` by swapping the side to move.
+
+The board is left unchanged except that the side to move is changed. In other
+words, the function has the effect of "passing" and giving the other player the
+chance to move.
+
+Note that this will result in an illegal position if the side to move at `b` is
+in check. It's the caller's responsibility to make sure `donullmove` is not
+used in that case.
+
+The function returns a value of type `UndoInfo`. You'll need this if you want
+to later call `undomove!()` to take back the move and get the original position
+back.
+"""
+function donullmove!(b::Board)::UndoInfo
+    us = sidetomove(b)
+    ep = epsquare(b)
+    result = UndoInfo(b.castlerights, b.epsq, b.r50, b.move, b.checkers, b.pin,
+                      EMPTY, b.key)
+    b.side = coloropp(us).val
+    b.r50 += 1
+    b.epsq = SQ_NONE.val
+    b.move = MOVE_NULL.val
+    b.key ⊻= zobsidetomove()
+    if ep ≠ SQ_NONE
+        b.key ⊻= zobep(ep)
+    end
+    b.pin = findpinned(b)
+
+    result
 end
 
 

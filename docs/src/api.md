@@ -42,6 +42,8 @@ isterminal(b::Board)
 pinned
 domove(b::Board, m::Move)
 domove!(b::Board, m::Move)
+donullmove(b::Board)
+donullmove!(b::Board)
 undomove!
 domoves(b::Board, moves::Vararg{Move})
 domoves!(b::Board, moves::Vararg{Move})
