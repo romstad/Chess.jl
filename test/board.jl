@@ -201,3 +201,27 @@ begin
     @test !ismaterialdraw(fromfen("8/8/3k4/8/3K4/8/8/BB6 w - -"))
     @test !ismaterialdraw(fromfen("8/8/3k4/8/3K4/8/3P4/8 w - -"))
 end
+
+
+begin
+    b = fromfen("8/4k3/3p4/4p3/8/2BK4/8/8 w - - 0 1")
+    @test see(b, Move(SQ_C3, SQ_E5)) == -2
+    b = fromfen("8/4k3/3p4/4p3/8/2BK4/8/Q7 w - - 0 1")
+    @test see(b, Move(SQ_C3, SQ_E5)) == -1
+    b = fromfen("8/4k3/8/4p3/8/2BK4/8/q7 w - - 0 1")
+    @test see(b, Move(SQ_C3, SQ_E5)) == -2
+    b = fromfen("8/4k3/8/4p3/8/2BK4/8/8 w - - 0 1")
+    @test see(b, Move(SQ_C3, SQ_E5)) == 1
+    b = fromfen("7q/4k1b1/3p4/4n3/8/2BK1N2/4R3/4R3 w - - 0 1")
+    @test see(b, Move(SQ_F3, SQ_E5)) == 1
+    b = fromfen("7q/4k1b1/3p4/4n3/8/2BK1N2/4R3/4R3 w - - 0 1")
+    @test see(b, Move(SQ_E2, SQ_E5)) == -1
+    b = fromfen("7q/4k1b1/3p4/4n3/8/2BK1N2/4R3/8 w - - 0 1")
+    @test see(b, Move(SQ_E2, SQ_E5)) == -2
+    b = fromfen("7q/4k1b1/3p4/4n3/8/2BK1N2/4R3/8 w - - 0 1")
+    @test see(b, Move(SQ_C3, SQ_E5)) == 0
+    b = fromfen("8/2b5/3k4/4p3/3K1P2/8/8/8 w - -")
+    @test see(b, Move(SQ_F4, SQ_E5)) == 1
+    b = fromfen("8/8/3k1p2/4p3/3K1P2/2B5/8/8 w - -")
+    @test see(b, Move(SQ_F4, SQ_E5)) == 0
+end

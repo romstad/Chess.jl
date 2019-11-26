@@ -18,6 +18,9 @@
 
 for f in ALL_SQUARES
     for t in ALL_SQUARES
+        if t == f
+            continue
+        end
         m = Move(f, t)
         @test from(m) == f
         @test to(m) == t

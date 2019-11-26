@@ -31,6 +31,7 @@ queenattacks(b::Board, s::Square)
 isattacked
 attacksto
 attacksfrom
+see
 lastmove
 ischeck
 ischeckmate(b::Board)

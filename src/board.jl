@@ -34,7 +34,8 @@ export attacksto, attacksfrom, bishopattacks, bishoplike, bishops,
     ischeckmate, isdraw, ismaterialdraw, isrule50draw, isstalemate, isterminal,
     kings, kingsquare, knights, lastmove, movecount, moves, occupiedsquares,
     pawns, perft, pieceon, pieces, pinned, pprint, queenattacks, queens,
-    recycle!, rooklike, rookattacks, rooks, sidetomove, startboard, undomove!
+    recycle!, rooklike, rookattacks, rooks, see, sidetomove, startboard,
+    undomove!
 
 
 """
@@ -896,6 +897,122 @@ function attacksfrom(b::Board, s::Square)::SquareSet
     else
         SS_EMPTY
     end
+end
+
+
+"""
+    see(b::Board, m::Move)::Int
+    see(b::Board, m::String)::Int
+
+Static exchange evaluator.
+
+This function estimates the material gain/loss of a move without doing any
+search, just looking at the attackers and defenders of the destination square,
+including X-ray attackers and defenders. It does not consider pins, overloaded
+pieces, etc., and is therefore only reliable as a very rough guess.
+
+# Examples
+
+```julia-repl
+julia> b = fromfen("8/4k3/8/4p3/8/2BK4/8/q7 w - - 0 1")
+Board (8/4k3/8/4p3/8/2BK4/8/q7 w - -):
+ -  -  -  -  -  -  -  -
+ -  -  -  -  k  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  -  -  p  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  B  K  -  -  -  -
+ -  -  -  -  -  -  -  -
+ q  -  -  -  -  -  -  -
+
+julia> see(b, "Bxe5")
+-2
+
+julia> b = fromfen("7q/4k1b1/3p4/4n3/8/2BK1N2/4R3/4R3 w - - 0 1")
+Board (7q/4k1b1/3p4/4n3/8/2BK1N2/4R3/4R3 w - -):
+ -  -  -  -  -  -  -  q
+ -  -  -  -  k  -  b  -
+ -  -  -  p  -  -  -  -
+ -  -  -  -  n  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  B  K  -  N  -  -
+ -  -  -  -  R  -  -  -
+ -  -  -  -  R  -  -  -
+
+julia> see(b, "Nxe5")
+1
+```
+"""
+function see(b::Board, m::Move)::Int
+    values = [1, 3, 3, 5, 10, 100, 0, 0, 1, 3, 3, 5, 10, 100]
+    f = from(m)
+    t = to(m)
+    piece = pieceon(b, f)
+    capture = pieceon(b, t)
+    us = sidetomove(b)
+    them = coloropp(us)
+    occ = occupiedsquares(b) - f
+    attackers = (rookattacks(occ, t) ∩ rooklike(b)) ∪
+        (bishopattacks(occ, t) ∩ bishoplike(b)) ∪
+        (knightattacks(t) ∩ knights(b)) ∪
+        (kingattacks(t) ∩ kings(b)) ∪
+        (pawnattacks(WHITE, t) ∩ pawns(b, BLACK)) ∪
+        (pawnattacks(BLACK, t) ∩ pawns(b, BLACK))
+    attackers = attackers ∩ occ
+
+    if attackers ∩ pieces(b, them) == SS_EMPTY
+        return values[capture.val]
+    end
+
+    swaplist = zeros(Int, 32)
+    c = them
+    n = 2
+    lastcapval = values[piece.val]
+    swaplist[1] = values[capture.val]
+
+    while true
+        pt = PAWN
+        ss = attackers ∩ pieces(b, c, pt)
+        while ss == SS_EMPTY
+            pt = PieceType(pt.val + 1)
+            ss = attackers ∩ pieces(b, c, pt)
+        end
+        occ -= first(ss)
+        attackers = attackers ∪
+            (rookattacks(occ, t) ∩ rooklike(b)) ∪
+            (bishopattacks(occ, t) ∩ bishoplike(b))
+        attackers = attackers ∩ occ
+        swaplist[n] = -swaplist[n - 1] + lastcapval
+        c = coloropp(c)
+
+        if attackers ∩ pieces(b, c) == SS_EMPTY
+            break
+        end
+        n += 1
+
+        if pt == KING
+            swaplist[n] = 100
+            break
+        end
+        lastcapval = values[pt.val]
+    end
+
+    while n >= 2
+        swaplist[n - 1] = min(-swaplist[n], swaplist[n - 1])
+        n -= 1
+    end
+    swaplist[1]
+end
+
+function see(b::Board, m::String)::Int
+    mv = movefromstring(m)
+    if mv == nothing
+        mv = movefromsan(b, m)
+    end
+    if mv == nothing
+        throw("Illegal or ambiguous move: $m")
+    end
+    see(b, mv)
 end
 
 
