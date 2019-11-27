@@ -957,18 +957,18 @@ function see(b::Board, m::Move)::Int
         (knightattacks(t) ∩ knights(b)) ∪
         (kingattacks(t) ∩ kings(b)) ∪
         (pawnattacks(WHITE, t) ∩ pawns(b, BLACK)) ∪
-        (pawnattacks(BLACK, t) ∩ pawns(b, BLACK))
+        (pawnattacks(BLACK, t) ∩ pawns(b, WHITE))
     attackers = attackers ∩ occ
 
     if attackers ∩ pieces(b, them) == SS_EMPTY
-        return values[capture.val]
+        return capture == EMPTY ? 0 : values[capture.val]
     end
 
     swaplist = zeros(Int, 32)
     c = them
     n = 2
     lastcapval = values[piece.val]
-    swaplist[1] = values[capture.val]
+    swaplist[1] = capture == EMPTY ? 0 : values[capture.val]
 
     while true
         pt = PAWN
