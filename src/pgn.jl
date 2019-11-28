@@ -674,7 +674,7 @@ function gametopgn(g)::String
     write(result, formatheader("Black", g.headers.black))
     write(result, formatheader("Result", g.headers.result))
     if headervalue(g, "FEN") ≠ nothing
-        write(result, formatheader("Setup", "1"))
+        write(result, formatheader("SetUp", "1"))
         write(result, formatheader("FEN", headervalue(g, "FEN")))
     end
     for gh in g.headers.othertags
