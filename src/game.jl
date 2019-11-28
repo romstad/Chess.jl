@@ -1014,7 +1014,7 @@ All children of the node are also recursively deleted.
 function removenode!(g::Game, node::GameNode = g.node)
     if node.parent ≠ nothing
         removeallchildren!(g, node)
-        deleteat!(node.parent.children, ch .== node)
+        filter!(ch -> ch ≠ node, node.parent.children)
         delete!(g.nodemap, node.id)
         g.node = node.parent
     end
