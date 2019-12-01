@@ -145,6 +145,10 @@ julia> movetosan(b, Move(SQ_D2, SQ_D4))
 ```
 """
 function movetosan(b::Board, m::Move)::String
+    if m == MOVE_NULL
+        return "0000"
+    end
+
     f = from(m)
     t = to(m)
     pt = ptype(pieceon(b, f))

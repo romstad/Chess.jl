@@ -22,10 +22,10 @@ export Game, GameHeader, GameHeaders, GameNode, SimpleGame
 
 export addcomment!, adddata!, addmove!, addmoves!, addnag!, addprecomment!,
     back!, blackelo, board, comment, continuations, dateplayed, domove!,
-    domoves!, forward!, headervalue, isatbeginning, isatend, isleaf, isterminal,
-    nag, nextmove, ply, precomment, removeallchildren!, removedata!, removenode!,
-    replacemove!, setheadervalue!, tobeginning!, tobeginningofvariation!,
-    toend!, tonode!, undomove!, whiteelo
+    domoves!, findnodematching, forward!, headervalue, isatbeginning, isatend,
+    isleaf, isterminal, nag, nextmove, ply, precomment, removeallchildren!,
+    removedata!, removenode!, replacemove!, setheadervalue!, tobeginning!,
+    tobeginningofvariation!, toend!, tonode!, undomove!, whiteelo
 
 
 """
@@ -1184,4 +1184,31 @@ end
 
 function isterminal(g::Game)
     isterminal(board(g)) || isrepetitiondraw(g)
+end
+
+
+"""
+    findnodematching(node::GameNode, pred)
+    findnodematching(g::Game, pred)
+
+Finds a node in the game tree that satisfies the predicate `pred`.
+
+Returns a `GameNode`, or `nothing` if no node in the tree satisfies `pred`.
+"""
+function findnodematching(node::GameNode, pred)::Union{GameNode, Nothing}
+    if pred(node)
+        node
+    else
+        for ch ∈ node.children
+            n = findnodematching(ch, pred)
+            if n != nothing
+                return n
+            end
+        end
+        nothing
+    end
+end
+
+function findnodematching(g::Game, pred)::Union{GameNode, Nothing}
+    findnodematching(g.root, pred)
 end

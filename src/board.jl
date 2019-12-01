@@ -1220,6 +1220,10 @@ Board (rnbqkbnr/pppppppp/8/8/8/5N2/PPPPPPPP/RNBQKB1R b KQkq -):
 ```
 """
 function domove(b::Board, m::Move)::Board
+    if m == MOVE_NULL
+        return donullmove(b)
+    end
+
     result = deepcopy(b)
     f = from(m)
     t = to(m)
@@ -1334,6 +1338,10 @@ Board (rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq -):
 ```
 """
 function domove!(b::Board, m::Move)::UndoInfo
+    if m == MOVE_NULL
+        donullmove!(b)
+    end
+
     f = from(m)
     t = to(m)
     capture = pieceon(b, t)

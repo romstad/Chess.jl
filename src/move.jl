@@ -197,7 +197,9 @@ true
 ```
 """
 function movefromstring(s::String)::Union{Move, Nothing}
-    if length(s) < 4
+    if s == "0000"
+        return MOVE_NULL
+    elseif length(s) < 4
         nothing
     else
         f = squarefromstring(s[1:2])
