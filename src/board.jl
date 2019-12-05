@@ -1006,10 +1006,10 @@ end
 
 function see(b::Board, m::String)::Int
     mv = movefromstring(m)
-    if mv == nothing
+    if isnothing(mv)
         mv = movefromsan(b, m)
     end
-    if mv == nothing
+    if isnothing(mv)
         throw("Illegal or ambiguous move: $m")
     end
     see(b, mv)
@@ -1278,10 +1278,10 @@ end
 
 function domove(b::Board, m::String)::Board
     mv = movefromstring(m)
-    if mv == nothing
+    if isnothing(mv)
         mv = movefromsan(b, m)
     end
-    if mv == nothing
+    if isnothing(mv)
         throw("Illegal or ambiguous move: $m")
     end
     domove(b, mv)
@@ -1399,10 +1399,10 @@ end
 
 function domove!(b::Board, m::String)::UndoInfo
     mv = movefromstring(m)
-    if mv == nothing
+    if isnothing(mv)
         mv = movefromsan(b, m)
     end
-    if mv == nothing
+    if isnothing(mv)
         throw("Illegal or ambiguous move: $m")
     end
     domove!(b, mv)
@@ -1544,10 +1544,10 @@ end,
 function domoves!(b::Board, moves::Vararg{String})::Board
     for m in moves
         mv = movefromstring(m)
-        if mv == nothing
+        if isnothing(mv)
             mv = movefromsan(b, m)
         end
-        if mv == nothing
+        if isnothing(mv)
             throw("Illegal or ambiguous move: $m")
         end
         domove!(b, mv)

@@ -131,7 +131,7 @@ true
 """
 function colorfromchar(c::Char)::Union{PieceColor, Nothing}
     i = findfirst(isequal(lowercase(c)), "wb")
-    if i == nothing
+    if isnothing(i)
         nothing
     else
         PieceColor(i)
@@ -270,7 +270,7 @@ true
 """
 function piecetypefromchar(c::Char)::Union{PieceType, Nothing}
     i = findfirst(isequal(lowercase(c)), "pnbrqk")
-    if i == nothing
+    if isnothing(i)
         nothing
     else
         PieceType(i)
@@ -464,7 +464,7 @@ true
 function piecefromchar(ch::Char)::Union{Piece, Nothing}
     c = isuppercase(ch) ? WHITE : BLACK
     t = piecetypefromchar(ch)
-    if t == nothing
+    if isnothing(t)
         nothing
     else
         Piece(c, t)

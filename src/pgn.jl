@@ -447,7 +447,7 @@ function raises a `PGNException`.
 """
 function readgame(p::PGNReader; annotations=false)
     headers = readheaders(p)
-    if headers.fen == nothing
+    if isnothing(headers.fen)
         result = annotations ? Game() : SimpleGame()
     else
         result = annotations ? Game(headers.fen) : SimpleGame(headers.fen)
@@ -586,7 +586,7 @@ function formatmoves(g::Game)::String
             # Move number, if white to move or at the beginning of the game.
             if sidetomove(node.board) == WHITE
                 write(buffer, string(movenum ÷ 2 + 1), ". ")
-            elseif node.parent == nothing
+            elseif isnothing(node.parent)
                 write(buffer, string(movenum ÷ 2 + 1), "... ")
             end
 

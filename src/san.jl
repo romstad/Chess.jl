@@ -68,7 +68,7 @@ function movefromsan(b::Board, san::String)::Union{Move, Nothing}
 
     # Promotion
     prom = piecetypefromchar(s[right])
-    if prom != nothing
+    if !isnothing(prom)
         right -= 1
     end
 
@@ -76,7 +76,7 @@ function movefromsan(b::Board, san::String)::Union{Move, Nothing}
     if left < right
         if isuppercase(s[left])
             pt = piecetypefromchar(s[left])
-            if pt == nothing
+            if isnothing(pt)
                 pt = PAWN
             end
             left += 1
@@ -97,7 +97,7 @@ function movefromsan(b::Board, san::String)::Union{Move, Nothing}
     # Source square file/rank
     if left <= right
         ff = filefromchar(s[left])
-        if ff != nothing
+        if !isnothing(ff)
             left += 1
         end
         fr = rankfromchar(s[left])
@@ -112,13 +112,13 @@ function movefromsan(b::Board, san::String)::Union{Move, Nothing}
             match = false
         elseif to(m) != t
             match = false
-        elseif prom != nothing && prom != promotion(m)
+        elseif !isnothing(prom) && prom != promotion(m)
             match = false
-        elseif prom == nothing && ispromotion(m)
+        elseif isnothing(prom) && ispromotion(m)
             match = false
-        elseif ff != nothing && ff != file(from(m))
+        elseif !isnothing(ff) && ff != file(from(m))
             match = false
-        elseif fr != nothing && fr != rank(from(m))
+        elseif !isnothing(fr) && fr != rank(from(m))
             match = false
         end
         if match

@@ -206,7 +206,7 @@ function movefromstring(s::String)::Union{Move, Nothing}
         t = squarefromstring(s[3:4])
         if f ≠ nothing && t ≠ nothing
             p = piecetypefromchar(get(s, 5, '?'))
-            if p == nothing
+            if isnothing(p)
                 Move(f, t)
             else
                 Move(f, t, p)

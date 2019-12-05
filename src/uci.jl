@@ -291,7 +291,7 @@ function isvalidvalueforoption(o::Option, v::OptionValue)::Bool
     elseif o.type == spin
         typeof(v) == Int && v >= o.min && v <= o.max
     elseif o.type == button
-        v == nothing
+        isnothing(v)
     else
         false
     end
@@ -313,7 +313,7 @@ function setoption(e::Engine, name::String, value::OptionValue = nothing)
         throw("Invalid value $value for option $name")
     else
         e.options[name].value = value
-        if value == nothing
+        if isnothing(value)
             sendcommand(e, "setoption name $name")
         else
             sendcommand(e, "setoption name $name value $value")
@@ -381,7 +381,7 @@ end
 
 
 function Base.show(io::IO, bmi::BestMoveInfo)
-    if bmi.ponder == nothing
+    if isnothing(bmi.ponder)
         print(io, "BestMoveInfo (best=$(tostring(bmi.bestmove)))")
     else
         print(io, "BestMoveInfo (best=$(tostring(bmi.bestmove)), ponder=$(tostring(bmi.ponder)))")
@@ -457,46 +457,46 @@ end
 
 function Base.show(io::IO, si::SearchInfo)
     println(io, "SearchInfo:")
-    if si.depth != nothing
+    if !isnothing(si.depth)
         println(io, " depth: $(si.depth)")
     end
-    if si.seldepth != nothing
+    if !isnothing(si.seldepth)
         println(io, " seldepth: $(si.seldepth)")
     end
-    if si.time != nothing
+    if !isnothing(si.time)
         println(io, " time: $(si.time)")
     end
-    if si.nodes != nothing
+    if !isnothing(si.nodes)
         println(io, " nodes: $(si.nodes)")
     end
-    if si.nps != nothing
+    if !isnothing(si.nps)
         println(io, " nps: $(si.nps)")
     end
-    if si.score != nothing
+    if !isnothing(si.score)
         println(io, " score: $(si.score)")
     end
-    if si.currmove != nothing
+    if !isnothing(si.currmove)
         println(io, " currmove: $(tostring(si.currmove))")
     end
-    if si.currmovenumber != nothing
+    if !isnothing(si.currmovenumber)
         println(io, " currmovenumber: $(si.currmovenumber)")
     end
-    if si.hashfull != nothing
+    if !isnothing(si.hashfull)
         println(io, " hashfull: $(si.hashfull)")
     end
-    if si.tbhits != nothing
+    if !isnothing(si.tbhits)
         println(io, " tbhits: $(si.tbhits)")
     end
-    if si.cpuload != nothing
+    if !isnothing(si.cpuload)
         println(io, " cpuload: $(si.cpuload)")
     end
-    if si.string != nothing
+    if !isnothing(si.string)
         println(io, " string: $(si.string)")
     end
-    if si.multipv != nothing
+    if !isnothing(si.multipv)
         println(io, " multipv: $(si.multipv)")
     end
-    if si.pv != nothing
+    if !isnothing(si.pv)
         print(io, " pv:")
         for m ∈ si.pv
             print(io, " $(tostring(m))")
@@ -612,7 +612,7 @@ function search(e::Engine, gocmd::String; infoaction = nothing)::BestMoveInfo
         line = readline(e.io)
         if startswith(line, "bestmove")
             return parsebestmove(line)
-        elseif infoaction != nothing && startswith(line, "info")
+        elseif !isnothing(infoaction) && startswith(line, "info")
             infoaction(line)
         end
     end
@@ -683,7 +683,7 @@ function touci(g::Game)::String
         result *= " moves"
         moves = String[]
         n = g.node
-        while n.parent != nothing
+        while !isnothing(n.parent)
             push!(moves, tostring(lastmove(n.board)))
             n = n.parent
         end

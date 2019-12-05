@@ -604,7 +604,7 @@ end
 
 function domove!(g::SimpleGame, m::String)
     mv = movefromstring(m)
-    if mv == nothing
+    if isnothing(mv)
         mv = movefromsan(board(g), m)
     end
     domove!(g, mv)
@@ -680,7 +680,7 @@ end
 
 function addmove!(g::Game, m::String)
     mv = movefromstring(m)
-    if mv == nothing
+    if isnothing(mv)
         mv = movefromsan(board(g), m)
     end
     addmove!(g, mv)
@@ -753,11 +753,11 @@ true
 ```
 """
 function isatbeginning(g::SimpleGame)::Bool
-    g.history[g.ply].undo == nothing
+    isnothing(g.history[g.ply].undo)
 end
 
 function isatbeginning(g::Game)::Bool
-    g.node.parent == nothing
+    isnothing(g.node.parent)
 end
 
 
@@ -787,7 +787,7 @@ false
 ```
 """
 function isatend(g::SimpleGame)::Bool
-    g.history[g.ply].move == nothing
+    isnothing(g.history[g.ply].move)
 end
 
 function isatend(g::Game)
@@ -850,7 +850,7 @@ end
 
 function forward!(g::Game, m::Move)
     i = findfirst(ch -> lastmove(ch.board) == m, g.node.children)
-    if i != nothing
+    if !isnothing(i)
         g.node = g.node.children[i]
     end
     g
@@ -858,10 +858,10 @@ end
 
 function forward!(g::Game, m::String)
     mv = movefromstring(m)
-    if mv == nothing
+    if isnothing(mv)
         mv = movefromsan(board(g), m)
     end
-    if mv == nothing
+    if isnothing(mv)
         throw("Illegal or ambiguous move: $m")
     end
     forward!(g, mv)
@@ -1126,7 +1126,7 @@ function isrepetitiondraw(g::Game)::Bool
     rcount = 1
     key = g.node.board.key
     n = g.node.parent
-    while n != nothing
+    while !isnothing(n)
         if n.board.key == key
             rcount += 1
             if rcount == 3
@@ -1201,7 +1201,7 @@ function findnodematching(node::GameNode, pred)::Union{GameNode, Nothing}
     else
         for ch ∈ node.children
             n = findnodematching(ch, pred)
-            if n != nothing
+            if !isnothing(n)
                 return n
             end
         end
