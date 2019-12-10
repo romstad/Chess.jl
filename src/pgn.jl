@@ -627,6 +627,11 @@ function formatmoves(g::Game)::String
                 # Move in SAN notation
                 write(buffer, movetosan(node.board, lastmove(child.board)))
 
+                # Numeric Annotation Glyph
+                if Chess.nag(child) ≠ nothing
+                    write(buffer, " \$", string(Chess.nag(child)))
+                end
+
                 # Post-comment
                 if Chess.comment(child) ≠ nothing
                     write(buffer, " {", Chess.comment(child), "}")
