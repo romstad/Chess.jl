@@ -18,7 +18,7 @@
 
 module UCI
 
-using Chess
+using ..Chess
 
 export BestMoveInfo, BoundType, Engine, Option, OptionType, OptionValue, Score,
     SearchInfo

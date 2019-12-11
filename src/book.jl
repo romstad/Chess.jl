@@ -18,7 +18,7 @@
 
 module Book
 
-using Chess, Chess.PGN, Dates, Printf, StatsBase
+using ..Chess, ..Chess.PGN, Dates, Printf, StatsBase
 
 export BookEntry
 

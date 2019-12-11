@@ -18,7 +18,7 @@
 
 module PGN
 
-using Chess
+using ..Chess
 
 export PGNException, PGNReader
 

@@ -28,7 +28,7 @@ Use at your own risk!
 
 module DB
 
-using Chess, Chess.PGN
+using ..Chess, ..Chess.PGN
 using SQLite
 
 export createdb!, insertgame!, pgntodb, readgame
