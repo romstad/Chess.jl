@@ -31,7 +31,7 @@ module DB
 using ..Chess, ..Chess.PGN
 using SQLite
 
-export createdb!, insertgame!, pgntodb, readgame
+export createdb!, decodedbgame, insertgame!, pgntodb, readgame
 
 
 const CONFIG_TABLE = """
@@ -170,6 +170,30 @@ function insertgame!(dbname::String, g::Union{SimpleGame, Game})
 end
 
 
+function decodedbgame(dbgame, annotations = false)
+    result = if !missing(dbgame[:fen])
+        decodemoves(dbgame[:moves], dbgame[:fen])
+    else
+        decodemoves(dbgame[:moves])
+    end
+    setheadervalue!(result, "White", dbgame[:white])
+    setheadervalue!(result, "Black", dbgame[:black])
+    setheadervalue!(result, "Event", dbgame[:event])
+    setheadervalue!(result, "Site", dbgame[:site])
+    setheadervalue!(result, "Date", dbgame[:white])
+    setheadervalue!(result, "Round", dbgame[:white])
+    setheadervalue!(result, "White", dbgame[:white])
+    setheadervalue!(result, "Result", decoderesult(dbgame[:result]))
+    if !ismissing(dbgame[:whiteelo])
+        setheadervalue!(result, "WhiteElo", string(dbgame[:whiteelo]))
+    end
+    if !ismissing(dbgame[:blackelo])
+        setheadervalue!(result, "BlackElo", string(dbgame[:blackelo]))
+    end
+    result
+end
+
+
 """
     readgame(db::SQLite.DB, id::Int; annotations = false)
     readgame(dbname::String, id::Int; annotations = false)
@@ -192,26 +216,7 @@ function readgame(db::SQLite.DB, id::Int; annotations = false)
     """
     q = SQLite.Query(db, qstr, values = [id])
     if !isempty(q)
-        g = first(q)
-        result = if !ismissing(g[:fen])
-            decodemoves(g[:moves], g[:fen], annotations = annotations)
-        else
-            decodemoves(g[:moves], annotations = annotations)
-        end
-        setheadervalue!(result, "White", g[:white])
-        setheadervalue!(result, "Black", g[:black])
-        setheadervalue!(result, "Event", g[:event])
-        setheadervalue!(result, "Site", g[:site])
-        setheadervalue!(result, "Date", g[:date])
-        setheadervalue!(result, "Round", g[:round])
-        setheadervalue!(result, "Result", decoderesult(g[:result]))
-        if !ismissing(g[:whiteelo])
-            setheadervalue!(result, "WhiteElo", string(g[:whiteelo]))
-        end
-        if !ismissing(g[:blackelo])
-            setheadervalue!(result, "BlackElo", string(g[:blackelo]))
-        end
-        result
+        decodedbgame(first(q))
     end
 end
 
