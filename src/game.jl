@@ -21,11 +21,11 @@ using Dates;
 export Game, GameHeader, GameHeaders, GameNode, SimpleGame
 
 export addcomment!, adddata!, addmove!, addmoves!, addnag!, addprecomment!,
-    back!, blackelo, board, comment, continuations, dateplayed, domove!,
-    domoves!, findnodematching, forward!, headervalue, isatbeginning, isatend,
-    isleaf, isterminal, nag, nextmove, ply, precomment, removeallchildren!,
-    removedata!, removenode!, setheadervalue!, tobeginning!,
-    tobeginningofvariation!, toend!, tonode!, undomove!, whiteelo
+    back!, blackelo, board, comment, continuations, dateplayed, decodemoves,
+    domove!, domoves!, encodemoves, findnodematching, forward!, headervalue,
+    isatbeginning, isatend, isleaf, isterminal, nag, nextmove, ply, precomment,
+    removeallchildren!, removedata!, removenode!, setheadervalue!,
+    tobeginning!, tobeginningofvariation!, toend!, tonode!, undomove!, whiteelo
 
 
 """
@@ -1211,4 +1211,161 @@ end
 
 function findnodematching(g::Game, pred)::Union{GameNode, Nothing}
     findnodematching(g.root, pred)
+end
+
+
+const VARIATION_START = 60_000
+const VARIATION_END = 60_001
+const COMMENT = 60_002
+const NAG = 60_003
+
+
+"""
+    encodemoves(g::SimpleGame)::Vector{UInt8}
+    encodemoves(g::Game)::Vector{UInt8}
+
+Encodes the moves of the game as a byte vector.
+
+This is useful for storing games in a binary format significantly more compact
+than PGN.
+
+The inverse function `decodemoves` is used to convert back to a game.
+"""
+function encodemoves(g::SimpleGame)::Vector{UInt8}
+    buf = IOBuffer(UInt8[], write = true)
+    for h ∈ g.history
+        m = h.move
+        if !isnothing(m)
+            write(buf, UInt16(m.val))
+        end
+    end
+    take!(buf)
+end
+
+function encodemoves(g::Game)::Vector{UInt8}
+
+    function encodecomment(buf, cmt)
+        write(buf, UInt16(COMMENT))
+        for c ∈ cmt
+            write(buf, c)
+        end
+        write(buf, '}')
+    end
+
+    function encodenode(buf, node)
+        # Pre-comment
+        if precomment(node) ≠ nothing
+            encodecomment(buf, precomment(node))
+        end
+
+        # The move
+        write(buf, UInt16(lastmove(node.board).val))
+
+        # Numeric annotation glyph
+        if nag(node) ≠ nothing
+            write(buf, UInt16(NAG))
+            write(buf, UInt16(nag(node)))
+        end
+
+        # Post-comment
+        if comment(node) ≠ nothing
+            encodecomment(buf, comment(node))
+        end
+    end
+
+    function encodevariation(buf, node)
+        if !isempty(node.children)
+            child = first(node.children)
+
+            encodenode(buf, child)
+
+            # Recursive annotation variations
+            for child ∈ node.children[2:end]
+                write(buf, UInt16(VARIATION_START))
+                encodenode(buf, child)
+                isempty(child.children) || encodevariation(buf, child)
+                write(buf, UInt16(VARIATION_END))
+            end
+
+            # Continuation of variation
+            encodevariation(buf, first(node.children))
+        end
+    end
+
+    buf = IOBuffer(UInt8[], write = true)
+    encodevariation(buf, g.root)
+    take!(buf)
+end
+
+
+"""
+    decodemoves(bytes::Vector{UInt8}; annotations = false, fen = START_FEN)
+
+Converts a byte array created by `encodemoves` back to a game.
+
+If `annotations` is `false`, the return value is a `SimpleGame`, while if
+it is `true`, the return value is a `Game`.
+"""
+function decodemoves(bytes::Vector{UInt8}; annotations = false, fen = START_FEN)
+
+    function readcomment(buf::IOBuffer)::String
+        cmt = IOBuffer()
+        c = read(buf, Char)
+        while c ≠ '}'
+            write(cmt, c)
+            c = read(buf, Char)
+        end
+        String(take!(cmt))
+    end
+
+    result = annotations ? Game(fen) : SimpleGame(fen)
+    buf = IOBuffer(bytes)
+
+    precomment = nothing
+    variationdepth = 0
+
+    while !eof(buf)
+        x = read(buf, UInt16)
+
+        if x == UInt16(VARIATION_START)
+            variationdepth += 1
+            if annotations
+                back!(result)
+            end
+        elseif x == UInt16(VARIATION_END)
+            variationdepth -= 1
+            if annotations
+                tobeginningofvariation!(result)
+                forward!(result)
+            end
+        elseif x == UInt16(COMMENT)
+            if annotations
+                cmt = readcomment(buf)
+                if isatbeginning(result) || !isatend(result)
+                    precomment = cmt
+                else
+                    addcomment!(result, cmt)
+                end
+            end
+        elseif x == UInt16(NAG)
+            if annotations
+                n = read(buf, UInt16)
+                addnag!(result, Int(n))
+            end
+        else
+            m = Move(Int(x))
+            if annotations
+                addmove!(result, m)
+                if precomment ≠ nothing
+                    addprecomment!(result, precomment)
+                    precomment = nothing
+                end
+            elseif variationdepth == 0
+                domove!(result, m)
+            end
+        end
+    end
+
+    tobeginning!(result)
+    result
 end
