@@ -29,5 +29,6 @@ include("san.jl")
 include("pgn.jl")
 include("uci.jl")
 include("book.jl")
+include("db.jl")
 
 end # module
