@@ -24,7 +24,7 @@ export addcomment!, adddata!, addmove!, addmoves!, addnag!, addprecomment!,
     back!, blackelo, board, comment, continuations, dateplayed, domove!,
     domoves!, findnodematching, forward!, headervalue, isatbeginning, isatend,
     isleaf, isterminal, nag, nextmove, ply, precomment, removeallchildren!,
-    removedata!, removenode!, replacemove!, setheadervalue!, tobeginning!,
+    removedata!, removenode!, setheadervalue!, tobeginning!,
     tobeginningofvariation!, toend!, tonode!, undomove!, whiteelo
 
 
