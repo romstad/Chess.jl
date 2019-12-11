@@ -204,6 +204,7 @@ function readgame(db::SQLite.DB, id::Int; annotations = false)
         setheadervalue!(result, "Site", g[:site])
         setheadervalue!(result, "Date", g[:date])
         setheadervalue!(result, "Round", g[:round])
+        setheadervalue!(result, "Result", decoderesult(g[:result]))
         if !ismissing(g[:whiteelo])
             setheadervalue!(result, "WhiteElo", string(g[:whiteelo]))
         end
