@@ -28,10 +28,11 @@ Use at your own risk!
 
 module DB
 
-using Chess
+using Chess, Chess.PGN
 using SQLite
 
-export createdb!
+export createdb!, insertgame!, pgntodb, readgame
+
 
 const CONFIG_TABLE = """
     CREATE TABLE IF NOT EXISTS config(
@@ -204,10 +205,10 @@ function readgame(db::SQLite.DB, id::Int; annotations = false)
         setheadervalue!(result, "Date", g[:date])
         setheadervalue!(result, "Round", g[:round])
         if !ismissing(g[:whiteelo])
-            setheadervalue!(result, "WhiteElo", g[:whiteelo])
+            setheadervalue!(result, "WhiteElo", string(g[:whiteelo]))
         end
         if !ismissing(g[:blackelo])
-            setheadervalue!(result, "BlackElo", g[:blackelo])
+            setheadervalue!(result, "BlackElo", string(g[:blackelo]))
         end
         result
     end
@@ -216,6 +217,20 @@ end
 function readgame(dbname::String, id::Int; annotations = false)
     db = SQLite.DB(dbname)
     readgame(db, id, annotations = annotations)
+end
+
+
+function pgntodb(pgnfilename::String, dbfilename::String;
+                 annotations = false)
+    createdb!(dbfilename)
+    gamecount =  0
+    for g ∈ gamesinfile(pgnfilename, annotations = annotations)
+        insertgame!(dbfilename, g)
+        gamecount += 1
+        if gamecount % 1000 == 0
+            println("$gamecount games converted")
+        end
+    end
 end
 
 
