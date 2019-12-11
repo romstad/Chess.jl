@@ -171,7 +171,7 @@ end
 
 
 function decodedbgame(dbgame, annotations = false)
-    result = if !missing(dbgame[:fen])
+    result = if !ismissing(dbgame[:fen])
         decodemoves(dbgame[:moves], dbgame[:fen])
     else
         decodemoves(dbgame[:moves])
