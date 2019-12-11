@@ -224,9 +224,10 @@ end
 function pgntodb(pgnfilename::String, dbfilename::String;
                  annotations = false)
     createdb!(dbfilename)
-    gamecount =  0
+    db = SQLite.DB(dbfilename)
+    gamecount = 0
     for g ∈ gamesinfile(pgnfilename, annotations = annotations)
-        insertgame!(dbfilename, g)
+        insertgame!(db, g)
         gamecount += 1
         if gamecount % 1000 == 0
             println("$gamecount games converted")
