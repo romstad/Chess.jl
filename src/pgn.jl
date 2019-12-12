@@ -645,6 +645,11 @@ function formatmoves(g::Game)::String
 
                 # Variation end
                 write(buffer, ")")
+
+                # If this is not the last variation, insert a space before the next
+                if child ≠ node.children[end]
+                    write(buffer, " ")
+                end
             end
 
             # Continuation of variation
