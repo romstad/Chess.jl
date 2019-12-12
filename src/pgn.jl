@@ -603,7 +603,7 @@ function formatmoves(g::Game)::String
                 write(buffer, " {", Chess.comment(child), "}")
             end
 
-            if !isleaf(child)
+            if !isleaf(child) || length(node.children) > 1
                 write(buffer, " ")
             end
 
@@ -644,11 +644,14 @@ function formatmoves(g::Game)::String
                 end
 
                 # Variation end
-                write(buffer, ") ")
+                write(buffer, ")")
             end
 
             # Continuation of variation
-            formatvariation(buffer, first(node.children), movenum + 1)
+            if length(node.children) > 1 && !isempty(child.children)
+                write(buffer, " ")
+            end
+            formatvariation(buffer, child, movenum + 1)
         end
     end
 
