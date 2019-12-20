@@ -661,7 +661,7 @@ function formatmoves(g::Game)::String
     end
 
     result = IOBuffer()
-    formatvariation(result, g.root, 0)
+    formatvariation(result, g.root, sidetomove(g.root.board) == WHITE ? 0 : 1)
     write(result, " ")
 
     String(take!(result))
