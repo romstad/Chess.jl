@@ -244,6 +244,7 @@ end
 
 Base.show(io::IO, engine::Engine) = print(io, "Engine: $(engine.name)")
 
+
 """
     function runengine(path::String)::Engine
 
@@ -271,16 +272,6 @@ function runengine(path::String)::Engine
 end
 
 
-"""
-    sendcommand(e::Engine, cmd::String)
-
-Sends the UCI command `cmd` to the engine `e`.
-"""
-function sendcommand(e::Engine, cmd::String)
-    println(e.io, cmd)
-end
-
-
 function isvalidvalueforoption(o::Option, v::OptionValue)::Bool
     if o.type == string
         typeof(v) == String
@@ -295,6 +286,41 @@ function isvalidvalueforoption(o::Option, v::OptionValue)::Bool
     else
         false
     end
+end
+
+
+"""
+    sendcommand(e::Engine, cmd::String)
+
+Sends the UCI command `cmd` to the engine `e`.
+"""
+function sendcommand(e::Engine, cmd::String)
+    println(e.io, cmd)
+end
+
+
+"""
+    sendisready(e::Engine)::Bool
+
+Sends the engine `e` an "isready" command and waits for the "readyok" response.
+
+Returns `true` on success, `false` on failure (i.e. if the engine replies with
+anything other than "readyok").
+"""
+function sendisready(e::Engine)::Bool
+    sendcommand(e, "isready")
+    readline(e.io) == "readyok"
+end
+
+
+"""
+    newgame(e::Engine)
+
+Instructs the engine that a new game is about to begin.
+"""
+function newgame(e::Engine)
+    sendcommand(e, "ucinewgame")
+    sendisready(e)
 end
 
 
@@ -319,6 +345,7 @@ function setoption(e::Engine, name::String, value::OptionValue = nothing)
             sendcommand(e, "setoption name $name value $value")
         end
     end
+    sendisready(e)
 end
 
 
