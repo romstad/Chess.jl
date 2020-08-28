@@ -23,8 +23,8 @@ using ..Chess
 export BestMoveInfo, BoundType, Engine, Option, OptionType, OptionValue, Score,
     SearchInfo
 
-export parsebestmove, parsesearchinfo, quit, runengine, search, sendcommand,
-    setboard, setoption, touci
+export newgame, parsebestmove, parsesearchinfo, quit, runengine, search,
+    sendcommand, sendisready, setboard, setoption, touci
 
 
 """
