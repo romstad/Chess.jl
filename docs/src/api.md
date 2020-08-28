@@ -146,6 +146,7 @@ sendisready
 sendcommand
 setboard
 search
+mpvsearch
 BestMoveInfo
 parsebestmove
 SearchInfo

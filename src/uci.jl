@@ -23,8 +23,8 @@ using ..Chess
 export BestMoveInfo, BoundType, Engine, Option, OptionType, OptionValue, Score,
     SearchInfo
 
-export newgame, parsebestmove, parsesearchinfo, quit, runengine, search,
-    sendcommand, sendisready, setboard, setoption, touci
+export mpvsearch, newgame, parsebestmove, parsesearchinfo, quit, runengine,
+    search, sendcommand, sendisready, setboard, setoption, touci
 
 
 """
@@ -718,6 +718,56 @@ function touci(g::Game)::String
             result *= " " * m
         end
     end
+    result
+end
+
+
+"""
+    mpvsearch(game, engine; nodes, depth, pvs)::Vector{SearchInfo}
+
+Performs a multi-PV search and returns the result as a vector of `SearchInfo`.
+
+Parameters:
+
+- `game`: A `Game`, a `SimpleGame` or a `Board`.
+- `engine`: An `Engine`.
+- `nodes`: A named parameter instructing the engine to search to the desired
+  tree size.
+- `depth`: A named parameter instructing the engine to search to the given
+  depth.
+- `pvs`: The number of desired lines. Analysis for the `pvs` best moves is
+  returned. If `pvs` is greater than the number of legal moves, analysis for
+  all legal moves is returned.
+
+At least one of `nodes` and `depth` must be supplied. If both are supplied,
+the function will use `depth` and ignore `nodes`.
+
+The function returns a vector of `SearchInfo` values, one for each of the `pvs`
+best moves.
+"""
+function mpvsearch(g::Union{Board, SimpleGame, Game}, e::Engine;
+                   nodes=nothing, depth=nothing, pvs=100)::Vector{SearchInfo}
+
+    result = SearchInfo[]
+
+    function infoaction(info::String)
+        info = parsesearchinfo(info)
+        if !isnothing(info.multipv)
+            info.multipv == 1 && empty!(result)
+            push!(result, info)
+        end
+    end
+
+    setoption(e, "MultiPV", pvs)
+    setboard(e, g)
+    if nodes != nothing
+        search(e, "go nodes $nodes", infoaction = infoaction)
+    elseif depth != nothing
+        search(e, "go depth $depth", infoaction = infoaction)
+    else
+        Error("You must supply either the `nodes` or the `depth` parameter")
+    end
+
     result
 end
 
