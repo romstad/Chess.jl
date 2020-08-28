@@ -31,10 +31,10 @@ export attacksto, attacksfrom, bishopattacks, bishoplike, bishops,
     cancastlekingside, cancastlequeenside, copyto!, divide, domove, domove!,
     domoves, domoves!, donullmove, donullmove!, emptyboard, emptysquares,
     epsquare, fen, flip, fromfen, haslegalmoves, isattacked, ischeck,
-    ischeckmate, isdraw, ismaterialdraw, isrule50draw, isstalemate, isterminal,
-    kings, kingsquare, knights, lastmove, movecount, moves, occupiedsquares,
-    pawns, perft, pieceon, pieces, pinned, pprint, queenattacks, queens,
-    recycle!, rooklike, rookattacks, rooks, see, sidetomove, startboard,
+    ischeckmate, isdraw, ismatein1, ismaterialdraw, isrule50draw, isstalemate,
+    isterminal, kings, kingsquare, knights, lastmove, movecount, moves,
+    occupiedsquares, pawns, perft, pieceon, pieces, pinned, pprint, queenattacks,
+    queens, recycle!, rooklike, rookattacks, rooks, see, sidetomove, startboard,
     undomove!
 
 
@@ -2913,6 +2913,23 @@ Returns `true` if the side to move is checkmated.
 """
 function ischeckmate(b::Board)::Bool
     ischeck(b) && !haslegalmoves(b)
+end
+
+
+"""
+    ismatein1(b::Board)::Bool
+
+Returns `true` if the side to move has a mate in 1.
+"""
+function ismatein1(b::Board)::Bool
+    matefound = false
+    for m ∈ moves(b)
+        u = domove!(b, m)
+        matefound = ischeckmate(b)
+        undomove!(b, u)
+        matefound && break
+    end
+    matefound
 end
 
 
