@@ -139,8 +139,10 @@ gotonextgame!
 ```@docs
 Engine
 runengine
+newgame
 quit
 setoption
+sendisready
 sendcommand
 setboard
 search
