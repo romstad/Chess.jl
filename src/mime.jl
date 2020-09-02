@@ -99,6 +99,12 @@ function svg(;board = emptyboard(), highlight = SS_EMPTY)
           squarehighlights(highlight)])
 end
 
+function lichesslink(board)
+    Node(:a,
+         Dict(:href => lichessurl(board)),
+         "Open in lichess")
+end
+
 function description(board)
     Node(:div,
          [Node(:p,
@@ -107,7 +113,8 @@ function description(board)
           board.castlerights == 0 ?
           "" : Node(:p, "Castle rights: " * Chess.castlestring(board)),
           epsquare(board) == SQ_NONE ?
-          "" : Node(:p, "En passant square: " * tostring(epsquare(board)))])
+          "" : Node(:p, "En passant square: " * tostring(epsquare(board))),
+          Node(:p, lichesslink(board))])
 end
 
 function html(board::Board; highlight=SS_EMPTY)
