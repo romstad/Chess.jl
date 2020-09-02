@@ -90,6 +90,11 @@ function Base.show(io::IO, ss::SquareSet)
 end
 
 
+function Base.show(io::IO, ::MIME"text/html", ss::SquareSet)
+    print(io, Chess.MIME.html(ss))
+end
+
+
 """
     SquareSet(ss::Vararg{Square})
 

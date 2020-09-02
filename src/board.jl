@@ -86,6 +86,11 @@ function Base.show(io::IO, b::Board)
 end
 
 
+function Base.show(io::IO, ::MIME"text/html", b::Board)
+    print(io, Chess.MIME.html(b))
+end
+
+
 function copyto!(dest::Board, src::Board)
     copyto!(dest.board, src.board)
     copyto!(dest.bycolor, src.bycolor)

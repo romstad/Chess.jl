@@ -30,5 +30,6 @@ include("pgn.jl")
 include("uci.jl")
 include("book.jl")
 include("db.jl")
+include("mime.jl")
 
 end # module
