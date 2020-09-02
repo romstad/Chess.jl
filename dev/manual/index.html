@@ -8,7 +8,7 @@ Board (rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -):
  -  -  -  -  -  -  -  -
  -  -  -  -  -  -  -  -
  P  P  P  P  P  P  P  P
- R  N  B  Q  K  B  N  R</code></pre><h3><a class="nav-anchor" id="Making-and-Unmaking-Moves-1" href="#Making-and-Unmaking-Moves-1">Making and Unmaking Moves</a></h3><p>Given a chess board, you will usually want to modify the board by making some moves. The most straightforward way to do this is with the <code>domove</code> function, which takes two parameters: A chess board and a move. The move can be either a value of the <code>Move</code> type or a string representing a move in UCI or SAN notation.</p><p>The <code>Move</code> type is described in more detail in the API reference. For now, let&#39;s see how to use <code>domove</code> to make a move given in short algebraic notation (SAN):</p><pre><code class="language-julia-repl">julia&gt; domove(b, &quot;e4&quot;)
+ R  N  B  Q  K  B  N  R</code></pre><p>If you are using Chess.jl through a Pluto or Jupyter notebook, you&#39;ll see a graphical board, along with a link for opening the board in <a href="http://lichess.org">lichess</a>.</p><h3><a class="nav-anchor" id="Making-and-Unmaking-Moves-1" href="#Making-and-Unmaking-Moves-1">Making and Unmaking Moves</a></h3><p>Given a chess board, you will usually want to modify the board by making some moves. The most straightforward way to do this is with the <code>domove</code> function, which takes two parameters: A chess board and a move. The move can be either a value of the <code>Move</code> type or a string representing a move in UCI or SAN notation.</p><p>The <code>Move</code> type is described in more detail in the API reference. For now, let&#39;s see how to use <code>domove</code> to make a move given in short algebraic notation (SAN):</p><pre><code class="language-julia-repl">julia&gt; domove(b, &quot;e4&quot;)
 Board (rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq -):
  r  n  b  q  k  b  n  r
  p  p  p  p  p  p  p  p
@@ -76,7 +76,7 @@ SquareSet:
  -  -  -  -  #  -  -  -
  -  -  -  -  -  -  -  -
  #  #  #  #  -  #  #  #
- -  -  -  -  -  -  -  -</code></pre><p>The return value is of type <code>SquareSet</code>, which is discussed in depth in the API reference.</p><p>Here is a similar example that returns all squares occupied by black pieces:</p><pre><code class="language-julia-repl">julia&gt; pieces(b, BLACK)
+ -  -  -  -  -  -  -  -</code></pre><p>The return value is of type <code>SquareSet</code>, which is discussed in depth in the API reference. If you are using a Pluto or Jupyter notebook, the square set will be displayed graphically.</p><p>Here is a similar example that returns all squares occupied by black pieces:</p><pre><code class="language-julia-repl">julia&gt; pieces(b, BLACK)
 SquareSet:
  #  -  #  #  #  #  -  #
  #  #  #  #  -  #  #  #
