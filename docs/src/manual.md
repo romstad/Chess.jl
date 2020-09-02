@@ -34,6 +34,10 @@ Board (rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -):
  R  N  B  Q  K  B  N  R
 ```
 
+If you are using Chess.jl through a Pluto or Jupyter notebook, you'll see a
+graphical board, along with a link for opening the board in
+[lichess](http://lichess.org).
+
 ### Making and Unmaking Moves
 
 Given a chess board, you will usually want to modify the board by making some
@@ -171,7 +175,8 @@ SquareSet:
 ```
 
 The return value is of type `SquareSet`, which is discussed in depth in the API
-reference.
+reference. If you are using a Pluto or Jupyter notebook, the square set will be
+displayed graphically.
 
 Here is a similar example that returns all squares occupied by black pieces:
 

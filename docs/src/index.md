@@ -17,9 +17,8 @@ software.
 
 ## Installation
 
-`Chess` is not yet a registered package and needs to be installed via its GitHub
-URL:
+Chess.jl can be installed from the package manager i Julia's REPL:
 
 ```
-(v1.2) pkg> add https://github.com/romstad/Chess.jl
+(@v1.5) pkg> add Chess
 ```
