@@ -6,6 +6,7 @@ version = "0.1.0"
 [deps]
 Crayons = "a8cc5b0e-0ffa-5ad4-8c14-923d3ee1735f"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
+DefaultApplication = "3f0dd361-4fe0-5fc6-8523-80b14ec94d85"
 Hiccup = "9fb69e20-1954-56bb-a84f-559cc56a8ff7"
 JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"

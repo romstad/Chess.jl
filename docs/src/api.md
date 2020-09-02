@@ -8,6 +8,8 @@ startboard
 fromfen
 fen
 pprint(b::Board)
+lichessurl
+lichess(b::Board)
 pieceon
 sidetomove
 epsquare

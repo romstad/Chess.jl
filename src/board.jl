@@ -19,6 +19,8 @@
 using Crayons
 using StaticArrays
 
+import DefaultApplication
+
 include("key.jl")
 
 import Base.push!
@@ -32,10 +34,10 @@ export attacksto, attacksfrom, bishopattacks, bishoplike, bishops,
     domoves, domoves!, donullmove, donullmove!, emptyboard, emptysquares,
     epsquare, fen, flip, fromfen, haslegalmoves, isattacked, ischeck,
     ischeckmate, isdraw, ismatein1, ismaterialdraw, isrule50draw, isstalemate,
-    isterminal, kings, kingsquare, knights, lastmove, movecount, moves,
-    occupiedsquares, pawns, perft, pieceon, pieces, pinned, pprint, queenattacks,
-    queens, recycle!, rooklike, rookattacks, rooks, see, sidetomove, startboard,
-    undomove!
+    isterminal, kings, kingsquare, knights, lastmove, lichess, lichessurl,
+    movecount, moves, occupiedsquares, pawns, perft, pieceon, pieces, pinned,
+    pprint, queenattacks, queens, recycle!, rooklike, rookattacks, rooks, see,
+    sidetomove, startboard, undomove!
 
 
 """
@@ -3367,4 +3369,24 @@ function pprint(b::Board; color = false, highlight = SS_EMPTY, unicode = false)
         println("+---+---+---+---+---+---+---+---+")
     end
     println(fen(b))
+end
+
+
+"""
+    lichessurl(b::Board)
+
+Returns an URL for opening the board in lichess.
+"""
+function lichessurl(b::Board)
+    "https://lichess.org/editor/" * replace(fen(b), " " => "_")
+end
+
+
+"""
+    lichess(b::Board)
+
+Opens the board in lichess.
+"""
+function lichess(b::Board)
+    DefaultApplication.open(lichessurl(b))
 end
