@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>User Guide · Chess.jl</title><link href="https://cdnjs.cloudflare.com/ajax/libs/normalize/4.2.0/normalize.min.css" rel="stylesheet" type="text/css"/><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.2.0/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link href="../assets/documenter.css" rel="stylesheet" type="text/css"/></head><body><nav class="toc"><h1>Chess.jl</h1><select id="version-selector" onChange="window.location.href=this.value" style="visibility: hidden"></select><form class="search" id="search-form" action="../search/"><input id="search-query" name="q" type="text" placeholder="Search docs"/></form><ul><li><a class="toctext" href="../">Home</a></li><li class="current"><a class="toctext" href>User Guide</a><ul class="internal"><li><a class="toctext" href="#Boards-1">Boards</a></li><li><a class="toctext" href="#Games-1">Games</a></li><li><a class="toctext" href="#PGN-Import-and-Export-1">PGN Import and Export</a></li><li><a class="toctext" href="#Opening-Books-1">Opening Books</a></li><li><a class="toctext" href="#Interacting-with-UCI-Engines-1">Interacting with UCI Engines</a></li></ul></li><li><a class="toctext" href="../api/">API Reference</a></li><li><a class="toctext" href="../api-index/">Index</a></li></ul></nav><article id="docs"><header><nav><ul><li><a href>User Guide</a></li></ul><a class="edit-page" href="https://github.com/romstad/Chess.jl/blob/master/docs/src/manual.md#L"><span class="fa"></span> Edit on GitHub</a></nav><hr/><div id="topbar"><span>User Guide</span><a class="fa fa-bars" href="#"></a></div></header><h1><a class="nav-anchor" id="Manual-1" href="#Manual-1">Manual</a></h1><h2><a class="nav-anchor" id="Boards-1" href="#Boards-1">Boards</a></h2><h3><a class="nav-anchor" id="Creating-Boards-1" href="#Creating-Boards-1">Creating Boards</a></h3><p>A chess board is represented by the <code>Board</code> type. A board is usually obtained in one of four ways:</p><ol><li>By calling the <code>startboard()</code> function, which returns a board initialized to the standard chess opening position.</li><li>By calling the <code>fromfen(fen::String)</code> function, which takes a board string in <a href="https://en.wikipedia.org/wiki/Forsyth–Edwards_Notation">Forsyth-Edwards Notation</a> and returns the corresponding board.</li><li>By making a move or a sequence of moves on an existing chess board, using a function like <code>domove()</code> or <code>domoves()</code>.</li><li>By calling the <code>board()</code> function on a <code>Game</code> or a <code>SimpleGame</code>, obtaining the current board position in a game. See the section about games below for a discussion of this.</li></ol><p>Boards are printed in a readable ASCII notation:</p><pre><code class="language-julia-repl">julia&gt; startboard()
+Board (rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -):
+ r  n  b  q  k  b  n  r
+ p  p  p  p  p  p  p  p
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ P  P  P  P  P  P  P  P
+ R  N  B  Q  K  B  N  R</code></pre><h3><a class="nav-anchor" id="Making-and-Unmaking-Moves-1" href="#Making-and-Unmaking-Moves-1">Making and Unmaking Moves</a></h3><p>Given a chess board, you will usually want to modify the board by making some moves. The most straightforward way to do this is with the <code>domove</code> function, which takes two parameters: A chess board and a move. The move can be either a value of the <code>Move</code> type or a string representing a move in UCI or SAN notation.</p><p>The <code>Move</code> type is described in more detail in the API reference. For now, let&#39;s see how to use <code>domove</code> to make a move given in short algebraic notation (SAN):</p><pre><code class="language-julia-repl">julia&gt; domove(b, &quot;e4&quot;)
+Board (rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq -):
+ r  n  b  q  k  b  n  r
+ p  p  p  p  p  p  p  p
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  -  -  P  -  -  -
+ -  -  -  -  -  -  -  -
+ P  P  P  P  -  P  P  P
+ R  N  B  Q  K  B  N  R</code></pre><p>There is also a function <code>domoves</code> that takes a series of several moves and executes all of them:</p><pre><code class="language-julia">julia&gt; b = startboard();
+
+julia&gt; domoves(b, &quot;e4&quot;, &quot;e5&quot;, &quot;Nf3&quot;, &quot;Nc6&quot;, &quot;Bb5&quot;)
+Board (r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq -):
+ r  -  b  q  k  b  n  r
+ p  p  p  p  -  p  p  p
+ -  -  n  -  -  -  -  -
+ -  B  -  -  p  -  -  -
+ -  -  -  -  P  -  -  -
+ -  -  -  -  -  N  -  -
+ P  P  P  P  -  P  P  P
+ R  N  B  Q  K  -  -  R</code></pre><p>Note that both of these functions return new boards: The original board <code>b</code> is left untouched. This is often convenient, but also results in a considerable amount of copying, and for some types of applications, excessive heap allocations. When this is a problem, there are alternative functions <code>domove!</code> and <code>domoves!</code> that do modify the input board.</p><p>The <code>domove!</code> function destructively modifies the input board by making a move, but returns an <code>UndoInfo</code> value that can later be used to retract the move, using the <code>undomove!</code> function:</p><pre><code class="language-julia-repl">julia&gt; b = startboard();
+
+julia&gt; u = domove!(b, &quot;d4&quot;);
+
+julia&gt; b
+Board (rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq -):
+ r  n  b  q  k  b  n  r
+ p  p  p  p  p  p  p  p
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  -  P  -  -  -  -
+ -  -  -  -  -  -  -  -
+ P  P  P  -  P  P  P  P
+ R  N  B  Q  K  B  N  R
+
+julia&gt; undomove!(b, u);
+
+julia&gt; b
+Board (rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -):
+ r  n  b  q  k  b  n  r
+ p  p  p  p  p  p  p  p
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ P  P  P  P  P  P  P  P
+ R  N  B  Q  K  B  N  R</code></pre><p>Similarly, <code>domoves!</code> takes a board and a sequence of moves and executes them all, destructively modifying the board. Unlike <code>domove!</code>, this operation is irreversible. There is no way to retract the moves and return to the original board.</p><h3><a class="nav-anchor" id="Extracting-Information-from-a-Board-1" href="#Extracting-Information-from-a-Board-1">Extracting Information from a Board</a></h3><p>For the purposes of this section, we&#39;ll construct an early opening position from a popular Ruy Lopez line:</p><pre><code class="language-julia-repl">julia&gt; b = domoves(startboard(), &quot;e4&quot;, &quot;e5&quot;, &quot;Nf3&quot;, &quot;Nc6&quot;, &quot;Bb5&quot;, &quot;Nf6&quot;, &quot;O-O&quot;)
+Board (r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQ1RK1 b kq -):
+ r  -  b  q  k  b  -  r
+ p  p  p  p  -  p  p  p
+ -  -  n  -  -  n  -  -
+ -  B  -  -  p  -  -  -
+ -  -  -  -  P  -  -  -
+ -  -  -  -  -  N  -  -
+ P  P  P  P  -  P  P  P
+ R  N  B  Q  -  R  K  -</code></pre><p>To ask what piece occupies a given square, use the <code>pieceon</code> function, which takes two arguments: A board and a square. The square can be either a <code>Square</code> value (discussed in the API reference) or a string. The return value is a <code>Piece</code>, which can have one of the values <code>EMPTY</code> (for an empty square), <code>PIECE_WP</code>, <code>PIECE_WN</code>, <code>PIECE_WB</code>, <code>PIECE_WR</code>, <code>PIECE_WQ</code>, <code>PIECE_WK</code>, <code>PIECE_BP</code>, <code>PIECE_BN</code>, <code>PIECE_BB</code>, <code>PIECE_BR</code>, <code>PIECE_BQ</code> or <code>PIECE_BK</code>:</p><pre><code class="language-julia-repl">julia&gt; pieceon(b, &quot;e4&quot;)
+PIECE_WP
+
+julia&gt; pieceon(b, &quot;b8&quot;)
+EMPTY</code></pre><p>It is also possible to ask for the set of all squares occupied by pieces of a given color and/or type. Here is an example that returns the set of all squares occupied by white pawns:</p><pre><code class="language-julia-repl">julia&gt; pawns(b, WHITE)
+SquareSet:
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  -  -  #  -  -  -
+ -  -  -  -  -  -  -  -
+ #  #  #  #  -  #  #  #
+ -  -  -  -  -  -  -  -</code></pre><p>The return value is of type <code>SquareSet</code>, which is discussed in depth in the API reference.</p><p>Here is a similar example that returns all squares occupied by black pieces:</p><pre><code class="language-julia-repl">julia&gt; pieces(b, BLACK)
+SquareSet:
+ #  -  #  #  #  #  -  #
+ #  #  #  #  -  #  #  #
+ -  -  #  -  -  #  -  -
+ -  -  -  -  #  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -</code></pre><p>A few other functions returning square sets are <code>knights</code>, <code>bishops</code>, <code>rooks</code>, <code>queens</code>, <code>kings</code>, <code>emptysquares</code> and <code>occupiedsquares</code>.</p><p>The function <code>sidetomove</code> returns the current side to move, in the form of a <code>PieceColor</code> value that can be either <code>WHITE</code> or <code>BLACK</code>:</p><pre><code class="language-julia-repl">julia&gt; sidetomove(b)
+BLACK</code></pre><p>A few other functions that are frequently useful when inspecting boards are <code>ischeck</code> (is the side to move in check?), <code>ischeckmate</code> (is the side to move checkmated?) and <code>isdraw</code> (is the position an immediate draw?).</p><h3><a class="nav-anchor" id="Generating-Legal-Moves-1" href="#Generating-Legal-Moves-1">Generating Legal Moves</a></h3><p>The legal moves for a board can be obtained with the <code>moves</code> function:</p><pre><code class="language-julia-repl">julia&gt; b = fromfen(&quot;8/5P2/3k4/8/8/6N1/3B4/4KR2 w - -&quot;)
+Board (8/5P2/3k4/8/8/6N1/3B4/4KR2 w - -):
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  P  -  -
+ -  -  -  k  -  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  N  -
+ -  -  -  B  -  -  -  -
+ -  -  -  -  K  R  -  -
+
+julia&gt; moves(b)
+27-element MoveList:
+ Move(f7f8q)
+ Move(f7f8r)
+ Move(f7f8b)
+ Move(f7f8n)
+ Move(g3e4)
+ Move(g3e2)
+ Move(g3f5)
+ Move(g3h5)
+ ⋮
+ Move(f1f4)
+ Move(f1f3)
+ Move(f1f2)
+ Move(f1g1)
+ Move(f1h1)
+ Move(e1d1)
+ Move(e1e2)
+ Move(e1f2)</code></pre><p>The return value is a <code>MoveList</code>, a subtype of <code>AbstractArray</code>. It contains all the legal moves for the position.</p><p>Here is an example of a simple way to find all moves that give check for the above board:</p><pre><code class="language-julia-repl">julia&gt; filter(m -&gt; ischeck(domove(b, m)), moves(b))
+7-element Array{Move,1}:
+ Move(f7f8q)
+ Move(f7f8b)
+ Move(g3e4)
+ Move(g3f5)
+ Move(d2b4)
+ Move(d2f4)
+ Move(f1f6)</code></pre><h2><a class="nav-anchor" id="Games-1" href="#Games-1">Games</a></h2><p>There are two types for representing chess games: <code>SimpleGame</code> is a basic type that contains little more than PGN headers (player names, game result, etc.) and a sequence of moves. <code>Game</code> is a more full-featured type that supports annotated, tree-like games with comments and variations. If you don&#39;t need these features, <code>SimpleGame</code> is usually a better choice, because it performs much better.</p><p>For the rest of this section, we will only discuss the more complex <code>Game</code> type. With a few exceptions (that will be pointed out), methods with identical names and behavior exist for the <code>SimpleGame</code> type.</p><p>To create a game from the standard chess position, use the parameterless <code>Game</code> constructor:</p><pre><code class="language-julia-repl">julia&gt; g = Game()
+Game:
+  *</code></pre><p>The printed representation of the game consists of the moves in short algebraic notation (in this case, because we just constructed a game, there are no moves) and an asterisk (<code>*</code>) showing our current position in the game.</p><p>There is also a version of this constructor that takes a string representing a board in <a href="https://en.wikipedia.org/wiki/Forsyth–Edwards_Notation">Forsyth-Edwards Notation</a>, and uses that instead of the standard chess starting position as the root position of the game.</p><p>You can obtain the current position board position of the game with the <code>board</code> function, which returns a value of type <code>Board</code>:</p><pre><code class="language-julia-repl">julia&gt; board(g)
+Board (rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -):
+ r  n  b  q  k  b  n  r
+ p  p  p  p  p  p  p  p
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ P  P  P  P  P  P  P  P
+ R  N  B  Q  K  B  N  R</code></pre><p>To update the game with a new move, use the <code>domove!</code> function:</p><pre><code class="language-julia-repl">julia&gt; domove!(g, &quot;Nf3&quot;)
+Game:
+ Nf3 *
+
+julia&gt; domove!(g, &quot;d5&quot;)
+Game:
+ Nf3 d5 *
+
+julia&gt; domove!(g, &quot;d4&quot;)
+Game:
+ Nf3 d5 d4 *</code></pre><p>A move can be taken back by the <code>back!</code> function:</p><pre><code class="language-julia-repl">julia&gt; back!(g)
+Game:
+ Nf3 d5 * d4</code></pre><p>Note that the last move, d4, is not removed from the game. It&#39;s still there, the only result of calling <code>back!</code> is that our <em>current location in the game</em> (indicated by the asterisk) moved one step back. The current board position is the one before the move <code>d4</code> was made:</p><pre><code class="language-julia-repl">julia&gt; board(g)
+Board (rnbqkbnr/ppp1pppp/8/3p4/8/5N2/PPPPPPPP/RNBQKB1R w KQkq -):
+ r  n  b  q  k  b  n  r
+ p  p  p  -  p  p  p  p
+ -  -  -  -  -  -  -  -
+ -  -  -  p  -  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  N  -  -
+ P  P  P  P  P  P  P  P
+ R  N  B  Q  K  B  -  R</code></pre><p>It&#39;s possible to step forward again by executing <code>forward!(g)</code>:</p><pre><code class="language-julia-repl">julia&gt; forward!(g)
+Game:
+ Nf3 d5 d4 *
+
+julia&gt; board(g)
+Board (rnbqkbnr/ppp1pppp/8/3p4/3P4/5N2/PPP1PPPP/RNBQKB1R b KQkq -):
+ r  n  b  q  k  b  n  r
+ p  p  p  -  p  p  p  p
+ -  -  -  -  -  -  -  -
+ -  -  -  p  -  -  -  -
+ -  -  -  P  -  -  -  -
+ -  -  -  -  -  N  -  -
+ P  P  P  -  P  P  P  P
+ R  N  B  Q  K  B  -  R</code></pre><p>There are also functions <code>tobeginning!</code> and <code>toend!</code> that jump all the way to the beginning or the end of the game (notice the position of the asterisk indicating the current location in the game in both cases):</p><pre><code class="language-julia-repl">julia&gt; tobeginning!(g)
+Game:
+ * Nf3 d5 d4
+
+julia&gt; toend!(g)
+Game:
+ Nf3 d5 d4 *</code></pre><p>If you call <code>domove!</code> at any point other than the end of the game, the previous game continuation will be deleted:</p><pre><code class="language-julia-repl">julia&gt; toend!(g)
+Game:
+ Nf3 d5 d4 *
+
+julia&gt; back!(g)
+Game:
+ Nf3 d5 * d4
+
+julia&gt; domove!(g, &quot;c4&quot;)
+Game:
+ Nf3 d5 c4 *</code></pre><p>This is not always desirable. Sometimes what we want to do is not to overwrite the existing continuation, but to insert a new variation. When this is what we want, the solution is to use <code>addmove!</code> instead of <code>domove!</code>. The two functions behave identically when at the end of the game, but at any earlier point of the game, <code>addmove!</code> inserts the new move as an alternative variation, keeping the existing move (and any previously added variations).</p><p>Let&#39;s add 1... Nf6 as an alternative to 1... d5 in our existing game. We first have to navigate to the place in the game where we want to insert the move, and then call <code>addmove!</code>:</p><pre><code class="language-julia-repl">julia&gt; tobeginning!(g)
+Game:
+ * Nf3 d5 c4
+
+julia&gt; forward!(g)
+Game:
+ Nf3 * d5 c4
+
+julia&gt; addmove!(g, &quot;Nf6&quot;)
+Game:
+ Nf3 d5 (Nf6 *) c4</code></pre><p>Alternative variations are printed in parens. Of course, variations can be nested.</p><h2><a class="nav-anchor" id="PGN-Import-and-Export-1" href="#PGN-Import-and-Export-1">PGN Import and Export</a></h2><p>This section describes import and export of chess games in the popular <a href="https://www.chessclub.com/help/PGN-spec">PGN format</a>. PGN is a rather awkward and complicated format, and a lot of the &quot;PGN files&quot; out there on the Internet don&#39;t quite follow the standard, and are broken in various ways. The functions described in this section does a fairly good job of handling correct PGNs (although bugs are possible), but will often fail on the various not-quite-PGNs found on the Internet.</p><h3><a class="nav-anchor" id="Creating-a-game-from-a-PGN-string-1" href="#Creating-a-game-from-a-PGN-string-1">Creating a game from a PGN string</a></h3><p>Given a PGN string, the <code>gamefrompgn</code> function creates a game object from the string (throwing a <code>PGNException</code> on failure). By default, the return value is a <code>SimpleGame</code> containing only the moves of the game, without any comments, variations or numeric annotatin glyphs. If the optional named parameter <code>annotations</code> is <code>true</code>, the return value is a <code>Game</code> with all annotations included:</p><pre><code class="language-julia-repl">julia&gt; pgnstring = &quot;&quot;&quot;
+       [Event &quot;F/S Return Match&quot;]
+       [Site &quot;Belgrade, Serbia JUG&quot;]
+       [Date &quot;1992.11.04&quot;]
+       [Round &quot;29&quot;]
+       [White &quot;Fischer, Robert J.&quot;]
+       [Black &quot;Spassky, Boris V.&quot;]
+       [Result &quot;1/2-1/2&quot;]
+
+       1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O Be7 6. Re1 b5 7. Bb3 d6 8. c3
+       O-O 9. h3 Nb8 10. d4 Nbd7 11. c4 c6 12. cxb5 axb5 13. Nc3 Bb7 14. Bg5 b4 15.
+       Nb1 h6 16. Bh4 c5 17. dxe5 Nxe4 18. Bxe7 Qxe7 19. exd6 Qf6 20. Nbd2 Nxd6 21.
+       Nc4 Nxc4 22. Bxc4 Nb6 23. Ne5 Rae8 24. Bxf7+ Rxf7 25. Nxf7 Rxe1+ 26. Qxe1 Kxf7
+       27. Qe3 Qg5 28. Qxg5 hxg5 29. b3 Ke6 30. a3 Kd6 31. axb4 cxb4 32. Ra5 Nd5 33.
+       f3 Bc8 34. Kf2 Bf5 35. Ra7 g6 36. Ra6+ Kc5 37. Ke1 Nf4 38. g3 Nxh3 39. Kd2 Kb5
+       40. Rd6 Kc5 41. Ra6 Nf2 42. g4 Bd3 43. Re6 1/2-1/2
+       &quot;&quot;&quot;;
+
+julia&gt; sg = gamefromstring(pgnstring)
+SimpleGame:
+ * e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O Be7 Re1 b5 Bb3 d6 c3 O-O h3 Nb8 d4 Nbd7 c4 c6 cxb5 axb5 Nc3 Bb7 Bg5 b4 Nb1 h6 Bh4 c5 dxe5 Nxe4 Bxe7 Qxe7 exd6 Qf6 Nbd2 Nxd6 Nc4 Nxc4 Bxc4 Nb6 Ne5 Rae8 Bxf7+ Rxf7 Nxf7 Rxe1+ Qxe1 Kxf7 Qe3 Qg5 Qxg5 hxg5 b3 Ke6 a3 Kd6 axb4 cxb4 Ra5 Nd5 f3 Bc8 Kf2 Bf5 Ra7 g6 Ra6+ Kc5 Ke1 Nf4 g3 Nxh3 Kd2 Kb5 Rd6 Kc5 Ra6 Nf2 g4 Bd3 Re6
+
+julia&gt; g = gamefromstring(pgnstring, annotations=true)
+Game:
+ * e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O Be7 Re1 b5 Bb3 d6 c3 O-O h3 Nb8 d4 Nbd7 c4 c6 cxb5 axb5 Nc3 Bb7 Bg5 b4 Nb1 h6 Bh4 c5 dxe5 Nxe4 Bxe7 Qxe7 exd6 Qf6 Nbd2 Nxd6 Nc4 Nxc4 Bxc4 Nb6 Ne5 Rae8 Bxf7+ Rxf7 Nxf7 Rxe1+ Qxe1 Kxf7 Qe3 Qg5 Qxg5 hxg5 b3 Ke6 a3 Kd6 axb4 cxb4 Ra5 Nd5 f3 Bc8 Kf2 Bf5 Ra7 g6 Ra6+ Kc5 Ke1 Nf4 g3 Nxh3 Kd2 Kb5 Rd6 Kc5 Ra6 Nf2 g4 Bd3 Re6</code></pre><p>Unless you really need the annotations, importing to a <code>SimpleGame</code> is the preferred choice. A <code>SimpleGame</code> is much faster to create and consumes less memory.</p><p>Converting a game to a PGN string is done by the <code>gametopgn</code> function. This works for both <code>SimpleGame</code> and <code>Game</code> objects:</p><pre><code class="language-julia-repl">julia&gt; gametopgn(sg)
+&quot;[Event \&quot;F/S Return Match\&quot;]\n[Site \&quot;Belgrade, Serbia JUG\&quot;]\n[Date \&quot;1992.11.04\&quot;]\n[Round \&quot;29\&quot;]\n[White \&quot;Fischer, Robert J.\&quot;]\n[Black \&quot;Spassky, Boris V.\&quot;]\n[Result \&quot;1/2-1/2\&quot;]\n\n1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O Be7 6. Re1 b5 7. Bb3 d6 8. c3 O-O 9. h3 Nb8 10. d4 Nbd7 11. c4 c6 12. cxb5 axb5 13. Nc3 Bb7 14. Bg5 b4 15. Nb1 h6 16. Bh4 c5 17. dxe5 Nxe4 18. Bxe7 Qxe7 19. exd6 Qf6 20. Nbd2 Nxd6 21. Nc4 Nxc4 22. Bxc4 Nb6 23. Ne5 Rae8 24. Bxf7+ Rxf7 25. Nxf7 Rxe1+ 26. Qxe1 Kxf7 27. Qe3 Qg5 28. Qxg5 hxg5 29. b3 Ke6 30. a3 Kd6 31. axb4 cxb4 32. Ra5 Nd5 33. f3 Bc8 34. Kf2 Bf5 35. Ra7 g6 36. Ra6+ Kc5 37. Ke1 Nf4 38. g3 Nxh3 39. Kd2 Kb5 40. Rd6 Kc5 41. Ra6 Nf2 42. g4 Bd3 43. Re6 1/2-1/2\n&quot;
+
+julia&gt; gametopgn(g)
+&quot;[Event \&quot;F/S Return Match\&quot;]\n[Site \&quot;Belgrade, Serbia JUG\&quot;]\n[Date \&quot;1992.11.04\&quot;]\n[Round \&quot;29\&quot;]\n[White \&quot;Fischer, Robert J.\&quot;]\n[Black \&quot;Spassky, Boris V.\&quot;]\n[Result \&quot;1/2-1/2\&quot;]\n\n1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O Be7 6. Re1 b5 7. Bb3 d6 8. c3 O-O 9. h3 Nb8 10. d4 Nbd7 11. c4 c6 12. cxb5 axb5 13. Nc3 Bb7 14. Bg5 b4 15. Nb1 h6 16. Bh4 c5 17. dxe5 Nxe4 18. Bxe7 Qxe7 19. exd6 Qf6 20. Nbd2 Nxd6 21. Nc4 Nxc4 22. Bxc4 Nb6 23. Ne5 Rae8 24. Bxf7+ Rxf7 25. Nxf7 Rxe1+ 26. Qxe1 Kxf7 27. Qe3 Qg5 28. Qxg5 hxg5 29. b3 Ke6 30. a3 Kd6 31. axb4 cxb4 32. Ra5 Nd5 33. f3 Bc8 34. Kf2 Bf5 35. Ra7 g6 36. Ra6+ Kc5 37. Ke1 Nf4 38. g3 Nxh3 39. Kd2 Kb5 40. Rd6 Kc5 41. Ra6 Nf2 42. g4 Bd3 43. Re6 1/2-1/2\n&quot;</code></pre><h3><a class="nav-anchor" id="Working-with-PGN-files-1" href="#Working-with-PGN-files-1">Working with PGN files</a></h3><p>Given a file with one or more PGN games, the function <code>gamesinfile</code> returns a <code>Channel</code> of game objects, one for each game in the file. Like <code>gamefromstring</code>, <code>gamesinfile</code> takes an optional named parameter <code>annotations</code>. If <code>annotations</code> is <code>false</code> (the default), you get a channel of <code>SimpleGame</code>s. If it&#39;s <code>true</code>, you get a channel of <code>Game</code>s with the annotations (comments, variations and numeric annotation glyphs) included in the PGN games.</p><p>As an example, here&#39;s a function that scans a PGN file and returns a vector of all games that end in checkmate:</p><pre><code class="language-julia">function checkmategames(pgnfilename::String)
+    result = SimpleGame[]
+    for g in gamesinfile(pgnfilename)
+        toend!(g)
+        if ischeckmate(g)
+            push!(result, g)
+        end
+    end
+    result
+end</code></pre><h2><a class="nav-anchor" id="Opening-Books-1" href="#Opening-Books-1">Opening Books</a></h2><p>The <code>Chess.Book</code> module contains utilities for processing PGN game files and building opening trees with move statistics, and for looking up board positions in an opening tree.</p><h3><a class="nav-anchor" id="Creating-Book-Files-1" href="#Creating-Book-Files-1">Creating Book Files</a></h3><p>To create an opening book, use the <code>createbook</code> function, and supply it with one or more PGN files:</p><pre><code class="language-julia-repl">julia&gt; using Chess, Chess.Book
+
+julia&gt; bk = createbook(&quot;/path/to/SomeGameDatabase.pgn&quot;);</code></pre><p><code>createbook</code> also accepts a number of optional named parameters that configure the scoring of the book moves and what moves are included and excluded. See the function documentation for details.</p><p>Please note that while Chess.jl&#39;s PGN parser works pretty well for processing correct PGN, it&#39;s not very robust when it comes to parsing &quot;PGN files&quot; that fail to follow the standard. Annoyingly, even popular software like ChessBase sometimes generate broken PGN files (failing to escape quotes in strings is a particularly frequent problem). If you feed <code>createbook</code> with a non-standard PGN file, it will often fail.</p><p>For large databases with millions of games, creating a book consumes a lot of memory, since all the data is stored in RAM.</p><p>The first thing you want to do after creating an opening book is probably to write it to disk. Assuming that we stored the result of <code>createbook</code> in a variable <code>bk</code>, like above, we save the book like this:</p><pre><code class="language-julia-repl">julia&gt; writebooktofile(bk, &quot;/path/to/mybook.obk&quot;)</code></pre><p>Opening book files can be very large, because they contain every move that has been played even once in the input PGN databases. The function <code>purgebook</code> can create a smaller book from a large book by only including moves which have been played several times and/or have high scores (the <em>score</em> of a move is computed based on how well it has been formed and by how popular it is, with more weight being given to recent games and games played by strong players). <code>purgebook</code> has two required parameters, an input file name and an output file name. The optional named parameters <code>minscore</code> (default 0) and <code>mingamecount</code> (default 5) control what moves are included in the output file.</p><p>Example usage:</p><pre><code class="language-julia-repl">julia&gt; purgebook(&quot;/path/to/mybook.obk&quot;, &quot;/path/to/mybook-small.obk&quot;, minscore=0.01, mingamecount=10)</code></pre><h3><a class="nav-anchor" id="Looking-Up-Positions-in-a-Book-File-1" href="#Looking-Up-Positions-in-a-Book-File-1">Looking Up Positions in a Book File</a></h3><p>Given a <code>Board</code> value and an opening book file, the function <code>findbookentries</code> find all the opening book entries for that board position. For instance, this gives us all book moves for the standard opening position:</p><pre><code class="language-julia-repl">julia&gt; b = startboard();
+
+julia&gt; entries = findbookentries(b, &quot;/path/to/mybook.obk&quot;);</code></pre><p>The return value is a vector of <code>BookEntry</code> structs. This struct contains the following slots:</p><ul><li><code>move</code>: The move played. For space reasons, the move is stored as an <code>Int32</code> value. To get the actual <code>Move</code>, do <code>Move(entry.move)</code>.</li><li><code>wins</code>: The number of times the player who played this move won the game.</li><li><code>draws</code>: The number of times the game was drawn when this move was played.</li><li><code>losses</code>: The number of times the player who played this move lost the game.</li><li><code>elo</code>: The Elo rating of the highest rated player who played this move.</li><li><code>oppelo</code>: The Elo rating of the highest rated opponent against whom this move was played.</li><li><code>firstyear</code>: The first year this move was played.</li><li><code>lastyear</code>: The last year this move was played.</li><li><code>score</code>: The score of the move, used to decide the probability that this move is played when picking a book move to play. The score is computed based on the move&#39;s win/loss/draw statistics and its popularity, especially in recent games and games with strong players.</li></ul><p>To print out the stats for all moves for a position, use <code>printbookentries</code>:</p><pre><code class="language-julia-repl">julia&gt; printbookentries(startboard(), &quot;/path/to/mybook.obk&quot;)
+e4 0.479 53.5% (+359254, =342397, -290198) 2881 2881 1990 2018
+d4 0.343 55.1% (+283148, =280733, -204292) 2881 2881 1990 2018
+Nf3 0.092 55.9% (+79513, =82970, -54128) 2881 2881 1990 2018
+c4 0.064 55.6% (+53691, =52039, -37534) 2881 2881 1990 2018
+g3 0.007 56.0% (+6639, =5986, -4584) 2868 2851 1990 2018
+b3 0.006 51.9% (+3532, =3060, -3154) 2857 2881 1990 2018
+f4 0.004 45.0% (+2093, =1974, -2775) 2837 2843 1990 2018
+Nc3 0.002 49.1% (+1247, =991, -1309) 2834 2851 1990 2018
+b4 0.001 44.9% (+535, =431, -704) 2834 2795 1990 2018
+e3 0.001 43.6% (+269, =219, -381) 2857 2843 1990 2018
+d3 0.000 47.3% (+242, =216, -282) 2843 2819 1990 2018
+a3 0.000 48.2% (+223, =182, -246) 2834 2771 1991 2018
+c3 0.000 44.0% (+98, =100, -138) 2773 2767 1991 2018
+g4 0.000 38.6% (+55, =43, -100) 2795 2795 1991 2018
+h3 0.000 48.4% (+47, =30, -51) 2834 2782 1990 2018
+h4 0.000 32.6% (+10, =8, -25) 2545 2722 1994 2018
+Nh3 0.000 47.5% (+13, =12, -15) 2834 2653 1993 2018
+Na3 0.000 68.8% (+9, =4, -3) 2834 2528 1992 2018
+a4 0.000 59.4% (+7, =5, -4) 2843 2788 1996 2018
+f3 0.000 36.7% (+4, =3, -8) 2834 2843 1999 2018</code></pre><p>On each output line, we see the move, the probability that this move will be picked (by <code>pickbookmove</code>, described below), the percentage score from the point of view of the side to move, the number of wins, draws and losses, the maximum rating, the maximum opponent rating, the first year played, and the last year played.</p><p>To pick a book move, use <code>pickbookmove</code>:</p><pre><code class="language-julia-repl">julia&gt; b = domoves(startboard(), &quot;e4&quot;, &quot;c5&quot;);
+
+julia&gt; pickbookmove(b, &quot;/path/to/mybook.obk&quot;, minscore=0.01, mingamecount=10)
+Move(g1f3)</code></pre><p>The optional parameters <code>minscore</code> and <code>mingamecount</code> are used when you want to prevent moves that have almost never been played or have a very low score from being picked.</p><p>If no book moves is found for the input position, <code>pickbookmove</code> returns <code>nothing</code>.</p><h2><a class="nav-anchor" id="Interacting-with-UCI-Engines-1" href="#Interacting-with-UCI-Engines-1">Interacting with UCI Engines</a></h2><p>This section describes how to run and interact with chess engines using the <a href="http://wbec-ridderkerk.nl/html/UCIProtocol.html">Universal Chess Interface</a> protocol. There are hundreds of UCI chess engines out there. A free, strong and popular choice is <a href="https://stockfishchess.org">Stockfish</a>. Stockfish is used as an example in this section, but any other engine should work just as well.</p><p>For the remainder of this section, it is assumed that you know the basics of how the UCI protocol works, and that <code>stockfish</code> is found somewhere in your <code>PATH</code> environment variable</p><p>An engine is started by calling the <code>runengine</code> command, which takes the path to the engine as a parameter:</p><pre><code class="language-julia-repl">julia&gt; using Chess, Chess.UCI
+
+julia&gt; sf = runengine(&quot;stockfish&quot;);</code></pre><p>The first thing you want to do after starting a chess engine is probably to set some UCI parameter values. This can be done with <code>setoption</code>:</p><pre><code class="language-julia-repl">julia&gt; setoption(sf, &quot;Hash&quot;, 256)</code></pre><p>You can send a game to the engine with <code>setboard</code>:</p><pre><code class="language-julia-repl">julia&gt; g = SimpleGame();
+
+julia&gt; domoves!(g, &quot;f4&quot;, &quot;e5&quot;, &quot;fxe5&quot;, &quot;d6&quot;, &quot;exd6&quot;, &quot;Bxd6&quot;, &quot;Nc3&quot;)
+
+julia&gt; setboard(sf, g)</code></pre><p>The second parameter to <code>setboard</code> can also be a <code>Board</code> or a <code>Game</code>.</p><p>To ask the engine to search the position you just sent to it, use the <code>search</code> function. <code>search</code> has two required parameters: The engine and the UCI <code>go</code> command we want to send to it. There is also an optional named parameter <code>infoaction</code>. This parameter is a function that takes each of the engine&#39;s <code>info</code> output lines and does something to them. Here&#39;s an example where we just print the engine output with <code>println</code> as our <code>infoaction</code>:</p><pre><code class="language-julia-repl">julia&gt; search(sf, &quot;go depth 10&quot;, infoaction=println)
+info depth 1 seldepth 1 multipv 1 score cp 275 nodes 42 nps 21000 tbhits 0 time 2 pv d6c5
+info depth 2 seldepth 2 multipv 1 score cp 93 nodes 118 nps 59000 tbhits 0 time 2 pv d6c5 g2g3
+info depth 3 seldepth 3 multipv 1 score cp 83 nodes 207 nps 103500 tbhits 0 time 2 pv a7a6 g2g3 d6c5
+info depth 4 seldepth 4 multipv 1 score cp 23 nodes 809 nps 404500 tbhits 0 time 2 pv g8h6 d2d4 h6g4 g2g3
+info depth 5 seldepth 6 multipv 1 score cp -22 nodes 1669 nps 556333 tbhits 0 time 3 pv g8e7 e2e3 e8g8 g1f3 f8e8 d2d4
+info depth 6 seldepth 7 multipv 1 score mate 3 nodes 2293 nps 764333 tbhits 0 time 3 pv d8h4 g2g3 d6g3 h2g3
+info depth 7 seldepth 6 multipv 1 score mate 3 nodes 2337 nps 779000 tbhits 0 time 3 pv d8h4 g2g3 d6g3 h2g3 h4g3
+info depth 8 seldepth 6 multipv 1 score mate 3 nodes 2387 nps 795666 tbhits 0 time 3 pv d8h4 g2g3 d6g3 h2g3 h4g3
+info depth 9 seldepth 6 multipv 1 score mate 3 nodes 2436 nps 812000 tbhits 0 time 3 pv d8h4 g2g3 d6g3 h2g3 h4g3
+info depth 10 seldepth 6 multipv 1 score mate 3 nodes 2502 nps 625500 tbhits 0 time 4 pv d8h4 g2g3 d6g3 h2g3 h4g3
+BestMoveInfo (best=d8h4, ponder=g2g3)</code></pre><p>The return value is a <code>BestMoveInfo</code>, a struct containing the two slots <code>bestmove</code> (the best move returned by the engine, a <code>Move</code>) and <code>ponder</code> (the ponder move returned by the engine, a <code>Move</code> or <code>nothing</code>).</p><p>In most cases, we want something more easily manipulatable than the raw string values sent by the engine&#39;s <code>info</code> lines in our <code>infoaction</code> function. The function <code>parseinfoline</code> takes care of this. It takes an <code>info</code> string as input and returns a <code>SearchInfo</code> value, a struct that contains the various components of the <code>info</code> line as its slots. See the documentation for <code>SearchInfo</code> in the API reference for details.</p><footer><hr/><a class="previous" href="../"><span class="direction">Previous</span><span class="title">Home</span></a><a class="next" href="../api/"><span class="direction">Next</span><span class="title">API Reference</span></a></footer></article></body></html>
