@@ -83,7 +83,8 @@ end
 
 function lichesslink(board)
     Node(:a,
-         Dict(:href => lichessurl(board)),
+         Dict(:href => lichessurl(board),
+              :target => "_blank"),
          "Open in lichess")
 end
 
