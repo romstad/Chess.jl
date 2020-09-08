@@ -523,7 +523,8 @@ end
 
 All moves at this node in the game tree.
 
-One move for each child node of the current node.
+One move for each child node of the current node. The first element is the
+main line.
 
 # Examples
 
