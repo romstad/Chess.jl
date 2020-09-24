@@ -180,9 +180,9 @@ function addgame!(entries::Vector{BookEntry}, g::SimpleGame,
         w = result == "1-0" ? 1 : 0
         d = result == "1/2-1/2" ? 1 : 0
         l = result == "0-1" ? 1 : 0
-        welo = whiteelo(g) ≠ nothing ? whiteelo(g) : 0
-        belo = blackelo(g) ≠ nothing ? blackelo(g) : 0
-        date = dateplayed(g) ≠ nothing ? dateplayed(g) : Date(1900, 1, 1)
+        welo = !isnothing(whiteelo(g)) ? whiteelo(g) : 0
+        belo = !isnothing(blackelo(g)) ? blackelo(g) : 0
+        date = !isnothing(dateplayed(g)) ? dateplayed(g) : Date(1900, 1, 1)
         year = Dates.year(date)
         wscore = computescore(result, WHITE, welo, date,
                               scorewhitewin, scorewhitedraw, scorewhiteloss,
@@ -402,7 +402,7 @@ function findbookentries(key::UInt64, bookfilename::String)::Vector{BookEntry}
         entrysize = compact ? COMPACT_ENTRY_SIZE : ENTRY_SIZE
         entrycount = div(filesize(bookfilename) - 1, entrysize)
         i = findkey(f, key, 0, entrycount - 1, entrysize)
-        if i ≠ nothing
+        if !isnothing(i)
             for j in i:entrycount
                 e = readentry(f, j, compact)
                 if e.key == key
