@@ -742,9 +742,9 @@ function mpvsearch(g::Union{Board, SimpleGame, Game}, e::Engine;
 
     setoption(e, "MultiPV", pvs)
     setboard(e, g)
-    if nodes != nothing
+    if !isnothing(nodes)
         search(e, "go nodes $nodes", infoaction = infoaction)
-    elseif depth != nothing
+    elseif !isnothing(depth)
         search(e, "go depth $depth", infoaction = infoaction)
     else
         Error("You must supply either the `nodes` or the `depth` parameter")

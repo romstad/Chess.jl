@@ -3,7 +3,7 @@
 
 @test colorfromchar('w') == WHITE
 @test colorfromchar('b') == BLACK
-@test colorfromchar('?') == nothing
+@test isnothing(colorfromchar('?'))
 
 @test tochar(WHITE) == 'w'
 @test tochar(BLACK) == 'b'

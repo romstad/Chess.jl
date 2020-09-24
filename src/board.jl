@@ -3047,7 +3047,7 @@ function fromfen(fen::String)::Union{Board, Nothing}
     f = FILE_A.val
     for c in components[1]
         p = piecefromchar(c)
-        if p ≠ nothing
+        if !isnothing(p)
             s = Square(SquareFile(f), SquareRank(r))
             putpiece!(result, p, s)
             f += 1
@@ -3073,7 +3073,7 @@ function fromfen(fen::String)::Union{Board, Nothing}
     comp = get(components, 3, "-")
     for ch in comp
         i = findfirst(isequal(ch), "KQkq")
-        if i ≠ nothing
+        if !isnothing(i)
             result.castlerights |= 1 << (i - 1)
         end
     end
@@ -3081,7 +3081,7 @@ function fromfen(fen::String)::Union{Board, Nothing}
 
     comp = get(components, 4, "-")
     s = squarefromstring(String(comp))
-    if s ≠ nothing
+    if !isnothing(s)
         result.epsq = s.val
         result.key ⊻= zobep(s)
     end

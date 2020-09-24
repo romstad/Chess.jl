@@ -10,7 +10,7 @@ begin
     @test movetosan(b, Move(SQ_G3, SQ_E4)) == "Nge4"
     @test movefromsan(b, "Nce4") == Move(SQ_C3, SQ_E4)
     @test movetosan(b, Move(SQ_C3, SQ_E4)) == "Nce4"
-    @test movefromsan(b, "Ne4") == nothing
+    @test isnothing(movefromsan(b, "Ne4"))
     @test movefromsan(b, "O-O-O") == Move(SQ_E1, SQ_C1)
     @test movetosan(b, Move(SQ_E1, SQ_C1)) == "O-O-O"
     @test movefromsan(b, "O-O+") == Move(SQ_E1, SQ_G1)
@@ -21,17 +21,17 @@ begin
     @test movetosan(b, Move(SQ_G3, SQ_E4)) == "Ne4"
 
     b = fromfen("4k3/R7/8/8/8/8/8/R3K3 w -")
-    @test movefromsan(b, "Ra6") == nothing
+    @test isnothing(movefromsan(b, "Ra6"))
     @test movefromsan(b, "R1a6") == Move(SQ_A1, SQ_A6)
     @test movetosan(b, Move(SQ_A1, SQ_A6)) == "R1a6"
     @test movefromsan(b, "R7a6") == Move(SQ_A7, SQ_A6)
     @test movetosan(b, Move(SQ_A7, SQ_A6)) == "R7a6"
 
     b = fromfen("4k3/8/8/3q1q2/3q1q2/8/8/4K3 b -")
-    @test movefromsan(b, "Qde4#") == nothing
-    @test movefromsan(b, "Qfe4#") == nothing
-    @test movefromsan(b, "Q4e4#") == nothing
-    @test movefromsan(b, "Q5e4#") == nothing
+    @test isnothing(movefromsan(b, "Qde4#"))
+    @test isnothing(movefromsan(b, "Qfe4#"))
+    @test isnothing(movefromsan(b, "Q4e4#"))
+    @test isnothing(movefromsan(b, "Q5e4#"))
     @test movefromsan(b, "Qd4e4#") == Move(SQ_D4, SQ_E4)
     @test movetosan(b, Move(SQ_D4, SQ_E4)) == "Qd4e4#"
     @test movefromsan(b, "Qd5e4#") == Move(SQ_D5, SQ_E4)
