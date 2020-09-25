@@ -604,7 +604,7 @@ end
 """
     onlyfirst(ss::SquareSet)
 
-Return a square set with all squares excep the first removed.
+Return a square set with all squares except the first removed.
 
 # Examples
 
