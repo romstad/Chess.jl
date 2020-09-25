@@ -1029,7 +1029,6 @@ function colorpprint(ss::SquareSet)
         for fi in 1:8
             f = SquareFile(fi)
             bg = (ri + fi) % 2 == 0 ? 0x87CEFF : 0x6CA6CD
-            #bg = (ri + fi) % 2 == 0 ? 0xCDA776 : 0xA0522D
             bg = (ri + fi) % 2 == 0 ? 0x8accc0 : 0x66b0a3
             if Square(f, r) ∈ ss
                 print(Crayon(background = bg, foreground = 0xff1654), " * ")

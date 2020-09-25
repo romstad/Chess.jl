@@ -165,83 +165,23 @@ end
 
 
 function square(file, rank)
-    file * 8 + rank
+    8 * file + rank
 end
 
 
-function ratt(s, block)
+function computeslidingattacks(s, occ, dirs, ix)
     result = UInt64(0)
     (fl, rk) = fldmod(s, 8)
-    for r in (rk + 1):7
-        s = square(fl, r)
-        result |= UInt64(1) << s
-        if (block & UInt64(1) << s) != 0
-            break
-        end
-    end
-    for r in (rk - 1):-1:0
-        s = square(fl, r)
-        result |= UInt64(1) << s
-        if (block & UInt64(1) << s) != 0
-            break
-        end
-    end
-    for f in (fl + 1):7
-        s = square(f, rk)
-        result |= UInt64(1) << s
-        if (block & UInt64(1) << s) != 0
-            break
-        end
-    end
-    for f in (fl - 1):-1:0
-        s = square(f, rk)
-        result |= UInt64(1) << s
-        if (block & UInt64(1) << s) != 0
-            break
-        end
-    end
-    result
-end
-
-
-function batt(s, block)
-    result = UInt64(0)
-    (fl, rk) = fldmod(s, 8)
-    for i in 1:7
-        if fl + i <= 7 && rk + i <= 7
-            s = UInt64(1) << square(fl + i, rk + i)
+    while dirs[ix] ≠ 0
+        (dx, dy) = ((dirs[ix] & 3) - 2, (dirs[ix] >> 2) - 2)
+        (f, r) = (fl + dx, rk + dy)
+        while 0 ≤ f ≤ 7 && 0 ≤ r ≤ 7
+            s = UInt64(1) << square(f, r)
             result |= s
-            if (block & s) != 0
-                break
-            end
+            (occ & s) ≠ 0 && break
+            f += dx; r += dy
         end
-    end
-    for i in 1:7
-        if fl + i <= 7 && rk - i >= 0
-            s = UInt64(1) << square(fl + i, rk - i)
-            result |= s
-            if (block & s) != 0
-                break
-            end
-        end
-    end
-    for i in 1:7
-        if fl - i >= 0 && rk + i <= 7
-            s = UInt64(1) << square(fl - i, rk + i)
-            result |= s
-            if (block & s) != 0
-                break
-            end
-        end
-    end
-    for i in 1:7
-        if fl - i >= 0 && rk - i >= 0
-            s = UInt64(1) << square(fl - i, rk - i)
-            result |= s
-            if (block & s) != 0
-                break
-            end
-        end
+        ix += 1
     end
     result
 end
@@ -249,18 +189,15 @@ end
 
 function computeattackdb()
     result = Array{UInt64, 1}(zeros(107648))
+    dirs = [5, 7, 13, 15, 0, 6, 9, 11, 14, 0]
     for s in 0:63
-        m = B_MAGIC[s + 1]
-        bits = 64 - m.shift
-        for i in 0:((1 << bits) - 1)
-            b = indextou64(i, bits, m.mask)
-            result[magicindex(m, b)] = batt(s, b)
-        end
-        m = R_MAGIC[s + 1]
-        bits = 64 - m.shift
-        for i in 0:((1 << bits) - 1)
-            b = indextou64(i, bits, m.mask)
-            result[magicindex(m, b)] = ratt(s, b)
+        for i ∈ 0:1
+            m = i == 0 ? B_MAGIC[s+1] : R_MAGIC[s+1]
+            bits = 64 - m.shift
+            for j ∈ 0:((1 << bits) - 1)
+                b = indextou64(j, bits, m.mask)
+                result[magicindex(m, b)] = computeslidingattacks(s, b, dirs, i * 5 + 1)
+            end
         end
     end
     result
