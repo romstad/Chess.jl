@@ -24,14 +24,14 @@ function movefromsan(b::Board, san::String)::Union{Move, Nothing}
     # Castling moves
     if length(san) >= 5 && san[1:5] == "O-O-O"
         for m in ms
-            if ptype(pieceon(b, from(m))) == KING && to(m) - from(m) == 2 * DELTA_W
+            if moveislongcastle(b, m)
                 return m
             end
         end
         return nothing
     elseif length(san) >= 3 && san[1:3] == "O-O"
         for m in ms
-            if ptype(pieceon(b, from(m))) == KING && to(m) - from(m) == 2 * DELTA_E
+            if moveisshortcastle(b, m)
                 return m
             end
         end
@@ -137,9 +137,9 @@ function movetosan(b::Board, m::Move)::String
     result = IOBuffer()
 
     # Castling
-    if pt == KING && t - f == 2 * DELTA_W
+    if moveislongcastle(b, m)
         write(result, "O-O-O")
-    elseif pt == KING && t - f == 2 * DELTA_E
+    elseif moveiscastle(b, m)
         write(result, "O-O")
     elseif pt == PAWN
         if file(f) != file(t) # Capture

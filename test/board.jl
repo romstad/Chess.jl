@@ -114,6 +114,94 @@ begin
     @test perft(b, 5) == 674624
     # @test perft(b, 6) == 11030083
     # @test perft(b, 7) == 178633661
+
+    b = fromfen("bqnb1rkr/pp3ppp/3ppn2/2p5/5P2/P2P4/NPP1P1PP/BQ1BNRKR w HFhf -")
+    @test perft(b, 0) == 1
+    @test perft(b, 1) == 21
+    @test perft(b, 2) == 528
+    @test perft(b, 3) == 12189
+    @test perft(b, 4) == 326672
+    @test perft(b, 5) == 8146062
+
+    b = fromfen("b1qr1krb/pp1ppppp/n2n4/8/2p5/2P3P1/PP1PPP1P/BNQRNKRB w GDgd -")
+    @test perft(b, 0) == 1
+    @test perft(b, 1) == 28
+    @test perft(b, 2) == 707
+    @test perft(b, 3) == 19721
+    @test perft(b, 4) == 549506
+    @test perft(b, 5) == 15583376
+
+    b = fromfen("nrnbqkbr/2pp2pp/4pp2/pp6/8/1P3P2/P1PPPBPP/NRNBQ1KR w hb -")
+    @test perft(b, 0) == 1
+    @test perft(b, 1) == 25
+    @test perft(b, 2) == 656
+    @test perft(b, 3) == 16951
+    @test perft(b, 4) == 466493
+    @test perft(b, 5) == 12525939
+
+    b = fromfen("qnbbrknr/1p1ppppp/8/p1p5/5P2/PP1P4/2P1P1PP/QNBBRKNR w HEhe -")
+    @test perft(b, 0) == 1
+    @test perft(b, 1) == 27
+    @test perft(b, 2) == 573
+    @test perft(b, 3) == 16331
+    @test perft(b, 4) == 391656
+    @test perft(b, 5) == 11562434
+
+    b = fromfen("nrq1kbnr/p1pbpppp/3p4/1p6/6P1/1N3N2/PPPPPP1P/1RBQKB1R w HBhb -")
+    @test perft(b, 0) == 1
+    @test perft(b, 1) == 24
+    @test perft(b, 2) == 648
+    @test perft(b, 3) == 16640
+    @test perft(b, 4) == 471192
+    @test perft(b, 5) == 12871967
+
+    b = fromfen("1qrkrnbb/1p1p1ppp/pnp1p3/8/3PP3/P6P/1PP2PP1/NQRKRNBB w ECec -")
+    @test perft(b, 0) == 1
+    @test perft(b, 1) == 24
+    @test perft(b, 2) == 688
+    @test perft(b, 3) == 17342
+    @test perft(b, 4) == 511444
+    @test perft(b, 5) == 13322502
+
+    b = fromfen("1brnqknr/2p1pppp/p2p4/1P6/6P1/4Nb2/PP1PPP1P/BBR1QKNR w HChc -")
+    @test perft(b, 0) == 1
+    @test perft(b, 1) == 34
+    @test perft(b, 2) == 1019
+    @test perft(b, 3) == 32982
+    @test perft(b, 4) == 1003103
+    @test perft(b, 5) == 33322477
+
+    b = fromfen("brn1kbrn/pp2p1pp/3p4/q1p2p2/2P4P/6P1/PP1PPP2/BRNQKBRN w GBgb -")
+    @test perft(b, 0) == 1
+    @test perft(b, 1) == 18
+    @test perft(b, 2) == 477
+    @test perft(b, 3) == 10205
+    @test perft(b, 4) == 273925
+    @test perft(b, 5) == 6720181
+
+    b = fromfen("b1rknnrq/bpppp1p1/p6p/5p1P/6P1/4N3/PPPPPP2/BBRKN1RQ w GCgc -")
+    @test perft(b, 0) == 1
+    @test perft(b, 1) == 33
+    @test perft(b, 2) == 851
+    @test perft(b, 3) == 28888
+    @test perft(b, 4) == 763967
+    @test perft(b, 5) == 26686205
+
+    b = fromfen("brkqnrnb/1p1pp1p1/p4p2/2p4p/8/P2PP3/1PP1QPPP/BRK1NRNB w FBfb -")
+    @test perft(b, 0) == 1
+    @test perft(b, 1) == 24
+    @test perft(b, 2) == 479
+    @test perft(b, 3) == 12584
+    @test perft(b, 4) == 280081
+    @test perft(b, 5) == 7830230
+
+    b = fromfen("brkrqb1n/1pppp1pp/p7/3n1p2/P5P1/3PP3/1PP2P1P/BRKRQBNN w DBdb -")
+    @test perft(b, 0) == 1
+    @test perft(b, 1) == 27
+    @test perft(b, 2) == 669
+    @test perft(b, 3) == 18682
+    @test perft(b, 4) == 484259
+    @test perft(b, 5) == 13956471
 end
 
 begin

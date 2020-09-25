@@ -107,6 +107,9 @@ function SimpleGame(startboard::Board=startboard())
     if fen(startboard) ≠ START_FEN
         setheadervalue!(result, "FEN", fen(startboard))
     end
+    if is960(startboard)
+        setheadervalue!(result, "Variant", "Chess960")
+    end
     result
 end
 
@@ -245,6 +248,9 @@ function Game(startboard::Board)
     result = Game(GameHeaders(), root, root, Dict(root.id => root), 1)
     if fen(startboard) ≠ START_FEN
         setheadervalue!(result, "FEN", fen(startboard))
+    end
+    if is960(startboard)
+        setheadervalue!(result, "Variant", "Chess960")
     end
     result
 end
@@ -1194,6 +1200,22 @@ end
 
 function findnodematching(g::Game, pred)::Union{GameNode, Nothing}
     findnodematching(g.root, pred)
+end
+
+
+"""
+    is960(g::Game)
+    is960(g::SimpleGame)
+
+Tests whether this is a Chess960 game.
+"""
+function is960(g::SimpleGame)::Bool
+    is960(board(g))
+end
+
+
+function is960(g::Game)::Bool
+    is960(board(g))
 end
 
 

@@ -14,12 +14,12 @@ export Board, MoveList, UndoInfo
 export attacksto, attacksfrom, bishopattacks, bishoplike, bishops,
     cancastlekingside, cancastlequeenside, copyto!, divide, domove, domove!,
     domoves, domoves!, donullmove, donullmove!, emptyboard, emptysquares,
-    epsquare, fen, flip, fromfen, haslegalmoves, isattacked, ischeck,
+    epsquare, fen, flip, fromfen, haslegalmoves, is960, isattacked, ischeck,
     ischeckmate, isdraw, ismatein1, ismaterialdraw, isrule50draw, isstalemate,
     isterminal, kings, kingsquare, knights, lastmove, lichess, lichessurl,
     movecount, moves, occupiedsquares, pawns, perft, pieceon, pieces, pinned,
     pprint, queenattacks, queens, recycle!, rooklike, rookattacks, rooks, see,
-    sidetomove, startboard, undomove!
+    sidetomove, startboard, startboard960, undomove!
 
 
 """
@@ -38,6 +38,7 @@ mutable struct Board
     bytype::MVector{6, SquareSet}
     side::UInt8
     castlerights::UInt8
+    castlefiles::MVector{2, UInt8}
     epsq::UInt8
     r50::UInt8
     ksq::MVector{2, UInt8}
@@ -46,6 +47,7 @@ mutable struct Board
     checkers::SquareSet
     pin::SquareSet
     key::UInt64
+    is960::Bool
 end
 
 
@@ -81,6 +83,7 @@ function copyto!(dest::Board, src::Board)
     copyto!(dest.bytype, src.bytype)
     dest.side = src.side
     dest.castlerights = src.castlerights
+    copyto!(dest.castlefiles, src.castlefiles)
     dest.epsq = src.epsq
     dest.r50 = src.r50
     copyto!(dest.ksq, src.ksq)
@@ -89,6 +92,7 @@ function copyto!(dest::Board, src::Board)
     dest.checkers = src.checkers
     dest.pin = src.pin
     dest.key = src.key
+    dest.is960 = src.is960
     dest
 end
 
@@ -100,6 +104,7 @@ function emptyboard()::Board
         @MVector([SS_EMPTY, SS_EMPTY, SS_EMPTY, SS_EMPTY, SS_EMPTY, SS_EMPTY]),
         UInt8(WHITE.val),
         0,
+        @MVector([UInt8(FILE_H.val), UInt8(FILE_A.val)]),
         UInt8(SQ_NONE.val),
         0,
         @MVector([SQ_NONE.val, SQ_NONE.val]),
@@ -107,8 +112,19 @@ function emptyboard()::Board
         SS_EMPTY,
         SS_EMPTY,
         SS_EMPTY,
-        0
+        0,
+        false
     )
+end
+
+
+"""
+    is960(b::Board)
+
+Tests whether a board is a Chess960 position.
+"""
+function is960(b::Board)::Bool
+    b.is960
 end
 
 
@@ -650,6 +666,34 @@ function cancastlequeenside(b::Board, c::PieceColor)::Bool
 end
 
 
+function kingsidecastlefile(b::Board)::SquareFile
+    SquareFile(@inbounds b.castlefiles[1])
+end
+
+
+function queensidecastlefile(b::Board)::SquareFile
+    SquareFile(@inbounds b.castlefiles[2])
+end
+
+
+function moveiscastle(b::Board, m::Move)::Bool
+    f = from(m);
+    t = to(m)
+    us = sidetomove(b)
+    f == kingsquare(b, us) && (distance(f, t) > 1 || t ∈ rooks(b, us))
+end
+
+
+function moveisshortcastle(b::Board, m::Move)::Bool
+    moveiscastle(b, m) && file(from(m)) < file(to(m))
+end
+
+
+function moveislongcastle(b::Board, m::Move)::Bool
+    moveiscastle(b, m) && file(from(m)) > file(to(m))
+end
+
+
 """
     bishopattacks(b::Board, s::Square)
 
@@ -1125,23 +1169,23 @@ end
 
 
 function updatecastlerights!(b::Board, f::Square, t::Square)
-    CASTLE_RIGHTS = SVector(
-        ~UInt8(8), ~UInt8(0), ~UInt8(0), ~UInt8(0), ~UInt8(0), ~UInt8(0), ~UInt8(0), ~UInt8(2),
-        ~UInt8(0), ~UInt8(0), ~UInt8(0), ~UInt8(0), ~UInt8(0), ~UInt8(0), ~UInt8(0), ~UInt8(0),
-        ~UInt8(0), ~UInt8(0), ~UInt8(0), ~UInt8(0), ~UInt8(0), ~UInt8(0), ~UInt8(0), ~UInt8(0),
-        ~UInt8(0), ~UInt8(0), ~UInt8(0), ~UInt8(0), ~UInt8(0), ~UInt8(0), ~UInt8(0), ~UInt8(0),
-        ~UInt8(12), ~UInt8(0), ~UInt8(0), ~UInt8(0), ~UInt8(0), ~UInt8(0), ~UInt8(0), ~UInt8(3),
-        ~UInt8(0), ~UInt8(0), ~UInt8(0), ~UInt8(0), ~UInt8(0), ~UInt8(0), ~UInt8(0), ~UInt8(0),
-        ~UInt8(0), ~UInt8(0), ~UInt8(0), ~UInt8(0), ~UInt8(0), ~UInt8(0), ~UInt8(0), ~UInt8(0),
-        ~UInt8(4), ~UInt8(0), ~UInt8(0), ~UInt8(0), ~UInt8(0), ~UInt8(0), ~UInt8(0), ~UInt8(1),
-    )
     crights = b.castlerights
-    b.castlerights &= CASTLE_RIGHTS[f.val]
-    b.castlerights &= CASTLE_RIGHTS[t.val]
+    if t == kingsquare(b, WHITE)
+        b.castlerights &= ~3
+    elseif t == kingsquare(b, BLACK)
+        b.castlerights &= ~12
+    elseif f == Square(kingsidecastlefile(b), RANK_1) || t == Square(kingsidecastlefile(b), RANK_1)
+        b.castlerights &= ~1
+    elseif f == Square(queensidecastlefile(b), RANK_1) || t == Square(queensidecastlefile(b), RANK_1)
+        b.castlerights &= ~2
+    elseif f == Square(kingsidecastlefile(b), RANK_8) || t == Square(kingsidecastlefile(b), RANK_8)
+        b.castlerights &= ~4
+    elseif f == Square(queensidecastlefile(b), RANK_8) || t == Square(queensidecastlefile(b), RANK_8)
+        b.castlerights &= ~8
+    end
     b.key ⊻= zobcastle(crights)
     b.key ⊻= zobcastle(b.castlerights)
 end
-
 
 
 function findcheckers(b::Board)::SquareSet
@@ -1219,6 +1263,7 @@ function domove(b::Board, m::Move)::Board
     capture = pieceon(b, t)
     us = sidetomove(b)
     pt = ptype(pieceon(b, f))
+    castle = pt == KING && (distance(f, t) > 1 || pieceon(b, t) == Piece(us, ROOK))
 
     result.side = coloropp(us).val
     result.r50 += 1
@@ -1229,7 +1274,7 @@ function domove(b::Board, m::Move)::Board
         result.key ⊻= zobep(epsquare(b))
     end
 
-    if capture ≠ EMPTY
+    if capture ≠ EMPTY && !castle
         removepiece!(result, t)
         result.r50 = 0
     end
@@ -1241,15 +1286,15 @@ function domove(b::Board, m::Move)::Board
         movepiece!(result, f, t)
         removepiece!(result, Square(file(t), rank(f)))
         result.r50 = 0
-    elseif pt == KING && distance(f, t) > 1 # Castle
-        movepiece!(result, f, t)
-        if file(t) == FILE_C
-            rfrom = Square(FILE_A, rank(f))
-            movepiece!(result, rfrom, rfrom + 3 * DELTA_E)
-        else
-            rfrom = Square(FILE_H, rank(f))
-            movepiece!(result, rfrom, rfrom + 2 * DELTA_W)
-        end
+    elseif castle
+        queenside = file(t) < file(f)
+        kt = Square(queenside ? FILE_C : FILE_G, rank(f))
+        rf = Square(queenside ? queensidecastlefile(b) : kingsidecastlefile(b), rank(f))
+        rt = Square(queenside ? FILE_D : FILE_F, rank(f))
+        removepiece!(result, f)
+        removepiece!(result, rf)
+        putpiece!(result, Piece(us, KING), kt)
+        putpiece!(result, Piece(us, ROOK), rt)
     else
         movepiece!(result, f, t)
         if pt == PAWN
@@ -1282,6 +1327,7 @@ struct UndoInfo
     epsq::UInt8
     r50::UInt8
     move::UInt16
+    movewascastle::Bool
     checkers::SquareSet
     pin::SquareSet
     capture::Piece
@@ -1337,9 +1383,10 @@ function domove!(b::Board, m::Move)::UndoInfo
     us = sidetomove(b)
     pt = ptype(pieceon(b, f))
     ep = epsquare(b)
+    castle = pt == KING && (distance(f, t) > 1 || pieceon(b, t) == Piece(us, ROOK))
 
-    result = UndoInfo(b.castlerights, b.epsq, b.r50, b.move, b.checkers, b.pin,
-                      capture, b.key)
+    result = UndoInfo(b.castlerights, b.epsq, b.r50, b.move, castle, b.checkers,
+                      b.pin, capture, b.key)
 
     b.side = coloropp(us).val
     b.r50 += 1
@@ -1350,7 +1397,7 @@ function domove!(b::Board, m::Move)::UndoInfo
         b.key ⊻= zobep(ep)
     end
 
-    if capture ≠ EMPTY
+    if capture ≠ EMPTY && !castle
         removepiece!(b, t)
         b.r50 = 0
     end
@@ -1362,15 +1409,15 @@ function domove!(b::Board, m::Move)::UndoInfo
         movepiece!(b, f, t)
         removepiece!(b, Square(file(t), rank(f)))
         b.r50 = 0
-    elseif pt == KING && distance(f, t) > 1 # Castle
-        movepiece!(b, f, t)
-        if file(t) == FILE_C
-            rfrom = Square(FILE_A, rank(f))
-            movepiece!(b, rfrom, rfrom + 3 * DELTA_E)
-        else
-            rfrom = Square(FILE_H, rank(f))
-            movepiece!(b, rfrom, rfrom + 2 * DELTA_W)
-        end
+    elseif castle
+        queenside = file(t) < file(f)
+        kt = Square(queenside ? FILE_C : FILE_G, rank(f))
+        rf = Square(queenside ? queensidecastlefile(b) : kingsidecastlefile(b), rank(f))
+        rt = Square(queenside ? FILE_D : FILE_F, rank(f))
+        removepiece!(b, f)
+        removepiece!(b, rf)
+        putpiece!(b, Piece(us, KING), kt)
+        putpiece!(b, Piece(us, ROOK), rt)
     else
         movepiece!(b, f, t)
         if pt == PAWN
@@ -1466,15 +1513,15 @@ function undomove!(b::Board, u::UndoInfo)
     elseif pt == PAWN && t == ep
         movepiece!(b, t, f)
         putpiece!(b, Piece(them, PAWN), Square(file(t), rank(f)))
-    elseif pt == KING && distance(f, t) > 1 # Castle
-        movepiece!(b, t, f)
-        if file(t) == FILE_C
-            rfrom = Square(FILE_A, rank(f))
-            movepiece!(b, rfrom + 3 * DELTA_E, rfrom)
-        else
-            rfrom = Square(FILE_H, rank(f))
-            movepiece!(b, rfrom + 2 * DELTA_W, rfrom)
-        end
+    elseif u.movewascastle
+        queenside = file(t) < file(f)
+        kt = Square(queenside ? FILE_C : FILE_G, rank(f))
+        rf = Square(queenside ? queensidecastlefile(b) : kingsidecastlefile(b), rank(f))
+        rt = Square(queenside ? FILE_D : FILE_F, rank(f))
+        removepiece!(b, kt)
+        removepiece!(b, rt)
+        putpiece!(b, Piece(us, KING), f)
+        putpiece!(b, Piece(us, ROOK), rf)
     else
         movepiece!(b, t, f)
         if capture ≠ EMPTY
@@ -1648,8 +1695,8 @@ back.
 function donullmove!(b::Board)::UndoInfo
     us = sidetomove(b)
     ep = epsquare(b)
-    result = UndoInfo(b.castlerights, b.epsq, b.r50, b.move, b.checkers, b.pin,
-                      EMPTY, b.key)
+    result = UndoInfo(b.castlerights, b.epsq, b.r50, b.move, false, b.checkers,
+                      b.pin, EMPTY, b.key)
     b.side = coloropp(us).val
     b.r50 += 1
     b.epsq = SQ_NONE.val
@@ -2601,24 +2648,41 @@ function haskingevasions(b::Board)::Bool
 end
 
 
+function castleislegal(b, kf, kt, rf, rt)::Bool
+    them = coloropp(sidetomove(b))
+    if !isempty((squaresbetween(kf, kt) + kt) ∩ (occupiedsquares(b) - kf -rf))
+        false
+    elseif !isempty((squaresbetween(rf, rt) + rt) ∩ (occupiedsquares(b) - kf - rf))
+        false
+    else
+        for s ∈ squaresbetween(kf, kt) + kt
+            if isattacked(b, s, them)
+                return false
+            end
+        end
+        isempty(rookattacks(occupiedsquares(b) - rf - kf, kt) ∩ rooklike(b, them))
+    end
+end
+
+
 function gencastles(b::Board, list::MoveList)
     us = sidetomove(b)
     them = coloropp(us)
-    ksq = kingsquare(b, us)
+    kf = kingsquare(b, us)
     if cancastlequeenside(b, us)
-        rsq = Square(FILE_A, rank(ksq))
-        if isempty(occupiedsquares(b) ∩ squaresbetween(ksq, rsq)) &&
-            !isattacked(b, ksq + DELTA_W, them) &&
-            !isattacked(b, ksq + 2 * DELTA_W, them)
-            push!(list, Move(ksq, ksq + 2 * DELTA_W))
+        rf = Square(queensidecastlefile(b), rank(kf))
+        rt = Square(FILE_D, rank(kf))
+        kt = Square(FILE_C, rank(kf))
+        if castleislegal(b, kf, kt, rf, rt)
+            push!(list, Move(kf, b.is960 ? rf : kt))
         end
     end
     if cancastlekingside(b, us)
-        rsq = Square(FILE_H, rank(ksq))
-        if isempty(occupiedsquares(b) ∩ squaresbetween(ksq, rsq)) &&
-            !isattacked(b, ksq + DELTA_E, them) &&
-            !isattacked(b, ksq + 2 * DELTA_E, them)
-            push!(list, Move(ksq, ksq + 2 * DELTA_E))
+        rf = Square(kingsidecastlefile(b), rank(kf))
+        rt = Square(FILE_F, rank(kf))
+        kt = Square(FILE_G, rank(kf))
+        if castleislegal(b, kf, kt, rf, rt)
+            push!(list, Move(kf, b.is960 ? rf : kt))
         end
     end
 end
@@ -2628,20 +2692,21 @@ function countcastles(b::Board)::Int
     result = 0
     us = sidetomove(b)
     them = coloropp(us)
-    ksq = kingsquare(b, us)
+    kf = kingsquare(b, us)
+
     if cancastlequeenside(b, us)
-        rsq = Square(FILE_A, rank(ksq))
-        if isempty(occupiedsquares(b) ∩ squaresbetween(ksq, rsq)) &&
-            !isattacked(b, ksq + DELTA_W, them) &&
-            !isattacked(b, ksq + 2 * DELTA_W, them)
+        rf = Square(queensidecastlefile(b), rank(kf))
+        rt = Square(FILE_D, rank(kf))
+        kt = Square(FILE_C, rank(kf))
+        if castleislegal(b, kf, kt, rf, rt)
             result += 1
         end
     end
     if cancastlekingside(b, us)
-        rsq = Square(FILE_H, rank(ksq))
-        if isempty(occupiedsquares(b) ∩ squaresbetween(ksq, rsq)) &&
-            !isattacked(b, ksq + DELTA_E, them) &&
-            !isattacked(b, ksq + 2 * DELTA_E, them)
+        rf = Square(kingsidecastlefile(b), rank(kf))
+        rt = Square(FILE_F, rank(kf))
+        kt = Square(FILE_G, rank(kf))
+        if castleislegal(b, kf, kt, rf, rt)
             result += 1
         end
     end
@@ -2652,20 +2717,20 @@ end
 function hascastles(b::Board)::Bool
     us = sidetomove(b)
     them = coloropp(us)
-    ksq = kingsquare(b, us)
+    kf = kingsquare(b, us)
     if cancastlequeenside(b, us)
-        rsq = Square(FILE_A, rank(ksq))
-        if isempty(occupiedsquares(b) ∩ squaresbetween(ksq, rsq)) &&
-            !isattacked(b, ksq + DELTA_W, them) &&
-            !isattacked(b, ksq + 2 * DELTA_W, them)
+        rf = Square(queensidecastlefile(b), rank(kf))
+        rt = Square(FILE_D, rank(kf))
+        kt = Square(FILE_C, rank(kf))
+        if castleislegal(b, kf, kt, rf, rt)
             return true
         end
     end
     if cancastlekingside(b, us)
-        rsq = Square(FILE_H, rank(ksq))
-        if isempty(occupiedsquares(b) ∩ squaresbetween(ksq, rsq)) &&
-            !isattacked(b, ksq + DELTA_E, them) &&
-            !isattacked(b, ksq + 2 * DELTA_E, them)
+        rf = Square(kingsidecastlefile(b), rank(ksq))
+        rt = Square(FILE_F, rank(kf))
+        kt = Square(FILE_G, rank(kf))
+        if castleislegal(b, kf, kt, rf, rt)
             return true
         end
     end
@@ -3043,6 +3108,8 @@ returns `nothing`.
 function fromfen(fen::String)::Union{Board, Nothing}
     result = emptyboard()
     components = split(fen, r"\s+")
+
+    # Board
     r = RANK_8.val
     f = FILE_A.val
     for c in components[1]
@@ -3061,6 +3128,7 @@ function fromfen(fen::String)::Union{Board, Nothing}
         end
     end
 
+    # Side to move
     comp = get(components, 2, "w")
     c = colorfromchar(comp[1])
     if isok(c)
@@ -3070,11 +3138,34 @@ function fromfen(fen::String)::Union{Board, Nothing}
         end
     end
 
+    # Castle rights
     comp = get(components, 3, "-")
-    for ch in comp
-        i = findfirst(isequal(ch), "KQkq")
-        if !isnothing(i)
-            result.castlerights |= 1 << (i - 1)
+    if comp ≠ "-"
+        for ch in comp
+            i = findfirst(isequal(ch), "KQkq")
+            if !isnothing(i)
+                result.castlerights |= 1 << (i - 1)
+            elseif 'A' ≤ ch ≤ 'H'
+                result.is960 = true
+                f = filefromchar(lowercase(ch))
+                if f > file(kingsquare(result, WHITE))
+                    result.castlerights |= 1
+                    result.castlefiles[1] = f.val
+                else
+                    result.castlerights |= 2
+                    result.castlefiles[2] = f.val
+                end
+            elseif 'a' ≤ ch ≤ 'h'
+                result.is960 = true
+                f = filefromchar(lowercase(ch))
+                if f > file(kingsquare(result, BLACK))
+                    result.castlerights |= 4
+                    result.castlefiles[1] = f.val
+                else
+                    result.castlerights |= 8
+                    result.castlefiles[2] = f.val
+                end
+            end
         end
     end
     result.key ⊻= zobcastle(result.castlerights)
@@ -3095,11 +3186,16 @@ end
 function castlestring(b::Board)::String
     if b.castlerights == 0
         "-"
-    else
+    elseif !b.is960
         ((b.castlerights & 1) ≠ 0 ? "K" : "") *
             ((b.castlerights & 2) ≠ 0 ? "Q" : "") *
             ((b.castlerights & 4) ≠ 0 ? "k" : "") *
             ((b.castlerights & 8) ≠ 0 ? "q" : "")
+    else
+        ((b.castlerights & 1) ≠ 0 ? string(uppercase(tochar(SquareFile(b.castlefiles[1])))) : "") *
+        ((b.castlerights & 2) ≠ 0 ? string(uppercase(tochar(SquareFile(b.castlefiles[2])))) : "") *
+        ((b.castlerights & 4) ≠ 0 ? string(lowercase(tochar(SquareFile(b.castlefiles[1])))) : "") *
+        ((b.castlerights & 8) ≠ 0 ? string(lowercase(tochar(SquareFile(b.castlefiles[2])))) : "")
     end
 end
 
@@ -3154,10 +3250,27 @@ const START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -"
 """
     startboard()
 
-Gives a `Board` object with the standard chess initial position.
+Returns a `Board` object with the standard chess initial position.
 """
 function startboard()::Board
     fromfen(START_FEN)
+end
+
+"""
+    startboard960(i=nothing)
+
+Returns a `Board` object with a Chess960 starting position.
+
+The optional parameter `i` -- an integer in the range 0..959 -- is used to
+pick a particular Chess960 position, using the indexing scheme described
+[here](https://en.wikipedia.org/wiki/Fischer_random_chess_numbering_scheme).
+When this parameter is omitted, the function picks a random position.
+"""
+function startboard960(i=nothing)
+    if isnothing(i)
+        i = rand(0:959)
+    end
+    fromfen(chess960fen(i))
 end
 
 
