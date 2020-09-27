@@ -73,13 +73,13 @@ end
 
 
 function playerid(db::SQLite.DB, playername::String)
-    q = SQLite.Query(db, "SELECT id FROM players WHERE name=?",
-                     values = [playername]) |> collect
+    q =
+        SQLite.Query(db, "SELECT id FROM players WHERE name=?", values = [playername]) |>
+        collect
     if !isempty(q)
         first(q)[:id]
     else
-        SQLite.Query(db, "INSERT INTO players (name) VALUES (?)",
-                     values = [playername])
+        SQLite.Query(db, "INSERT INTO players (name) VALUES (?)", values = [playername])
         q = SQLite.Query(db, "SELECT last_insert_rowid() AS id")
         first(q)[:id]
     end
@@ -121,7 +121,7 @@ Inserts a game into the database.
 The game is added to the `games` table. If one or both players are missing
 from the `players` table, they are added there.
 """
-function insertgame!(db::SQLite.DB, g::Union{SimpleGame, Game})
+function insertgame!(db::SQLite.DB, g::Union{SimpleGame,Game})
     white = headervalue(g, "White")
     black = headervalue(g, "Black")
     event = headervalue(g, "Event")
@@ -134,18 +134,30 @@ function insertgame!(db::SQLite.DB, g::Union{SimpleGame, Game})
     belo = blackelo(g)
     moves = encodemoves(g)
 
-    white= playerid(db, white)
+    white = playerid(db, white)
     black = playerid(db, black)
 
-    SQLite.Query(db, "INSERT INTO games(event, site, date, round, white, black, result, fen, whiteelo, blackelo, othertags, moves) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                 values = [event, site, date, round, white, black, encoderesult(result),
-                 isnothing(fen) ? missing : fen,
-                 isnothing(welo) ? missing : welo,
-                 isnothing(belo) ? missing : belo,
-                 missing, moves])
+    SQLite.Query(
+        db,
+        "INSERT INTO games(event, site, date, round, white, black, result, fen, whiteelo, blackelo, othertags, moves) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        values = [
+            event,
+            site,
+            date,
+            round,
+            white,
+            black,
+            encoderesult(result),
+            isnothing(fen) ? missing : fen,
+            isnothing(welo) ? missing : welo,
+            isnothing(belo) ? missing : belo,
+            missing,
+            moves,
+        ],
+    )
 end
 
-function insertgame!(dbname::String, g::Union{SimpleGame, Game})
+function insertgame!(dbname::String, g::Union{SimpleGame,Game})
     db = SQLite.DB(dbname)
     insertgame!(db, g)
 end
@@ -207,8 +219,7 @@ function readgame(dbname::String, id::Int; annotations = false)
 end
 
 
-function pgntodb(pgnfilename::String, dbfilename::String;
-                 annotations = false)
+function pgntodb(pgnfilename::String, dbfilename::String; annotations = false)
     createdb!(dbfilename)
     db = SQLite.DB(dbfilename)
     gamecount = 0

@@ -2,11 +2,20 @@ module UCI
 
 using ..Chess
 
-export BestMoveInfo, BoundType, Engine, Option, OptionType, OptionValue, Score,
-    SearchInfo
+export BestMoveInfo, BoundType, Engine, Option, OptionType, OptionValue, Score, SearchInfo
 
-export mpvsearch, newgame, parsebestmove, parsesearchinfo, quit, runengine,
-    search, sendcommand, sendisready, setboard, setoption, touci
+export mpvsearch,
+    newgame,
+    parsebestmove,
+    parsesearchinfo,
+    quit,
+    runengine,
+    search,
+    sendcommand,
+    sendisready,
+    setboard,
+    setoption,
+    touci
 
 
 """
@@ -33,7 +42,7 @@ the types `Nothing` (for options of type `button`), `Bool` (for options of type
 `check`, `Int` (for options of type `spin`) and `String` (for options of type
 `combo` or `string`).)
 """
-const OptionValue = Union{Nothing, Bool, Int, String}
+const OptionValue = Union{Nothing,Bool,Int,String}
 
 
 """
@@ -61,34 +70,36 @@ mutable struct Option
 end
 
 
-function parseoptionname(s::String)::Tuple{String, String}
+function parseoptionname(s::String)::Tuple{String,String}
     @assert startswith(s, "name ")
     result = ""
     for c in s[6:end]
         result *= c
         endswith(result, " type") && break
     end
-    (result[1:end - 5], s[length(result) + 2:end])
+    (result[1:end-5], s[length(result)+2:end])
 end
 
 
-function parseoptiontype(s::String)::Tuple{OptionType, String}
+function parseoptiontype(s::String)::Tuple{OptionType,String}
     @assert startswith(s, "type ")
     result = ""
     for c in s[6:end]
         c == ' ' && break
         result *= c
     end
-    optionsbyname = Dict("check" => check,
-                         "spin" => spin,
-                         "combo" => combo,
-                         "button" => button,
-                         "string" => string)
-    (optionsbyname[result], s[length(result) + 6:end])
+    optionsbyname = Dict(
+        "check" => check,
+        "spin" => spin,
+        "combo" => combo,
+        "button" => button,
+        "string" => string,
+    )
+    (optionsbyname[result], s[length(result)+6:end])
 end
 
 
-function parseoptiondefault(ot::OptionType, s::String)::Tuple{OptionValue, String}
+function parseoptiondefault(ot::OptionType, s::String)::Tuple{OptionValue,String}
     if ot == button
         (nothing, s)
     else
@@ -102,14 +113,14 @@ function parseoptiondefault(ot::OptionType, s::String)::Tuple{OptionValue, Strin
                 c == ' ' && break
                 result *= c
             end
-            (parse(Int, result), s[length(result) + 1:end])
+            (parse(Int, result), s[length(result)+1:end])
         elseif ot == combo
             result = ""
             for c in s
                 endswith(result, " var ") && break
                 result *= c
             end
-            (result[1:end - 5], s[length(result) - 3:end])
+            (result[1:end-5], s[length(result)-3:end])
         elseif ot == string
             (s, s)
         end
@@ -117,7 +128,7 @@ function parseoptiondefault(ot::OptionType, s::String)::Tuple{OptionValue, Strin
 end
 
 
-function parsespinminmax(s::String)::Tuple{Int, Int}
+function parsespinminmax(s::String)::Tuple{Int,Int}
     @assert startswith(s, " min ")
     tokens = split(s[2:end], r"\s+")
     @assert length(tokens) >= 4
@@ -126,7 +137,7 @@ function parsespinminmax(s::String)::Tuple{Int, Int}
 end
 
 
-function parsecombovar(s::String)::Tuple{String, String}
+function parsecombovar(s::String)::Tuple{String,String}
     @assert startswith(s, "var ")
     result = ""
     for c in s[5:end]
@@ -134,7 +145,7 @@ function parsecombovar(s::String)::Tuple{String, String}
         result *= c
     end
     if endswith(result, " var ")
-        (result[1:end - 5], s[length(result) + 1: end])
+        (result[1:end-5], s[length(result)+1:end])
     else
         (result, "")
     end
@@ -219,7 +230,7 @@ BestMoveInfo (best=e3f4, ponder=g5f4)
 mutable struct Engine
     name::String
     author::String
-    options::Dict{String, Option}
+    options::Dict{String,Option}
     io::Base.Process
 end
 
@@ -234,7 +245,7 @@ Runs the engine at the specified path, returning an `Engine`.
 """
 function runengine(path::String)::Engine
     process = open(`$path`, "r+")
-    options = Dict{String, Option}()
+    options = Dict{String,Option}()
     println(process, "uci")
     name = path
     author = ""
@@ -385,7 +396,7 @@ Contains the following slots:
 """
 struct BestMoveInfo
     bestmove::Move
-    ponder::Union{Move, Nothing}
+    ponder::Union{Move,Nothing}
 end
 
 
@@ -393,7 +404,10 @@ function Base.show(io::IO, bmi::BestMoveInfo)
     if isnothing(bmi.ponder)
         print(io, "BestMoveInfo (best=$(tostring(bmi.bestmove)))")
     else
-        print(io, "BestMoveInfo (best=$(tostring(bmi.bestmove)), ponder=$(tostring(bmi.ponder)))")
+        print(
+            io,
+            "BestMoveInfo (best=$(tostring(bmi.bestmove)), ponder=$(tostring(bmi.ponder)))",
+        )
     end
 end
 
@@ -441,26 +455,40 @@ of search output:
 - `string`: An arbitrary string sent by the engine.
 """
 mutable struct SearchInfo
-    depth::Union{Nothing, Int}
-    seldepth::Union{Nothing, Int}
-    time::Union{Nothing, Int}
-    nodes::Union{Nothing, Int}
-    pv::Union{Nothing, Vector{Move}}
-    multipv::Union{Nothing, Int}
-    score::Union{Nothing, Score}
-    currmove::Union{Nothing, Move}
-    currmovenumber::Union{Nothing, Int}
-    hashfull::Union{Nothing, Int}
-    nps::Union{Nothing, Int}
-    tbhits::Union{Nothing, Int}
-    cpuload::Union{Nothing, Int}
-    string::Union{Nothing, String}
+    depth::Union{Nothing,Int}
+    seldepth::Union{Nothing,Int}
+    time::Union{Nothing,Int}
+    nodes::Union{Nothing,Int}
+    pv::Union{Nothing,Vector{Move}}
+    multipv::Union{Nothing,Int}
+    score::Union{Nothing,Score}
+    currmove::Union{Nothing,Move}
+    currmovenumber::Union{Nothing,Int}
+    hashfull::Union{Nothing,Int}
+    nps::Union{Nothing,Int}
+    tbhits::Union{Nothing,Int}
+    cpuload::Union{Nothing,Int}
+    string::Union{Nothing,String}
 end
 
 
 function SearchInfo()
-    SearchInfo(nothing, nothing, nothing, nothing, nothing, nothing, nothing,
-               nothing, nothing, nothing, nothing, nothing, nothing, nothing,)
+    SearchInfo(
+        nothing,
+        nothing,
+        nothing,
+        nothing,
+        nothing,
+        nothing,
+        nothing,
+        nothing,
+        nothing,
+        nothing,
+        nothing,
+        nothing,
+        nothing,
+        nothing,
+    )
 end
 
 
@@ -518,17 +546,17 @@ end
 const TokenList = Vector{SubString{String}}
 
 
-function parseinfoint(tokens::TokenList)::Tuple{Int, TokenList}
+function parseinfoint(tokens::TokenList)::Tuple{Int,TokenList}
     (parse(Int, tokens[2]), tokens[3:end])
 end
 
 
-function parseinfocurrmove(tokens::TokenList)::Tuple{Move, TokenList}
+function parseinfocurrmove(tokens::TokenList)::Tuple{Move,TokenList}
     (movefromstring(String(tokens[2])), tokens[3:end])
 end
 
 
-function parseinfoscore(tokens::TokenList)::Tuple{Score, TokenList}
+function parseinfoscore(tokens::TokenList)::Tuple{Score,TokenList}
     ismate = tokens[2] == "mate"
     value = parse(Int, tokens[3])
     bound = exact
@@ -679,7 +707,7 @@ function touci(g::SimpleGame)::String
     result = "position fen $(fen(g.startboard))"
     if !isatbeginning(g)
         result *= " moves"
-        for ply in 1:(g.ply - 1)
+        for ply = 1:(g.ply-1)
             result *= " " * tostring(g.history[ply].move)
         end
     end
@@ -727,8 +755,13 @@ the function will use `depth` and ignore `nodes`.
 The function returns a vector of `SearchInfo` values, one for each of the `pvs`
 best moves.
 """
-function mpvsearch(g::Union{Board, SimpleGame, Game}, e::Engine;
-                   nodes=nothing, depth=nothing, pvs=100)::Vector{SearchInfo}
+function mpvsearch(
+    g::Union{Board,SimpleGame,Game},
+    e::Engine;
+    nodes = nothing,
+    depth = nothing,
+    pvs = 100,
+)::Vector{SearchInfo}
 
     result = SearchInfo[]
 

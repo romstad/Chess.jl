@@ -56,17 +56,49 @@ end
 begin
     local b = fromfen("5k2/8/4q3/8/2B5/8/4P3/3K4 w - -")
     @test bishopattacks(b, SQ_C4) ==
-        SquareSet(SQ_A2, SQ_B3, SQ_E2, SQ_D3, SQ_B5, SQ_A6, SQ_D5, SQ_E6)
+          SquareSet(SQ_A2, SQ_B3, SQ_E2, SQ_D3, SQ_B5, SQ_A6, SQ_D5, SQ_E6)
     local b = fromfen("2r2k2/8/8/8/2R3P1/8/4P3/3K4 w - -")
-    @test rookattacks(b, SQ_C4) ==
-        SquareSet(SQ_A4, SQ_B4, SQ_D4, SQ_E4, SQ_F4, SQ_G4,
-                  SQ_C1, SQ_C2, SQ_C3, SQ_C5, SQ_C6, SQ_C7, SQ_C8)
+    @test rookattacks(b, SQ_C4) == SquareSet(
+        SQ_A4,
+        SQ_B4,
+        SQ_D4,
+        SQ_E4,
+        SQ_F4,
+        SQ_G4,
+        SQ_C1,
+        SQ_C2,
+        SQ_C3,
+        SQ_C5,
+        SQ_C6,
+        SQ_C7,
+        SQ_C8,
+    )
     local b = fromfen("2r2k2/8/8/8/2Q3P1/8/4P3/3K4 w - -")
-    @test queenattacks(b, SQ_C4) ==
-        SquareSet(SQ_C1, SQ_C2, SQ_C3, SQ_C5, SQ_C6, SQ_C7, SQ_C8,
-                  SQ_A4, SQ_B4, SQ_D4, SQ_E4, SQ_F4, SQ_G4,
-                  SQ_A2, SQ_B3, SQ_D5, SQ_E6, SQ_F7, SQ_G8,
-                  SQ_E2, SQ_D3, SQ_B5, SQ_A6)
+    @test queenattacks(b, SQ_C4) == SquareSet(
+        SQ_C1,
+        SQ_C2,
+        SQ_C3,
+        SQ_C5,
+        SQ_C6,
+        SQ_C7,
+        SQ_C8,
+        SQ_A4,
+        SQ_B4,
+        SQ_D4,
+        SQ_E4,
+        SQ_F4,
+        SQ_G4,
+        SQ_A2,
+        SQ_B3,
+        SQ_D5,
+        SQ_E6,
+        SQ_F7,
+        SQ_G8,
+        SQ_E2,
+        SQ_D3,
+        SQ_B5,
+        SQ_A6,
+    )
 end
 
 begin
@@ -81,7 +113,7 @@ begin
 end
 
 begin
-    local b = fromfen("2r4b/1kp5/8/2P1Q3/1P6/2K1P2r/8/8 w - -");
+    local b = fromfen("2r4b/1kp5/8/2P1Q3/1P6/2K1P2r/8/8 w - -")
     @test pinned(b) == SquareSet(SQ_E3, SQ_E5)
 end
 
@@ -201,15 +233,17 @@ begin
     @test perft(b, 2) == 669
     @test perft(b, 3) == 18682
     @test perft(b, 4) == 484259
-    @test perft(b, 5) == 13956471
+    @test perft(b, 5) == 13956472
 end
 
 begin
-    fens = ["rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -",
-            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w Kq -",
-            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w Qk -",
-            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - -",
-            "rnbqkbnr/pppp1ppp/4p3/4P3/8/8/PPPP1PPP/RNBQKBNR w KQkq d6"]
+    fens = [
+        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -",
+        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w Kq -",
+        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w Qk -",
+        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - -",
+        "rnbqkbnr/pppp1ppp/4p3/4P3/8/8/PPPP1PPP/RNBQKBNR w KQkq d6",
+    ]
     for f in fens
         @test fen(fromfen(f)) == f
     end

@@ -18,7 +18,7 @@ julia> movefromsan(b, "???") == nothing
 true
 ```
 """
-function movefromsan(b::Board, san::String)::Union{Move, Nothing}
+function movefromsan(b::Board, san::String)::Union{Move,Nothing}
     ms = moves(b)
 
     # Castling moves
@@ -70,7 +70,7 @@ function movefromsan(b::Board, san::String)::Union{Move, Nothing}
     # Destination square
     if left < right
         #t = squarefromstring(s[end - 1:end])
-        t = squarefromstring(s[right - 1:right])
+        t = squarefromstring(s[right-1:right])
         right -= 2
     else
         return nothing
@@ -151,8 +151,7 @@ function movetosan(b::Board, m::Move)::String
         end
     else
         write(result, uppercase(tochar(pt)))
-        ms = filter(m -> to(m) == t && ptype(pieceon(b, from(m))) == pt,
-                    collect(moves(b)))
+        ms = filter(m -> to(m) == t && ptype(pieceon(b, from(m))) == pt, collect(moves(b)))
         if length(ms) > 1
             # Several moves, need disambiguation character(s)
             samefilecount = 0
@@ -217,8 +216,12 @@ julia> variationtosan(b, map(movefromstring, ["e2e4", "e7e5", "g1f3", "b8c6"]))
 "1. e4 e5 2. Nf3 Nc6"
 ```
 """
-function variationtosan(board::Board, v::Vector{Move};
-                        startply=1, movenumbers=true)::String
+function variationtosan(
+    board::Board,
+    v::Vector{Move};
+    startply = 1,
+    movenumbers = true,
+)::String
     result = IOBuffer()
     b = deepcopy(board)
     ply = startply
@@ -259,10 +262,10 @@ julia> variationtosan(g, map(movefromstring, ["f8b4", "c1d2", "d8e7"]))
 "3... Bb4+ 4. Bd2 Qe7"
 ```
 """
-function variationtosan(g::SimpleGame, v::Vector{Move}; movenumbers=true)::String
+function variationtosan(g::SimpleGame, v::Vector{Move}; movenumbers = true)::String
     variationtosan(board(g), v, movenumbers = movenumbers, startply = ply(g))
 end
 
-function variationtosan(g::Game, v::Vector{Move}; movenumbers=true)::String
+function variationtosan(g::Game, v::Vector{Move}; movenumbers = true)::String
     variationtosan(board(g), v, movenumbers = movenumbers, startply = ply(g))
 end

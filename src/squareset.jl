@@ -1,21 +1,59 @@
 using Crayons
 using StaticArrays
 
-import Base.+, Base.-, Base.first, Base.in, Base.intersect, Base.isempty,
-    Base.issubset, Base.union
+import Base.+,
+    Base.-, Base.first, Base.in, Base.intersect, Base.isempty, Base.issubset, Base.union
 
 export SquareSet
 
-export bishopattacks, bishopattacksempty, filesquares, isempty, issingleton,
-    kingattacks, knightattacks, onlyfirst, pawnattacks, pawnshift_n,
-    pawnshift_ne, pawnshift_nw, pawnshift_s,  pawnshift_sw, pawnshift_se,
-    pprint, ranksquares, removefirst, rookattacks, rookattacksempty,
-    queenattacks, queenattacksempty, shift_e, shift_n, shift_s, shift_w,
-    squarecount, squares, squaresbetween, toarray
+export bishopattacks,
+    bishopattacksempty,
+    filesquares,
+    isempty,
+    issingleton,
+    kingattacks,
+    knightattacks,
+    onlyfirst,
+    pawnattacks,
+    pawnshift_n,
+    pawnshift_ne,
+    pawnshift_nw,
+    pawnshift_s,
+    pawnshift_sw,
+    pawnshift_se,
+    pprint,
+    ranksquares,
+    removefirst,
+    rookattacks,
+    rookattacksempty,
+    queenattacks,
+    queenattacksempty,
+    shift_e,
+    shift_n,
+    shift_s,
+    shift_w,
+    squarecount,
+    squares,
+    squaresbetween,
+    toarray
 
-export SS_EMPTY, SS_FILE_A, SS_FILE_B, SS_FILE_C, SS_FILE_D, SS_FILE_E,
-    SS_FILE_F, SS_FILE_G, SS_FILE_H, SS_RANK_1, SS_RANK_2, SS_RANK_3, SS_RANK_4,
-    SS_RANK_5, SS_RANK_6, SS_RANK_7, SS_RANK_8
+export SS_EMPTY,
+    SS_FILE_A,
+    SS_FILE_B,
+    SS_FILE_C,
+    SS_FILE_D,
+    SS_FILE_E,
+    SS_FILE_F,
+    SS_FILE_G,
+    SS_FILE_H,
+    SS_RANK_1,
+    SS_RANK_2,
+    SS_RANK_3,
+    SS_RANK_4,
+    SS_RANK_5,
+    SS_RANK_6,
+    SS_RANK_7,
+    SS_RANK_8
 
 
 """
@@ -55,9 +93,9 @@ end
 
 function Base.show(io::IO, ss::SquareSet)
     println(io, "SquareSet:")
-    for ri in 1:8
+    for ri ∈ 1:8
         r = SquareRank(ri)
-        for fi in 1:8
+        for fi ∈ 1:8
             f = SquareFile(fi)
             if Square(f, r) ∈ ss
                 print(io, " # ")
@@ -99,7 +137,7 @@ SquareSet:
 """
 function SquareSet(ss::Vararg{Square})
     result = UInt64(0)
-    for s in ss
+    for s ∈ ss
         result |= UInt64(1) << (s.val - 1)
     end
     SquareSet(result)
@@ -243,13 +281,25 @@ const SS_RANK_8 = SquareSet(0x0101010101010101)
 
 
 const FILE_SQUARES = SVector(
-    SS_FILE_A, SS_FILE_B, SS_FILE_C, SS_FILE_D,
-    SS_FILE_E, SS_FILE_F, SS_FILE_G, SS_FILE_H
+    SS_FILE_A,
+    SS_FILE_B,
+    SS_FILE_C,
+    SS_FILE_D,
+    SS_FILE_E,
+    SS_FILE_F,
+    SS_FILE_G,
+    SS_FILE_H,
 )
 
 const RANK_SQUARES = SVector(
-    SS_RANK_8, SS_RANK_7, SS_RANK_6, SS_RANK_5,
-    SS_RANK_4, SS_RANK_3, SS_RANK_2, SS_RANK_1
+    SS_RANK_8,
+    SS_RANK_7,
+    SS_RANK_6,
+    SS_RANK_5,
+    SS_RANK_4,
+    SS_RANK_3,
+    SS_RANK_2,
+    SS_RANK_1,
 )
 
 
@@ -417,9 +467,7 @@ SquareSet:
 """
 function setdiff(ss1::SquareSet, ss2::SquareSet)
     ss1 ∩ -ss2
-end,
-
-function -(ss1::SquareSet, ss2::SquareSet)
+end, function -(ss1::SquareSet, ss2::SquareSet)
     setdiff(ss1, ss2)
 end
 
@@ -533,9 +581,8 @@ julia> toarray(SS_FILE_C ∪ SS_RANK_5, Int)
  0  0  1  0  0  0  0  0
 ```
 """
-function toarray(ss::SquareSet, T::Type{<:Number}=Float32)::Array{T, 2}
-    reshape([Square(i) ∈ ss ? one(T) : zero(T) for i in 1:64],
-            8, 8)
+function toarray(ss::SquareSet, T::Type{<:Number} = Float32)::Array{T,2}
+    reshape([Square(i) ∈ ss ? one(T) : zero(T) for i ∈ 1:64], 8, 8)
 end
 
 
@@ -647,9 +694,9 @@ julia> tostring.(squares(SS_RANK_1))
  "h1"
 ```
 """
-function squares(ss::SquareSet)::Array{Square, 1}
-    result = Array{Square, 1}()
-    for s in ss
+function squares(ss::SquareSet)::Array{Square,1}
+    result = Array{Square,1}()
+    for s ∈ ss
         push!(result, s)
     end
     result
@@ -858,23 +905,32 @@ end
 
 
 function computestepattacks(s, deltas)
-    foldl((acc, d) -> distance(s, s + d) ≤ 2 ? acc + (s + d) : acc,
-          deltas,
-          init = SS_EMPTY)
+    foldl((acc, d) -> distance(s, s + d) ≤ 2 ? acc + (s + d) : acc, deltas, init = SS_EMPTY)
 end
 
 
 function computeknightattacks(s::Square)::SquareSet
-    computestepattacks(s, [2 * DELTA_N + DELTA_E, 2 * DELTA_N + DELTA_W,
-                           DELTA_N + 2 * DELTA_E, DELTA_N + 2 * DELTA_W,
-                           DELTA_S + 2 * DELTA_E, DELTA_S + 2 * DELTA_W,
-                           2 * DELTA_S + DELTA_E, 2 * DELTA_S + DELTA_W])
+    computestepattacks(
+        s,
+        [
+            2 * DELTA_N + DELTA_E,
+            2 * DELTA_N + DELTA_W,
+            DELTA_N + 2 * DELTA_E,
+            DELTA_N + 2 * DELTA_W,
+            DELTA_S + 2 * DELTA_E,
+            DELTA_S + 2 * DELTA_W,
+            2 * DELTA_S + DELTA_E,
+            2 * DELTA_S + DELTA_W,
+        ],
+    )
 end
 
 
 function computekingattacks(s::Square)::SquareSet
-    computestepattacks(s, [DELTA_NE, DELTA_N, DELTA_NW, DELTA_E,
-                           DELTA_W, DELTA_SE, DELTA_S, DELTA_SW])
+    computestepattacks(
+        s,
+        [DELTA_NE, DELTA_N, DELTA_NW, DELTA_E, DELTA_W, DELTA_SE, DELTA_S, DELTA_SW],
+    )
 end
 
 
@@ -888,10 +944,10 @@ function computebpattacks(s::Square)::SquareSet
 end
 
 
-const N_ATTACKS = @SVector [computeknightattacks(Square(i)) for i in 1:64]
-const K_ATTACKS = @SVector [computekingattacks(Square(i)) for i in 1:64]
-const WP_ATTACKS = @SVector [computewpattacks(Square(i)) for i in 1:64]
-const BP_ATTACKS = @SVector [computebpattacks(Square(i)) for i in 1:64]
+const N_ATTACKS = @SVector [computeknightattacks(Square(i)) for i ∈ 1:64]
+const K_ATTACKS = @SVector [computekingattacks(Square(i)) for i ∈ 1:64]
+const WP_ATTACKS = @SVector [computewpattacks(Square(i)) for i ∈ 1:64]
+const BP_ATTACKS = @SVector [computebpattacks(Square(i)) for i ∈ 1:64]
 
 
 """
@@ -928,14 +984,11 @@ function pawnattacks(c::PieceColor, s::Square)::SquareSet
 end
 
 
-const B_ATTACKS_EMPTY =
-    @SVector [bishopattacks(SS_EMPTY, Square(i)) for i in 1:64]
+const B_ATTACKS_EMPTY = @SVector [bishopattacks(SS_EMPTY, Square(i)) for i ∈ 1:64]
 
-const R_ATTACKS_EMPTY =
-    @SVector [rookattacks(SS_EMPTY, Square(i)) for i in 1:64]
+const R_ATTACKS_EMPTY = @SVector [rookattacks(SS_EMPTY, Square(i)) for i ∈ 1:64]
 
-const Q_ATTACKS_EMPTY =
-    @SVector [queenattacks(SS_EMPTY, Square(i)) for i in 1:64]
+const Q_ATTACKS_EMPTY = @SVector [queenattacks(SS_EMPTY, Square(i)) for i ∈ 1:64]
 
 
 """
@@ -975,7 +1028,7 @@ function computesquaresbetween(s1::Square, s2::Square)::SquareSet
         result = SS_EMPTY
         si1 = min(s1.val, s2.val)
         si2 = max(s1.val, s2.val)
-        for si3 in (si1 + 1):(si2 - 1)
+        for si3 ∈ (si1+1):(si2-1)
             s3 = Square(si3)
             ss = SquareSet(s3)
             if s2 ∈ queenattacksempty(s1) && s2 ∉ queenattacks(ss, s1)
@@ -987,8 +1040,7 @@ function computesquaresbetween(s1::Square, s2::Square)::SquareSet
 end
 
 
-const SQUARES_BETWEEN =
-    [computesquaresbetween(Square(i), Square(j)) for i in 1:64, j in 1:64]
+const SQUARES_BETWEEN = [computesquaresbetween(Square(i), Square(j)) for i ∈ 1:64, j = 1:64]
 
 
 """
@@ -1024,9 +1076,9 @@ end
 
 
 function colorpprint(ss::SquareSet)
-    for ri in 1:8
+    for ri ∈ 1:8
         r = SquareRank(ri)
-        for fi in 1:8
+        for fi ∈ 1:8
             f = SquareFile(fi)
             bg = (ri + fi) % 2 == 0 ? 0x87CEFF : 0x6CA6CD
             bg = (ri + fi) % 2 == 0 ? 0x8accc0 : 0x66b0a3
@@ -1051,10 +1103,10 @@ function pprint(ss::SquareSet; color = false)
         colorpprint(ss)
         return
     end
-    for ri in 1:8
+    for ri ∈ 1:8
         r = SquareRank(ri)
         println("+---+---+---+---+---+---+---+---+")
-        for fi in 1:8
+        for fi ∈ 1:8
             f = SquareFile(fi)
             if Square(f, r) ∈ ss
                 print("| # ")

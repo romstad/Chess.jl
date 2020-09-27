@@ -11,15 +11,64 @@ export START_FEN
 
 export Board, MoveList, UndoInfo
 
-export attacksto, attacksfrom, bishopattacks, bishoplike, bishops,
-    cancastlekingside, cancastlequeenside, copyto!, divide, domove, domove!,
-    domoves, domoves!, donullmove, donullmove!, emptyboard, emptysquares,
-    epsquare, fen, flip, fromfen, haslegalmoves, is960, isattacked, ischeck,
-    ischeckmate, isdraw, ismatein1, ismaterialdraw, isrule50draw, isstalemate,
-    isterminal, kings, kingsquare, knights, lastmove, lichess, lichessurl,
-    movecount, moves, occupiedsquares, pawns, perft, pieceon, pieces, pinned,
-    pprint, queenattacks, queens, recycle!, rooklike, rookattacks, rooks, see,
-    sidetomove, startboard, startboard960, undomove!
+export attacksto,
+    attacksfrom,
+    bishopattacks,
+    bishoplike,
+    bishops,
+    cancastlekingside,
+    cancastlequeenside,
+    copyto!,
+    divide,
+    domove,
+    domove!,
+    domoves,
+    domoves!,
+    donullmove,
+    donullmove!,
+    emptyboard,
+    emptysquares,
+    epsquare,
+    fen,
+    flip,
+    fromfen,
+    haslegalmoves,
+    is960,
+    isattacked,
+    ischeck,
+    ischeckmate,
+    isdraw,
+    ismatein1,
+    ismaterialdraw,
+    isrule50draw,
+    isstalemate,
+    isterminal,
+    kings,
+    kingsquare,
+    knights,
+    lastmove,
+    lichess,
+    lichessurl,
+    movecount,
+    moves,
+    occupiedsquares,
+    pawns,
+    perft,
+    pieceon,
+    pieces,
+    pinned,
+    pprint,
+    queenattacks,
+    queens,
+    recycle!,
+    rooklike,
+    rookattacks,
+    rooks,
+    see,
+    sidetomove,
+    startboard,
+    startboard960,
+    undomove!
 
 
 """
@@ -33,15 +82,15 @@ in the usual chess starting position), or by making a move on some other chess
 board.
 """
 mutable struct Board
-    board::MVector{64, UInt8}
-    bycolor::MVector{2, SquareSet}
-    bytype::MVector{6, SquareSet}
+    board::MVector{64,UInt8}
+    bycolor::MVector{2,SquareSet}
+    bytype::MVector{6,SquareSet}
     side::UInt8
     castlerights::UInt8
-    castlefiles::MVector{2, UInt8}
+    castlefiles::MVector{2,UInt8}
     epsq::UInt8
     r50::UInt8
-    ksq::MVector{2, UInt8}
+    ksq::MVector{2,UInt8}
     move::UInt16
     occ::SquareSet
     checkers::SquareSet
@@ -53,9 +102,9 @@ end
 
 function Base.show(io::IO, b::Board)
     println(io, "Board ($(fen(b))):")
-    for ri in 1:8
+    for ri ∈ 1:8
         r = SquareRank(ri)
-        for fi in 1:8
+        for fi ∈ 1:8
             f = SquareFile(fi)
             p = pieceon(b, f, r)
             if isok(p)
@@ -68,7 +117,6 @@ function Base.show(io::IO, b::Board)
             println(io, "")
         end
     end
-    # print(io, "Board($(fen(b)))")
 end
 
 
@@ -99,7 +147,7 @@ end
 
 function emptyboard()::Board
     Board(
-        @MVector([UInt8(EMPTY.val) for _ in 1:64]),
+        @MVector([UInt8(EMPTY.val) for _ ∈ 1:64]),
         @MVector([SS_EMPTY, SS_EMPTY]),
         @MVector([SS_EMPTY, SS_EMPTY, SS_EMPTY, SS_EMPTY, SS_EMPTY, SS_EMPTY]),
         UInt8(WHITE.val),
@@ -113,7 +161,7 @@ function emptyboard()::Board
         SS_EMPTY,
         SS_EMPTY,
         0,
-        false
+        false,
     )
 end
 
@@ -618,9 +666,8 @@ end
 
 """
     occupiedsquares(b::Board)
-    emptysquares(b::Board)
 
-The set of all occupied or empty squares on the board.
+The set of all occupied squares on the board.
 
 # Examples
 
@@ -630,17 +677,35 @@ julia> b = startboard();
 julia> occupiedsquares(b) == pieces(b, WHITE) ∪ pieces(b, BLACK)
 true
 
-julia> emptysquares(b) == SS_RANK_3 ∪ SS_RANK_4 ∪ SS_RANK_5 ∪ SS_RANK_6
-true
-
 julia> isempty(emptysquares(b) ∩ occupiedsquares(b))
 true
 ```
 """
 function occupiedsquares(b::Board)::SquareSet
     b.occ
-end,
+end
 
+
+"""
+    emptysquares(b::Board)
+
+The set of all empty squares on the board.
+
+# Examples
+
+```julia-repl
+julia> emptysquares(startboard())
+SquareSet:
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ #  #  #  #  #  #  #  #
+ #  #  #  #  #  #  #  #
+ #  #  #  #  #  #  #  #
+ #  #  #  #  #  #  #  #
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ ```
+"""
 function emptysquares(b::Board)::SquareSet
     -occupiedsquares(b)
 end
@@ -677,7 +742,7 @@ end
 
 
 function moveiscastle(b::Board, m::Move)::Bool
-    f = from(m);
+    f = from(m)
     t = to(m)
     us = sidetomove(b)
     f == kingsquare(b, us) && (distance(f, t) > 1 || t ∈ rooks(b, us))
@@ -869,12 +934,9 @@ r1bqkbnr/pppp1ppp/2n5/4p3/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq -
 ```
 """
 function attacksto(b::Board, s::Square)::SquareSet
-    (pawnattacks(BLACK, s) ∩ pawns(b, WHITE)) ∪
-        (pawnattacks(WHITE, s) ∩ pawns(b, BLACK)) ∪
-        (knightattacks(s) ∩ knights(b)) ∪
-        (bishopattacks(b, s) ∩ bishoplike(b)) ∪
-        (rookattacks(b, s) ∩ rooklike(b)) ∪
-        (kingattacks(s) ∩ kings(b))
+    (pawnattacks(BLACK, s) ∩ pawns(b, WHITE)) ∪ (pawnattacks(WHITE, s) ∩ pawns(b, BLACK)) ∪
+    (knightattacks(s) ∩ knights(b)) ∪ (bishopattacks(b, s) ∩ bishoplike(b)) ∪
+    (rookattacks(b, s) ∩ rooklike(b)) ∪ (kingattacks(s) ∩ kings(b))
 end
 
 
@@ -985,10 +1047,9 @@ function see(b::Board, m::Move)::Int
     us = sidetomove(b)
     them = coloropp(us)
     occ = occupiedsquares(b) - f
-    attackers = (rookattacks(occ, t) ∩ rooklike(b)) ∪
-        (bishopattacks(occ, t) ∩ bishoplike(b)) ∪
-        (knightattacks(t) ∩ knights(b)) ∪
-        (kingattacks(t) ∩ kings(b)) ∪
+    attackers =
+        (rookattacks(occ, t) ∩ rooklike(b)) ∪ (bishopattacks(occ, t) ∩ bishoplike(b)) ∪
+        (knightattacks(t) ∩ knights(b)) ∪ (kingattacks(t) ∩ kings(b)) ∪
         (pawnattacks(WHITE, t) ∩ pawns(b, BLACK)) ∪
         (pawnattacks(BLACK, t) ∩ pawns(b, WHITE))
     attackers = attackers ∩ occ
@@ -1011,11 +1072,11 @@ function see(b::Board, m::Move)::Int
             ss = attackers ∩ pieces(b, c, pt)
         end
         occ -= first(ss)
-        attackers = attackers ∪
-            (rookattacks(occ, t) ∩ rooklike(b)) ∪
+        attackers =
+            attackers ∪ (rookattacks(occ, t) ∩ rooklike(b)) ∪
             (bishopattacks(occ, t) ∩ bishoplike(b))
         attackers = attackers ∩ occ
-        swaplist[n] = -swaplist[n - 1] + lastcapval
+        swaplist[n] = -swaplist[n-1] + lastcapval
         c = coloropp(c)
 
         if attackers ∩ pieces(b, c) == SS_EMPTY
@@ -1031,7 +1092,7 @@ function see(b::Board, m::Move)::Int
     end
 
     while n >= 2
-        swaplist[n - 1] = min(-swaplist[n], swaplist[n - 1])
+        swaplist[n-1] = min(-swaplist[n], swaplist[n-1])
         n -= 1
     end
     swaplist[1]
@@ -1174,13 +1235,17 @@ function updatecastlerights!(b::Board, f::Square, t::Square)
         b.castlerights &= ~3
     elseif t == kingsquare(b, BLACK)
         b.castlerights &= ~12
-    elseif f == Square(kingsidecastlefile(b), RANK_1) || t == Square(kingsidecastlefile(b), RANK_1)
+    elseif f == Square(kingsidecastlefile(b), RANK_1) ||
+           t == Square(kingsidecastlefile(b), RANK_1)
         b.castlerights &= ~1
-    elseif f == Square(queensidecastlefile(b), RANK_1) || t == Square(queensidecastlefile(b), RANK_1)
+    elseif f == Square(queensidecastlefile(b), RANK_1) ||
+           t == Square(queensidecastlefile(b), RANK_1)
         b.castlerights &= ~2
-    elseif f == Square(kingsidecastlefile(b), RANK_8) || t == Square(kingsidecastlefile(b), RANK_8)
+    elseif f == Square(kingsidecastlefile(b), RANK_8) ||
+           t == Square(kingsidecastlefile(b), RANK_8)
         b.castlerights &= ~4
-    elseif f == Square(queensidecastlefile(b), RANK_8) || t == Square(queensidecastlefile(b), RANK_8)
+    elseif f == Square(queensidecastlefile(b), RANK_8) ||
+           t == Square(queensidecastlefile(b), RANK_8)
         b.castlerights &= ~8
     end
     b.key ⊻= zobcastle(crights)
@@ -1193,10 +1258,9 @@ function findcheckers(b::Board)::SquareSet
     them = coloropp(us)
     ksq = kingsquare(b, us)
 
-    (pawnattacks(us, ksq) ∩ pawns(b, them)) ∪
-        (knightattacks(ksq) ∩ knights(b, them)) ∪
-        (bishopattacks(b, ksq) ∩ bishoplike(b, them)) ∪
-        (rookattacks(b, ksq) ∩ rooklike(b, them))
+    (pawnattacks(us, ksq) ∩ pawns(b, them)) ∪ (knightattacks(ksq) ∩ knights(b, them)) ∪
+    (bishopattacks(b, ksq) ∩ bishoplike(b, them)) ∪
+    (rookattacks(b, ksq) ∩ rooklike(b, them))
 end
 
 
@@ -1206,11 +1270,12 @@ function findpinned(b::Board)::SquareSet
     ksq = kingsquare(b, us)
     occ = occupiedsquares(b)
     ourpieces = pieces(b, us)
-    sliders = (bishopattacksempty(ksq) ∩ bishoplike(b, them)) ∪
+    sliders =
+        (bishopattacksempty(ksq) ∩ bishoplike(b, them)) ∪
         (rookattacksempty(ksq) ∩ rooklike(b, them))
     pinned = SS_EMPTY
 
-    for s in sliders
+    for s ∈ sliders
         blockers = squaresbetween(s, ksq) ∩ occ
         if issingleton(blockers) && !isempty(blockers ∩ ourpieces)
             pinned = pinned ∪ blockers
@@ -1385,8 +1450,17 @@ function domove!(b::Board, m::Move)::UndoInfo
     ep = epsquare(b)
     castle = pt == KING && (distance(f, t) > 1 || pieceon(b, t) == Piece(us, ROOK))
 
-    result = UndoInfo(b.castlerights, b.epsq, b.r50, b.move, castle, b.checkers,
-                      b.pin, capture, b.key)
+    result = UndoInfo(
+        b.castlerights,
+        b.epsq,
+        b.r50,
+        b.move,
+        castle,
+        b.checkers,
+        b.pin,
+        capture,
+        b.key,
+    )
 
     b.side = coloropp(us).val
     b.r50 += 1
@@ -1503,7 +1577,7 @@ function undomove!(b::Board, u::UndoInfo)
     b.side = us.val
 
     if m == MOVE_NULL
-       # Do nothing
+        # Do nothing
     elseif ispromotion(m)
         removepiece!(b, t)
         putpiece!(b, Piece(us, PAWN), f)
@@ -1571,14 +1645,13 @@ ERROR: "Illegal or ambiguous move: Qxe4+"
 ```
 """
 function domoves!(b::Board, moves::Vararg{Move})::Board
-    for m in moves
+    for m ∈ moves
         domove!(b, m)
     end
     b
 end,
-
 function domoves!(b::Board, moves::Vararg{String})::Board
-    for m in moves
+    for m ∈ moves
         mv = movefromstring(m)
         if isnothing(mv)
             mv = movefromsan(b, m)
@@ -1695,8 +1768,17 @@ back.
 function donullmove!(b::Board)::UndoInfo
     us = sidetomove(b)
     ep = epsquare(b)
-    result = UndoInfo(b.castlerights, b.epsq, b.r50, b.move, false, b.checkers,
-                      b.pin, EMPTY, b.key)
+    result = UndoInfo(
+        b.castlerights,
+        b.epsq,
+        b.r50,
+        b.move,
+        false,
+        b.checkers,
+        b.pin,
+        EMPTY,
+        b.key,
+    )
     b.side = coloropp(us).val
     b.r50 += 1
     b.epsq = SQ_NONE.val
@@ -1717,8 +1799,8 @@ end
 An iterable type containing a a list of moves, as produced by legal move
 generators.
 """
-mutable struct MoveList <: AbstractArray{Move, 1}
-    moves::Array{Move, 1}
+mutable struct MoveList <: AbstractArray{Move,1}
+    moves::Array{Move,1}
     count::Int
 end
 
@@ -1793,33 +1875,33 @@ function genpawnpushes(b::Board, list::MoveList)
     if us == WHITE
         target = pawnshift_n(source) ∩ emptysquares(b)
         push = DELTA_N
-        for s in target ∩ SS_RANK_8
+        for s ∈ target ∩ SS_RANK_8
             push!(list, Move(s - push, s, QUEEN))
             push!(list, Move(s - push, s, ROOK))
             push!(list, Move(s - push, s, BISHOP))
             push!(list, Move(s - push, s, KNIGHT))
         end
-        for s in target - SS_RANK_8
+        for s ∈ target - SS_RANK_8
             push!(list, Move(s - push, s))
         end
         target = pawnshift_n(target) ∩ emptysquares(b) ∩ SS_RANK_4
-        for s in target
+        for s ∈ target
             push!(list, Move(s - 2 * push, s))
         end
     else
         target = pawnshift_s(source) ∩ emptysquares(b)
         push = DELTA_S
-        for s in target ∩ SS_RANK_1
+        for s ∈ target ∩ SS_RANK_1
             push!(list, Move(s - push, s, QUEEN))
             push!(list, Move(s - push, s, ROOK))
             push!(list, Move(s - push, s, BISHOP))
             push!(list, Move(s - push, s, KNIGHT))
         end
-        for s in target - SS_RANK_1
+        for s ∈ target - SS_RANK_1
             push!(list, Move(s - push, s))
         end
         target = pawnshift_s(target) ∩ emptysquares(b) ∩ SS_RANK_5
-        for s in target
+        for s ∈ target
             push!(list, Move(s - 2 * push, s))
         end
     end
@@ -1831,12 +1913,14 @@ function countpawnpushes(b::Board)::Int
     source = pawns(b, us) ∩ (-pinned(b) ∪ filesquares(file(kingsquare(b, us))))
     if us == WHITE
         target = pawnshift_n(source) ∩ emptysquares(b)
-        4 * squarecount(target ∩ SS_RANK_8) + squarecount(target - SS_RANK_8) +
-            squarecount(pawnshift_n(target) ∩ emptysquares(b) ∩ SS_RANK_4)
+        4 * squarecount(target ∩ SS_RANK_8) +
+        squarecount(target - SS_RANK_8) +
+        squarecount(pawnshift_n(target) ∩ emptysquares(b) ∩ SS_RANK_4)
     else
         target = pawnshift_s(source) ∩ emptysquares(b)
-        4 * squarecount(target ∩ SS_RANK_1) + squarecount(target - SS_RANK_1) +
-            squarecount(pawnshift_s(target) ∩ emptysquares(b) ∩ SS_RANK_5)
+        4 * squarecount(target ∩ SS_RANK_1) +
+        squarecount(target - SS_RANK_1) +
+        squarecount(pawnshift_s(target) ∩ emptysquares(b) ∩ SS_RANK_5)
     end
 end
 
@@ -1860,55 +1944,55 @@ function genpawncaptures(b::Board, list::MoveList)
     if us == WHITE
         target2 = pawnshift_nw(source) ∩ target
         delta = DELTA_NW
-        for s in target2 ∩ SS_RANK_8
+        for s ∈ target2 ∩ SS_RANK_8
             push!(list, Move(s - delta, s, QUEEN))
             push!(list, Move(s - delta, s, ROOK))
             push!(list, Move(s - delta, s, BISHOP))
             push!(list, Move(s - delta, s, KNIGHT))
         end
-        for s in target2 - SS_RANK_8
+        for s ∈ target2 - SS_RANK_8
             push!(list, Move(s - delta, s))
         end
         target2 = pawnshift_ne(source) ∩ target
         delta = DELTA_NE
-        for s in target2 ∩ SS_RANK_8
+        for s ∈ target2 ∩ SS_RANK_8
             push!(list, Move(s - delta, s, QUEEN))
             push!(list, Move(s - delta, s, ROOK))
             push!(list, Move(s - delta, s, BISHOP))
             push!(list, Move(s - delta, s, KNIGHT))
         end
-        for s in target2 - SS_RANK_8
+        for s ∈ target2 - SS_RANK_8
             push!(list, Move(s - delta, s))
         end
     else
         target2 = pawnshift_sw(source) ∩ target
         delta = DELTA_SW
-        for s in target2 ∩ SS_RANK_1
+        for s ∈ target2 ∩ SS_RANK_1
             push!(list, Move(s - delta, s, QUEEN))
             push!(list, Move(s - delta, s, ROOK))
             push!(list, Move(s - delta, s, BISHOP))
             push!(list, Move(s - delta, s, KNIGHT))
         end
-        for s in target2 - SS_RANK_1
+        for s ∈ target2 - SS_RANK_1
             push!(list, Move(s - delta, s))
         end
         target2 = pawnshift_se(source) ∩ target
         delta = DELTA_SE
-        for s in target2 ∩ SS_RANK_1
+        for s ∈ target2 ∩ SS_RANK_1
             push!(list, Move(s - delta, s, QUEEN))
             push!(list, Move(s - delta, s, ROOK))
             push!(list, Move(s - delta, s, BISHOP))
             push!(list, Move(s - delta, s, KNIGHT))
         end
-        for s in target2 - SS_RANK_1
+        for s ∈ target2 - SS_RANK_1
             push!(list, Move(s - delta, s))
         end
     end
 
     source = pawns(b, us) ∩ pinned(b)
     ksq = kingsquare(b, us)
-    for s1 in source
-        for s2 in pawnattacks(us, s1) ∩ target
+    for s1 ∈ source
+        for s2 ∈ pawnattacks(us, s1) ∩ target
             if s1 ∈ squaresbetween(ksq, s2)
                 if s2 ∈ (SS_RANK_1 ∪ SS_RANK_8)
                     push!(list, Move(s1, s2, QUEEN))
@@ -1948,8 +2032,8 @@ function countpawncaptures(b::Board)::Int
 
     source = pawns(b, us) ∩ pinned(b)
     ksq = kingsquare(b, us)
-    for s1 in source
-        for s2 in pawnattacks(us, s1) ∩ target
+    for s1 ∈ source
+        for s2 ∈ pawnattacks(us, s1) ∩ target
             if s1 ∈ squaresbetween(ksq, s2)
                 result += s2 ∈ (SS_RANK_1 ∪ SS_RANK_8) ? 4 : 1
             end
@@ -1966,19 +2050,19 @@ function haspawncaptures(b::Board)::Bool
     target = pieces(b, them)
     if us == WHITE
         if !isempty(pawnshift_nw(source) ∩ target) ||
-            !isempty(pawnshift_ne(source) ∩ target)
+           !isempty(pawnshift_ne(source) ∩ target)
             return true
         end
     else
         if !isempty(pawnshift_sw(source) ∩ target) ||
-            !isempty(pawnshift_se(source) ∩ target)
+           !isempty(pawnshift_se(source) ∩ target)
             return true
         end
     end
     source = pawns(b, us) ∩ pinned(b)
     ksq = kingsquare(b, us)
-    for s1 in source
-        for s2 in pawnattacks(us, s1) ∩ target
+    for s1 ∈ source
+        for s2 ∈ pawnattacks(us, s1) ∩ target
             if s1 ∈ squaresbetween(ksq, s2)
                 return true
             end
@@ -1995,7 +2079,7 @@ function genpawnevasions(b::Board, chsq::Square, block::SquareSet, list::MoveLis
 
     if us == WHITE
         # Capture checking piece
-        for s in pawnattacks(them, chsq) ∩ ps
+        for s ∈ pawnattacks(them, chsq) ∩ ps
             if rank(s) == RANK_7
                 push!(list, Move(s, chsq, QUEEN))
                 push!(list, Move(s, chsq, ROOK))
@@ -2009,21 +2093,21 @@ function genpawnevasions(b::Board, chsq::Square, block::SquareSet, list::MoveLis
         # Block check from sliding piece
         target = shift_n(ps) ∩ emptysquares(b)
         delta = DELTA_N
-        for s in target ∩ block ∩ SS_RANK_8
+        for s ∈ target ∩ block ∩ SS_RANK_8
             push!(list, Move(s - delta, s, QUEEN))
             push!(list, Move(s - delta, s, ROOK))
             push!(list, Move(s - delta, s, BISHOP))
             push!(list, Move(s - delta, s, KNIGHT))
         end
-        for s in (target ∩ block) - SS_RANK_8
+        for s ∈ (target ∩ block) - SS_RANK_8
             push!(list, Move(s - delta, s))
         end
-        for s in shift_n(target ∩ SS_RANK_3) ∩ emptysquares(b) ∩ block
+        for s ∈ shift_n(target ∩ SS_RANK_3) ∩ emptysquares(b) ∩ block
             push!(list, Move(s - 2 * delta, s))
         end
     else
         # Capture checking piece
-        for s in pawnattacks(them, chsq) ∩ ps
+        for s ∈ pawnattacks(them, chsq) ∩ ps
             if rank(s) == RANK_2
                 push!(list, Move(s, chsq, QUEEN))
                 push!(list, Move(s, chsq, ROOK))
@@ -2037,16 +2121,16 @@ function genpawnevasions(b::Board, chsq::Square, block::SquareSet, list::MoveLis
         # Block check from sliding piece
         target = shift_s(ps) ∩ emptysquares(b)
         delta = DELTA_S
-        for s in target ∩ block ∩ SS_RANK_1
+        for s ∈ target ∩ block ∩ SS_RANK_1
             push!(list, Move(s - delta, s, QUEEN))
             push!(list, Move(s - delta, s, ROOK))
             push!(list, Move(s - delta, s, BISHOP))
             push!(list, Move(s - delta, s, KNIGHT))
         end
-        for s in (target ∩ block) - SS_RANK_1
+        for s ∈ (target ∩ block) - SS_RANK_1
             push!(list, Move(s - delta, s))
         end
-        for s in shift_s(target ∩ SS_RANK_6) ∩ emptysquares(b) ∩ block
+        for s ∈ shift_s(target ∩ SS_RANK_6) ∩ emptysquares(b) ∩ block
             push!(list, Move(s - 2 * delta, s))
         end
     end
@@ -2061,7 +2145,7 @@ function countpawnevasions(b::Board, chsq::Square, block::SquareSet)::Int
 
     if us == WHITE
         # Capture checking piece
-        for s in pawnattacks(them, chsq) ∩ ps
+        for s ∈ pawnattacks(them, chsq) ∩ ps
             result += rank(s) == RANK_7 ? 4 : 1
         end
 
@@ -2072,7 +2156,7 @@ function countpawnevasions(b::Board, chsq::Square, block::SquareSet)::Int
         result += squarecount(shift_n(target ∩ SS_RANK_3) ∩ emptysquares(b) ∩ block)
     else
         # Capture checking piece
-        for s in pawnattacks(them, chsq) ∩ ps
+        for s ∈ pawnattacks(them, chsq) ∩ ps
             result += rank(s) == RANK_2 ? 4 : 1
         end
 
@@ -2130,14 +2214,14 @@ function genpawncaptureevasions(b::Board, chsq::Square, list::MoveList)
     us = sidetomove(b)
     them = coloropp(us)
     if rank(chsq) == RANK_1 || rank(chsq) == RANK_8
-        for s in pawnattacks(them, chsq) ∩ pawns(b, us) ∩ -pinned(b)
+        for s ∈ pawnattacks(them, chsq) ∩ pawns(b, us) ∩ -pinned(b)
             push!(list, Move(s, chsq, QUEEN))
             push!(list, Move(s, chsq, ROOK))
             push!(list, Move(s, chsq, BISHOP))
             push!(list, Move(s, chsq, KNIGHT))
         end
     else
-        for s in pawnattacks(them, chsq) ∩ pawns(b, us) ∩ -pinned(b)
+        for s ∈ pawnattacks(them, chsq) ∩ pawns(b, us) ∩ -pinned(b)
             push!(list, Move(s, chsq))
         end
     end
@@ -2148,10 +2232,10 @@ function genpawncaptureevasions(b::Board, chsq::Square, list::MoveList)
         occ = occupiedsquares(b)
         occ += epsq
         occ -= chsq
-        for s in pawnattacks(them, epsq) ∩ pawns(b, us)
+        for s ∈ pawnattacks(them, epsq) ∩ pawns(b, us)
             occ2 = occ - s
             if isempty(bishopattacks(occ2, ksq) ∩ bishoplike(b, them)) &&
-                isempty(rookattacks(occ2, ksq) ∩ rooklike(b, them))
+               isempty(rookattacks(occ2, ksq) ∩ rooklike(b, them))
                 push!(list, Move(s, epsq))
             end
         end
@@ -2175,10 +2259,10 @@ function countpawncaptureevasions(b::Board, chsq::Square)::Int
         occ = occupiedsquares(b)
         occ += epsq
         occ -= chsq
-        for s in pawnattacks(them, epsq) ∩ pawns(b, us)
+        for s ∈ pawnattacks(them, epsq) ∩ pawns(b, us)
             occ2 = occ - s
             if isempty(bishopattacks(occ2, ksq) ∩ bishoplike(b, them)) &&
-                isempty(rookattacks(occ2, ksq) ∩ rooklike(b, them))
+               isempty(rookattacks(occ2, ksq) ∩ rooklike(b, them))
                 result += 1
             end
         end
@@ -2200,10 +2284,10 @@ function haspawncaptureevasions(b::Board, chsq::Square)::Bool
         occ = occupiedsquares(b)
         occ += epsq
         occ -= chsq
-        for s in pawnattacks(them, epsq) ∩ pawns(b, us)
+        for s ∈ pawnattacks(them, epsq) ∩ pawns(b, us)
             occ2 = occ - s
             if isempty(bishopattacks(occ2, ksq) ∩ bishoplike(b, them)) &&
-                isempty(rookattacks(occ2, ksq) ∩ rooklike(b, them))
+               isempty(rookattacks(occ2, ksq) ∩ rooklike(b, them))
                 return true
             end
         end
@@ -2214,8 +2298,8 @@ end
 
 function genknightmoves(b::Board, target::SquareSet, list::MoveList)
     us = sidetomove(b)
-    for s1 in knights(b, us) - pinned(b)
-        for s2 in knightattacks(s1) ∩ target
+    for s1 ∈ knights(b, us) - pinned(b)
+        for s2 ∈ knightattacks(s1) ∩ target
             push!(list, Move(s1, s2))
         end
     end
@@ -2225,7 +2309,7 @@ end
 function countknightmoves(b::Board, target::SquareSet)::Int
     result = 0
     us = sidetomove(b)
-    for s in knights(b, us) - pinned(b)
+    for s ∈ knights(b, us) - pinned(b)
         result += squarecount(knightattacks(s) ∩ target)
     end
     result
@@ -2234,7 +2318,7 @@ end
 
 function hasknightmoves(b::Board, target::SquareSet)::Bool
     us = sidetomove(b)
-    for s in knights(b, us) - pinned(b)
+    for s ∈ knights(b, us) - pinned(b)
         if !isempty(knightattacks(s) ∩ target)
             return true
         end
@@ -2245,7 +2329,7 @@ end
 
 function genknightcaptureevasions(b::Board, chsq::Square, list::MoveList)
     us = sidetomove(b)
-    for s in knights(b, us) ∩ -pinned(b) ∩ knightattacks(chsq)
+    for s ∈ knights(b, us) ∩ -pinned(b) ∩ knightattacks(chsq)
         push!(list, Move(s, chsq))
     end
 end
@@ -2263,14 +2347,14 @@ end
 
 function genbishopmoves(b::Board, target::SquareSet, list::MoveList)
     us = sidetomove(b)
-    for s1 in bishops(b, us) - pinned(b)
-        for s2 in bishopattacks(b, s1) ∩ target
+    for s1 ∈ bishops(b, us) - pinned(b)
+        for s2 ∈ bishopattacks(b, s1) ∩ target
             push!(list, Move(s1, s2))
         end
     end
-    for s1 in bishops(b, us) ∩ pinned(b)
+    for s1 ∈ bishops(b, us) ∩ pinned(b)
         ksq = kingsquare(b, us)
-        for s2 in bishopattacks(b, s1) ∩ target
+        for s2 ∈ bishopattacks(b, s1) ∩ target
             if s2 ∈ squaresbetween(ksq, s1) || s1 ∈ squaresbetween(ksq, s2)
                 push!(list, Move(s1, s2))
             end
@@ -2282,12 +2366,12 @@ end
 function countbishopmoves(b::Board, target::SquareSet)::Int
     result = 0
     us = sidetomove(b)
-    for s in bishops(b, us) - pinned(b)
+    for s ∈ bishops(b, us) - pinned(b)
         result += squarecount(bishopattacks(b, s) ∩ target)
     end
-    for s1 in bishops(b, us) ∩ pinned(b)
+    for s1 ∈ bishops(b, us) ∩ pinned(b)
         ksq = kingsquare(b, us)
-        for s2 in bishopattacks(b, s1) ∩ target
+        for s2 ∈ bishopattacks(b, s1) ∩ target
             if s2 ∈ squaresbetween(ksq, s1) || s1 ∈ squaresbetween(ksq, s2)
                 result += 1
             end
@@ -2299,14 +2383,14 @@ end
 
 function hasbishopmoves(b::Board, target::SquareSet)::Bool
     us = sidetomove(b)
-    for s in bishops(b, us) - pinned(b)
+    for s ∈ bishops(b, us) - pinned(b)
         if !isempty(bishopattacks(b, s) ∩ target)
             return true
         end
     end
-    for s1 in bishops(b, us) ∩ pinned(b)
+    for s1 ∈ bishops(b, us) ∩ pinned(b)
         ksq = kingsquare(b, us)
-        for s2 in bishopattacks(b, s1) ∩ target
+        for s2 ∈ bishopattacks(b, s1) ∩ target
             if s2 ∈ squaresbetween(ksq, s1) || s1 ∈ squaresbetween(ksq, s2)
                 return true
             end
@@ -2318,8 +2402,8 @@ end
 
 function genbishopevasions(b::Board, target::SquareSet, list::MoveList)
     us = sidetomove(b)
-    for s1 in bishops(b, us) - pinned(b)
-        for s2 in bishopattacks(b, s1) ∩ target
+    for s1 ∈ bishops(b, us) - pinned(b)
+        for s2 ∈ bishopattacks(b, s1) ∩ target
             push!(list, Move(s1, s2))
         end
     end
@@ -2329,7 +2413,7 @@ end
 function countbishopevasions(b::Board, target::SquareSet)::Int
     result = 0
     us = sidetomove(b)
-    for s in bishops(b, us) - pinned(b)
+    for s ∈ bishops(b, us) - pinned(b)
         result += squarecount(bishopattacks(b, s) ∩ target)
     end
     result
@@ -2338,7 +2422,7 @@ end
 
 function hasbishopevasions(b::Board, target::SquareSet)::Bool
     us = sidetomove(b)
-    for s in bishops(b, us) - pinned(b)
+    for s ∈ bishops(b, us) - pinned(b)
         if !isempty(bishopattacks(b, s) ∩ target)
             return true
         end
@@ -2349,7 +2433,7 @@ end
 
 function genbishoplikecaptureevasions(b::Board, chsq::Square, list::MoveList)
     us = sidetomove(b)
-    for s in bishoplike(b, us) ∩ -pinned(b) ∩ bishopattacks(b, chsq)
+    for s ∈ bishoplike(b, us) ∩ -pinned(b) ∩ bishopattacks(b, chsq)
         push!(list, Move(s, chsq))
     end
 end
@@ -2367,14 +2451,14 @@ end
 
 function genrookmoves(b::Board, target::SquareSet, list::MoveList)
     us = sidetomove(b)
-    for s1 in rooks(b, us) - pinned(b)
-        for s2 in rookattacks(b, s1) ∩ target
+    for s1 ∈ rooks(b, us) - pinned(b)
+        for s2 ∈ rookattacks(b, s1) ∩ target
             push!(list, Move(s1, s2))
         end
     end
-    for s1 in rooks(b, us) ∩ pinned(b)
+    for s1 ∈ rooks(b, us) ∩ pinned(b)
         ksq = kingsquare(b, us)
-        for s2 in rookattacks(b, s1) ∩ target
+        for s2 ∈ rookattacks(b, s1) ∩ target
             if s2 ∈ squaresbetween(ksq, s1) || s1 ∈ squaresbetween(ksq, s2)
                 push!(list, Move(s1, s2))
             end
@@ -2386,12 +2470,12 @@ end
 function countrookmoves(b::Board, target::SquareSet)::Int
     result = 0
     us = sidetomove(b)
-    for s in rooks(b, us) - pinned(b)
+    for s ∈ rooks(b, us) - pinned(b)
         result += squarecount(rookattacks(b, s) ∩ target)
     end
-    for s1 in rooks(b, us) ∩ pinned(b)
+    for s1 ∈ rooks(b, us) ∩ pinned(b)
         ksq = kingsquare(b, us)
-        for s2 in rookattacks(b, s1) ∩ target
+        for s2 ∈ rookattacks(b, s1) ∩ target
             if s2 ∈ squaresbetween(ksq, s1) || s1 ∈ squaresbetween(ksq, s2)
                 result += 1
             end
@@ -2403,14 +2487,14 @@ end
 
 function hasrookmoves(b::Board, target::SquareSet)::Bool
     us = sidetomove(b)
-    for s in rooks(b, us) - pinned(b)
+    for s ∈ rooks(b, us) - pinned(b)
         if !isempty(rookattacks(b, s) ∩ target)
             return true
         end
     end
-    for s1 in rooks(b, us) ∩ pinned(b)
+    for s1 ∈ rooks(b, us) ∩ pinned(b)
         ksq = kingsquare(b, us)
-        for s2 in rookattacks(b, s1) ∩ target
+        for s2 ∈ rookattacks(b, s1) ∩ target
             if s2 ∈ squaresbetween(ksq, s1) || s1 ∈ squaresbetween(ksq, s2)
                 return true
             end
@@ -2422,8 +2506,8 @@ end
 
 function genrookevasions(b::Board, target::SquareSet, list::MoveList)
     us = sidetomove(b)
-    for s1 in rooks(b, us) - pinned(b)
-        for s2 in rookattacks(b, s1) ∩ target
+    for s1 ∈ rooks(b, us) - pinned(b)
+        for s2 ∈ rookattacks(b, s1) ∩ target
             push!(list, Move(s1, s2))
         end
     end
@@ -2433,7 +2517,7 @@ end
 function countrookevasions(b::Board, target::SquareSet)::Int
     result = 0
     us = sidetomove(b)
-    for s in rooks(b, us) - pinned(b)
+    for s ∈ rooks(b, us) - pinned(b)
         result += squarecount(rookattacks(b, s) ∩ target)
     end
     result
@@ -2442,7 +2526,7 @@ end
 
 function hasrookevasions(b::Board, target::SquareSet)::Bool
     us = sidetomove(b)
-    for s in rooks(b, us) - pinned(b)
+    for s ∈ rooks(b, us) - pinned(b)
         if !isempty(rookattacks(b, s) ∩ target)
             return true
         end
@@ -2453,7 +2537,7 @@ end
 
 function genrooklikecaptureevasions(b::Board, chsq::Square, list::MoveList)
     us = sidetomove(b)
-    for s in rooklike(b, us) ∩ -pinned(b) ∩ rookattacks(b, chsq)
+    for s ∈ rooklike(b, us) ∩ -pinned(b) ∩ rookattacks(b, chsq)
         push!(list, Move(s, chsq))
     end
 end
@@ -2471,14 +2555,14 @@ end
 
 function genqueenmoves(b::Board, target::SquareSet, list::MoveList)
     us = sidetomove(b)
-    for s1 in queens(b, us) - pinned(b)
-        for s2 in queenattacks(b, s1) ∩ target
+    for s1 ∈ queens(b, us) - pinned(b)
+        for s2 ∈ queenattacks(b, s1) ∩ target
             push!(list, Move(s1, s2))
         end
     end
-    for s1 in queens(b, us) ∩ pinned(b)
+    for s1 ∈ queens(b, us) ∩ pinned(b)
         ksq = kingsquare(b, us)
-        for s2 in queenattacks(b, s1) ∩ target
+        for s2 ∈ queenattacks(b, s1) ∩ target
             if s2 ∈ squaresbetween(ksq, s1) || s1 ∈ squaresbetween(ksq, s2)
                 push!(list, Move(s1, s2))
             end
@@ -2490,12 +2574,12 @@ end
 function countqueenmoves(b::Board, target::SquareSet)::Int
     result = 0
     us = sidetomove(b)
-    for s in queens(b, us) - pinned(b)
+    for s ∈ queens(b, us) - pinned(b)
         result += squarecount(queenattacks(b, s) ∩ target)
     end
-    for s1 in queens(b, us) ∩ pinned(b)
+    for s1 ∈ queens(b, us) ∩ pinned(b)
         ksq = kingsquare(b, us)
-        for s2 in queenattacks(b, s1) ∩ target
+        for s2 ∈ queenattacks(b, s1) ∩ target
             if s2 ∈ squaresbetween(ksq, s1) || s1 ∈ squaresbetween(ksq, s2)
                 result += 1
             end
@@ -2507,14 +2591,14 @@ end
 
 function hasqueenmoves(b::Board, target::SquareSet)::Bool
     us = sidetomove(b)
-    for s in queens(b, us) - pinned(b)
+    for s ∈ queens(b, us) - pinned(b)
         if !isempty(queenattacks(b, s) ∩ target)
             return true
         end
     end
-    for s1 in queens(b, us) ∩ pinned(b)
+    for s1 ∈ queens(b, us) ∩ pinned(b)
         ksq = kingsquare(b, us)
-        for s2 in queenattacks(b, s1) ∩ target
+        for s2 ∈ queenattacks(b, s1) ∩ target
             if s2 ∈ squaresbetween(ksq, s1) || s1 ∈ squaresbetween(ksq, s2)
                 return true
             end
@@ -2526,8 +2610,8 @@ end
 
 function genqueenevasions(b::Board, target::SquareSet, list::MoveList)
     us = sidetomove(b)
-    for s1 in queens(b, us) - pinned(b)
-        for s2 in queenattacks(b, s1) ∩ target
+    for s1 ∈ queens(b, us) - pinned(b)
+        for s2 ∈ queenattacks(b, s1) ∩ target
             push!(list, Move(s1, s2))
         end
     end
@@ -2537,7 +2621,7 @@ end
 function countqueenevasions(b::Board, target::SquareSet)::Int
     result = 0
     us = sidetomove(b)
-    for s in queens(b, us) - pinned(b)
+    for s ∈ queens(b, us) - pinned(b)
         result += squarecount(queenattacks(b, s) ∩ target)
     end
     result
@@ -2546,7 +2630,7 @@ end
 
 function hasqueenevasions(b::Board, target::SquareSet)::Bool
     us = sidetomove(b)
-    for s in queens(b, us) - pinned(b)
+    for s ∈ queens(b, us) - pinned(b)
         if !isempty(queenattacks(b, s) ∩ target)
             return true
         end
@@ -2559,7 +2643,7 @@ function genkingmoves(b::Board, target::SquareSet, list::MoveList)
     us = sidetomove(b)
     them = coloropp(us)
     s1 = kingsquare(b, us)
-    for s2 in kingattacks(s1) ∩ target
+    for s2 ∈ kingattacks(s1) ∩ target
         if !isattacked(b, s2, them)
             push!(list, Move(s1, s2))
         end
@@ -2572,7 +2656,7 @@ function countkingmoves(b::Board, target::SquareSet)::Int
     us = sidetomove(b)
     them = coloropp(us)
     s1 = kingsquare(b, us)
-    for s2 in kingattacks(s1) ∩ target
+    for s2 ∈ kingattacks(s1) ∩ target
         if !isattacked(b, s2, them)
             result += 1
         end
@@ -2585,7 +2669,7 @@ function haskingmoves(b::Board, target::SquareSet)::Bool
     us = sidetomove(b)
     them = coloropp(us)
     s1 = kingsquare(b, us)
-    for s2 in kingattacks(s1) ∩ target
+    for s2 ∈ kingattacks(s1) ∩ target
         if !isattacked(b, s2, them)
             return true
         end
@@ -2599,12 +2683,12 @@ function genkingevasions(b::Board, list::MoveList)
     them = coloropp(us)
     ksq = kingsquare(b, us)
     occ = occupiedsquares(b) - ksq
-    for s in kingattacks(ksq) ∩ -pieces(b, us)
+    for s ∈ kingattacks(ksq) ∩ -pieces(b, us)
         if isempty(pawnattacks(us, s) ∩ pawns(b, them)) &&
-            isempty(kingattacks(s) ∩ kings(b, them)) &&
-            isempty(knightattacks(s) ∩ knights(b, them)) &&
-            isempty(bishopattacks(occ, s) ∩ bishoplike(b, them)) &&
-            isempty(rookattacks(occ, s) ∩ rooklike(b, them))
+           isempty(kingattacks(s) ∩ kings(b, them)) &&
+           isempty(knightattacks(s) ∩ knights(b, them)) &&
+           isempty(bishopattacks(occ, s) ∩ bishoplike(b, them)) &&
+           isempty(rookattacks(occ, s) ∩ rooklike(b, them))
             push!(list, Move(ksq, s))
         end
     end
@@ -2617,12 +2701,12 @@ function countkingevasions(b::Board)::Int
     them = coloropp(us)
     ksq = kingsquare(b, us)
     occ = occupiedsquares(b) - ksq
-    for s in kingattacks(ksq) ∩ -pieces(b, us)
+    for s ∈ kingattacks(ksq) ∩ -pieces(b, us)
         if isempty(pawnattacks(us, s) ∩ pawns(b, them)) &&
-            isempty(kingattacks(s) ∩ kings(b, them)) &&
-            isempty(knightattacks(s) ∩ knights(b, them)) &&
-            isempty(bishopattacks(occ, s) ∩ bishoplike(b, them)) &&
-            isempty(rookattacks(occ, s) ∩ rooklike(b, them))
+           isempty(kingattacks(s) ∩ kings(b, them)) &&
+           isempty(knightattacks(s) ∩ knights(b, them)) &&
+           isempty(bishopattacks(occ, s) ∩ bishoplike(b, them)) &&
+           isempty(rookattacks(occ, s) ∩ rooklike(b, them))
             result += 1
         end
     end
@@ -2635,12 +2719,12 @@ function haskingevasions(b::Board)::Bool
     them = coloropp(us)
     ksq = kingsquare(b, us)
     occ = occupiedsquares(b) - ksq
-    for s in kingattacks(ksq) ∩ -pieces(b, us)
+    for s ∈ kingattacks(ksq) ∩ -pieces(b, us)
         if isempty(pawnattacks(us, s) ∩ pawns(b, them)) &&
-            isempty(kingattacks(s) ∩ kings(b, them)) &&
-            isempty(knightattacks(s) ∩ knights(b, them)) &&
-            isempty(bishopattacks(occ, s) ∩ bishoplike(b, them)) &&
-            isempty(rookattacks(occ, s) ∩ rooklike(b, them))
+           isempty(kingattacks(s) ∩ kings(b, them)) &&
+           isempty(knightattacks(s) ∩ knights(b, them)) &&
+           isempty(bishopattacks(occ, s) ∩ bishoplike(b, them)) &&
+           isempty(rookattacks(occ, s) ∩ rooklike(b, them))
             return true
         end
     end
@@ -2650,7 +2734,7 @@ end
 
 function castleislegal(b, kf, kt, rf, rt)::Bool
     them = coloropp(sidetomove(b))
-    if !isempty((squaresbetween(kf, kt) + kt) ∩ (occupiedsquares(b) - kf -rf))
+    if !isempty((squaresbetween(kf, kt) + kt) ∩ (occupiedsquares(b) - kf - rf))
         false
     elseif !isempty((squaresbetween(rf, rt) + rt) ∩ (occupiedsquares(b) - kf - rf))
         false
@@ -2744,13 +2828,13 @@ function genep(b::Board, list::MoveList)
         us = sidetomove(b)
         them = coloropp(us)
         ksq = kingsquare(b, us)
-        for s in pawnattacks(them, epsq) ∩ pawns(b, us)
+        for s ∈ pawnattacks(them, epsq) ∩ pawns(b, us)
             occ = occupiedsquares(b)
             occ -= s
             occ -= Square(file(epsq), rank(s))
             occ += epsq
             if isempty(bishopattacks(occ, ksq) ∩ bishoplike(b, them)) &&
-                isempty(rookattacks(occ, ksq) ∩ rooklike(b, them))
+               isempty(rookattacks(occ, ksq) ∩ rooklike(b, them))
                 push!(list, Move(s, epsq))
             end
         end
@@ -2765,13 +2849,13 @@ function countep(b::Board)::Int
         us = sidetomove(b)
         them = coloropp(us)
         ksq = kingsquare(b, us)
-        for s in pawnattacks(them, epsq) ∩ pawns(b, us)
+        for s ∈ pawnattacks(them, epsq) ∩ pawns(b, us)
             occ = occupiedsquares(b)
             occ -= s
             occ -= Square(file(epsq), rank(s))
             occ += epsq
             if isempty(bishopattacks(occ, ksq) ∩ bishoplike(b, them)) &&
-                isempty(rookattacks(occ, ksq) ∩ rooklike(b, them))
+               isempty(rookattacks(occ, ksq) ∩ rooklike(b, them))
                 result += 1
             end
         end
@@ -2786,13 +2870,13 @@ function hasep(b::Board)::Bool
         us = sidetomove(b)
         them = coloropp(us)
         ksq = kingsquare(b, us)
-        for s in pawnattacks(them, epsq) ∩ pawns(b, us)
+        for s ∈ pawnattacks(them, epsq) ∩ pawns(b, us)
             occ = occupiedsquares(b)
             occ -= s
             occ -= Square(file(epsq), rank(s))
             occ += epsq
             if isempty(bishopattacks(occ, ksq) ∩ bishoplike(b, them)) &&
-                isempty(rookattacks(occ, ksq) ∩ rooklike(b, them))
+               isempty(rookattacks(occ, ksq) ∩ rooklike(b, them))
                 return true
             end
         end
@@ -2825,10 +2909,15 @@ end
 function countmoves(b::Board)::Int
     us = sidetomove(b)
     target = -pieces(b, us)
-    countpawnpushes(b) + countpawncaptures(b) + countknightmoves(b, target) +
-        countbishopmoves(b, target) + countrookmoves(b, target) +
-        countqueenmoves(b, target) + countkingmoves(b, target) +
-        countcastles(b) + countep(b)
+    countpawnpushes(b) +
+    countpawncaptures(b) +
+    countknightmoves(b, target) +
+    countbishopmoves(b, target) +
+    countrookmoves(b, target) +
+    countqueenmoves(b, target) +
+    countkingmoves(b, target) +
+    countcastles(b) +
+    countep(b)
 end
 
 
@@ -2866,17 +2955,17 @@ function countevasions(b::Board)::Int
             blocksqs = squaresbetween(ksq, chsq)
             target = b.checkers ∪ blocksqs
             return countkingevasions(b) +
-                countpawnevasions(b, chsq, blocksqs) +
-                countknightmoves(b, target) +
-                countbishopevasions(b, target) +
-                countrookevasions(b, target) +
-                countqueenevasions(b, target)
+                   countpawnevasions(b, chsq, blocksqs) +
+                   countknightmoves(b, target) +
+                   countbishopevasions(b, target) +
+                   countrookevasions(b, target) +
+                   countqueenevasions(b, target)
         else
             return countkingevasions(b) +
-                countpawncaptureevasions(b, chsq) +
-                countknightcaptureevasions(b, chsq) +
-                countbishoplikecaptureevasions(b, chsq) +
-                countrooklikecaptureevasions(b, chsq)
+                   countpawncaptureevasions(b, chsq) +
+                   countknightcaptureevasions(b, chsq) +
+                   countbishoplikecaptureevasions(b, chsq) +
+                   countrooklikecaptureevasions(b, chsq)
         end
     end
 end
@@ -2892,17 +2981,17 @@ function hasevasions(b::Board)::Bool
             blocksqs = squaresbetween(ksq, chsq)
             target = b.checkers ∪ blocksqs
             return haskingevasions(b) ||
-                haspawnevasions(b, chsq, blocksqs) ||
-                hasknightmoves(b, target) ||
-                hasbishopevasions(b, target) ||
-                hasrookevasions(b, target) ||
-                hasqueenevasions(b, target)
+                   haspawnevasions(b, chsq, blocksqs) ||
+                   hasknightmoves(b, target) ||
+                   hasbishopevasions(b, target) ||
+                   hasrookevasions(b, target) ||
+                   hasqueenevasions(b, target)
         else
             return haskingevasions(b) ||
-                haspawncaptureevasions(b, chsq) ||
-                hasknightcaptureevasions(b, chsq) ||
-                hasbishoplikecaptureevasions(b, chsq) ||
-                hasrooklikecaptureevasions(b, chsq)
+                   haspawncaptureevasions(b, chsq) ||
+                   hasknightcaptureevasions(b, chsq) ||
+                   hasbishoplikecaptureevasions(b, chsq) ||
+                   hasrooklikecaptureevasions(b, chsq)
         end
     end
     false
@@ -2952,10 +3041,15 @@ function haslegalmoves(b::Board)::Bool
     else
         us = sidetomove(b)
         target = -pieces(b, us)
-        haspawnpushes(b) || haspawncaptures(b) || hasknightmoves(b, target) ||
-            hasbishopmoves(b, target) || hasrookmoves(b, target) ||
-            hasqueenmoves(b, target) || haskingmoves(b, target) ||
-            hascastles(b) || hasep(b)
+        haspawnpushes(b) ||
+            haspawncaptures(b) ||
+            hasknightmoves(b, target) ||
+            hasbishopmoves(b, target) ||
+            hasrookmoves(b, target) ||
+            hasqueenmoves(b, target) ||
+            haskingmoves(b, target) ||
+            hascastles(b) ||
+            hasep(b)
     end
 end
 
@@ -3003,7 +3097,9 @@ end
 Returns `true` if the position is a draw by material.
 """
 function ismaterialdraw(b::Board)::Bool
-    isempty(pawns(b)) && isempty(rooks(b)) && isempty(queens(b)) &&
+    isempty(pawns(b)) &&
+        isempty(rooks(b)) &&
+        isempty(queens(b)) &&
         squarecount(knights(b) ∪ bishops(b)) ≤ 1
 end
 
@@ -3042,10 +3138,10 @@ function perftinternal(b::Board, depth::Int, ply::Int, lists)::Int
     if depth == 1
         movecount(b)
     else
-        movelist = lists[ply + 1]
+        movelist = lists[ply+1]
         moves(b, movelist)
         result = 0
-        for m in movelist
+        for m ∈ movelist
             u = domove!(b, m)
             result += perftinternal(b, depth - 1, ply + 1, lists)
             undomove!(b, u)
@@ -3067,7 +3163,7 @@ function perft(b::Board, depth::Int)::Int
     if depth == 0
         1
     else
-        lists = [MoveList(200) for _ in 1:depth]
+        lists = [MoveList(200) for _ ∈ 1:depth]
         perftinternal(b, depth, 0, lists)
     end
 end
@@ -3081,9 +3177,9 @@ Do a `divide` search to debug the `perft()` function.
 See https://www.chessprogramming.org/Perft.
 """
 function divide(b::Board, depth::Int)::Int
-    ms = sort(collect(moves(b)), by=tostring)
+    ms = sort(collect(moves(b)), by = tostring)
     result = 0
-    for m in ms
+    for m ∈ ms
         result += perft(domove(b, m), depth - 1)
         println("$(tostring(m)) $result")
     end
@@ -3105,14 +3201,14 @@ Try to create a `Board` value from a FEN string.
 If the supplied string doesn't represent a valid board position, this function
 returns `nothing`.
 """
-function fromfen(fen::String)::Union{Board, Nothing}
+function fromfen(fen::String)::Union{Board,Nothing}
     result = emptyboard()
     components = split(fen, r"\s+")
 
     # Board
     r = RANK_8.val
     f = FILE_A.val
-    for c in components[1]
+    for c ∈ components[1]
         p = piecefromchar(c)
         if !isnothing(p)
             s = Square(SquareFile(f), SquareRank(r))
@@ -3141,7 +3237,7 @@ function fromfen(fen::String)::Union{Board, Nothing}
     # Castle rights
     comp = get(components, 3, "-")
     if comp ≠ "-"
-        for ch in comp
+        for ch ∈ comp
             i = findfirst(isequal(ch), "KQkq")
             if !isnothing(i)
                 result.castlerights |= 1 << (i - 1)
@@ -3188,14 +3284,26 @@ function castlestring(b::Board)::String
         "-"
     elseif !b.is960
         ((b.castlerights & 1) ≠ 0 ? "K" : "") *
-            ((b.castlerights & 2) ≠ 0 ? "Q" : "") *
-            ((b.castlerights & 4) ≠ 0 ? "k" : "") *
-            ((b.castlerights & 8) ≠ 0 ? "q" : "")
+        ((b.castlerights & 2) ≠ 0 ? "Q" : "") *
+        ((b.castlerights & 4) ≠ 0 ? "k" : "") *
+        ((b.castlerights & 8) ≠ 0 ? "q" : "")
     else
-        ((b.castlerights & 1) ≠ 0 ? string(uppercase(tochar(SquareFile(b.castlefiles[1])))) : "") *
-        ((b.castlerights & 2) ≠ 0 ? string(uppercase(tochar(SquareFile(b.castlefiles[2])))) : "") *
-        ((b.castlerights & 4) ≠ 0 ? string(lowercase(tochar(SquareFile(b.castlefiles[1])))) : "") *
-        ((b.castlerights & 8) ≠ 0 ? string(lowercase(tochar(SquareFile(b.castlefiles[2])))) : "")
+        (
+            (b.castlerights & 1) ≠ 0 ?
+            string(uppercase(tochar(SquareFile(b.castlefiles[1])))) : ""
+        ) *
+        (
+            (b.castlerights & 2) ≠ 0 ?
+            string(uppercase(tochar(SquareFile(b.castlefiles[2])))) : ""
+        ) *
+        (
+            (b.castlerights & 4) ≠ 0 ?
+            string(lowercase(tochar(SquareFile(b.castlefiles[1])))) : ""
+        ) *
+        (
+            (b.castlerights & 8) ≠ 0 ?
+            string(lowercase(tochar(SquareFile(b.castlefiles[2])))) : ""
+        )
     end
 end
 
@@ -3207,10 +3315,10 @@ Convert a board to a FEN string.
 """
 function fen(b::Board)::String
     result = IOBuffer()
-    for ri in 1:8
+    for ri ∈ 1:8
         r = SquareRank(ri)
         skip = 0
-        for fi in 1:8
+        for fi ∈ 1:8
             f = SquareFile(fi)
             p = pieceon(b, f, r)
             if p == EMPTY
@@ -3266,7 +3374,7 @@ pick a particular Chess960 position, using the indexing scheme described
 [here](https://en.wikipedia.org/wiki/Fischer_random_chess_numbering_scheme).
 When this parameter is omitted, the function picks a random position.
 """
-function startboard960(i=nothing)
+function startboard960(i = nothing)
     if isnothing(i)
         i = rand(0:959)
     end
@@ -3366,30 +3474,33 @@ end
 
 
 function colorpprint(b::Board, highlight = SS_EMPTY, unicode = false)
-    for ri in 1:8
+    for ri ∈ 1:8
         r = SquareRank(ri)
-        for fi in 1:8
+        for fi ∈ 1:8
             f = SquareFile(fi)
             p = pieceon(b, f, r)
             fg = pcolor(p) == WHITE ? 0xffff88 : 0x000000
             bg = (ri + fi) % 2 == 0 ? 0x8accc0 : 0x66b0a3
-            ch = unicode ?
-                tounicode(Piece(WHITE, ptype(p))) : tochar(ptype(p))
+            ch = unicode ? tounicode(Piece(WHITE, ptype(p))) : tochar(ptype(p))
             if Square(f, r) ∈ highlight
                 hc = 0xff1654
                 if p == EMPTY
                     print(Crayon(background = bg, foreground = hc), " * ")
                 else
-                    print(Crayon(background = bg, foreground = hc), "*",
-                          Crayon(background = bg, foreground = fg), ch,
-                          Crayon(background = bg, foreground = hc), "*")
+                    print(
+                        Crayon(background = bg, foreground = hc),
+                        "*",
+                        Crayon(background = bg, foreground = fg),
+                        ch,
+                        Crayon(background = bg, foreground = hc),
+                        "*",
+                    )
                 end
             else
                 if p == EMPTY
                     print(Crayon(background = bg, foreground = fg), "   ")
                 else
-                    print(Crayon(background = bg, foreground = fg),
-                          " $ch ")
+                    print(Crayon(background = bg, foreground = fg), " $ch ")
                 end
             end
         end
@@ -3438,13 +3549,12 @@ function pprint(b::Board; color = false, highlight = SS_EMPTY, unicode = false)
     if color
         colorpprint(b, highlight, unicode)
     else
-        for ri in 1:8
+        for ri ∈ 1:8
             r = SquareRank(ri)
             println("+---+---+---+---+---+---+---+---+")
-            for fi in 1:8
+            for fi ∈ 1:8
                 f = SquareFile(fi)
-                ch = unicode ?
-                    tounicode(pieceon(b, f, r)) : tochar(pieceon(b, f, r))
+                ch = unicode ? tounicode(pieceon(b, f, r)) : tochar(pieceon(b, f, r))
                 if Square(f, r) ∈ highlight
                     if pieceon(b, f, r) ≠ EMPTY
                         print("|*$ch*")

@@ -153,7 +153,7 @@ end
 function indextou64(index::Int, bits::Int, mask::UInt64)
     result = UInt64(0)
     m = mask
-    for i in 0:(bits - 1)
+    for i ∈ 0:(bits-1)
         j = trailing_zeros(m)
         m &= m - 1
         if (index & (1 << i)) != 0
@@ -179,7 +179,8 @@ function computeslidingattacks(s, occ, dirs, ix)
             s = UInt64(1) << square(f, r)
             result |= s
             (occ & s) ≠ 0 && break
-            f += dx; r += dy
+            f += dx
+            r += dy
         end
         ix += 1
     end
@@ -188,13 +189,13 @@ end
 
 
 function computeattackdb()
-    result = Array{UInt64, 1}(zeros(107648))
+    result = Array{UInt64,1}(zeros(107648))
     dirs = [5, 7, 13, 15, 0, 6, 9, 11, 14, 0]
-    for s in 0:63
+    for s ∈ 0:63
         for i ∈ 0:1
             m = i == 0 ? B_MAGIC[s+1] : R_MAGIC[s+1]
             bits = 64 - m.shift
-            for j ∈ 0:((1 << bits) - 1)
+            for j ∈ 0:((1<<bits)-1)
                 b = indextou64(j, bits, m.mask)
                 result[magicindex(m, b)] = computeslidingattacks(s, b, dirs, i * 5 + 1)
             end

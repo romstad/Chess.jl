@@ -14,7 +14,7 @@ function zobep(s::Square)::UInt64
 end
 
 function zobcastle(castlerights::UInt8)
-    @inbounds ZOB_KEYS[castlerights + 1, 8]
+    @inbounds ZOB_KEYS[castlerights+1, 8]
 end
 
 function zobsidetomove()

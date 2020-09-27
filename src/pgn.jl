@@ -18,7 +18,7 @@ A type for reading PGN data from a stream.
 """
 mutable struct PGNReader
     io::IO
-    unreadchar::Union{Char, Nothing}
+    unreadchar::Union{Char,Nothing}
 end
 
 
@@ -57,11 +57,12 @@ end
 
 
 function terminatesgame(t::Token)
-    t.ttype == asterisk || t.ttype == eof ||
-        (t.ttype == symbol &&
-         (t.value == "1-0" ||
-          t.value == "0-1" ||
-          t.value == "1/2-1/2"))
+    t.ttype == asterisk ||
+        t.ttype == eof ||
+        (
+            t.ttype == symbol &&
+            (t.value == "1-0" || t.value == "0-1" || t.value == "1/2-1/2")
+        )
 end
 
 
@@ -372,14 +373,16 @@ function gotonextgame!(p::PGNReader)::Bool
 end
 
 
-function readheader(p::PGNReader)::Tuple{String, String}
+function readheader(p::PGNReader)::Tuple{String,String}
     lb = readtoken(p)
     k = readtoken(p)
     v = readtoken(p)
     rb = readtoken(p)
     skipwhitespace(p)
-    if lb.ttype == leftbracket && rb.ttype == rightbracket &&
-        k.ttype == symbol && v.ttype == str
+    if lb.ttype == leftbracket &&
+       rb.ttype == rightbracket &&
+       k.ttype == symbol &&
+       v.ttype == str
         (k.value, v.value)
     else
         throw(PGNException("Malformed header pair"))
@@ -427,7 +430,7 @@ game. If you are not sure this is the case, call `gotonextgame!` on the
 If parsing fails or the notation contains illegal or ambiguous moves, the
 function raises a `PGNException`.
 """
-function readgame(p::PGNReader; annotations=false)
+function readgame(p::PGNReader; annotations = false)
     headers = readheaders(p)
     if isnothing(headers.fen)
         result = annotations ? Game() : SimpleGame()
@@ -498,7 +501,7 @@ channel of `Game` objects containing all comments, variations and numeric
 annotation glyphs in the PGN. Otherwise, it will consist of `SimpleGame` objects
 with only the game moves.
 """
-function gamesinfile(filename::String; annotations=false)
+function gamesinfile(filename::String; annotations = false)
     function createchannel(ch::Channel)
         open(filename, "r") do io
             pgnr = PGNReader(io)
@@ -524,7 +527,7 @@ PGN. Otherwise, it will be a `SimpleGame` with only the game moves.
 If the string does not parse as valid PGN, or if the notation contains illegal
 or ambiguous moves, the function raises a `PGNException`
 """
-function gamefromstring(s::String; annotations=false)
+function gamefromstring(s::String; annotations = false)
     readgame(PGNReader(IOBuffer(s)), annotations = annotations)
 end
 

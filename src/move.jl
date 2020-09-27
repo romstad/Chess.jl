@@ -178,7 +178,7 @@ julia> movefromstring("") == nothing
 true
 ```
 """
-function movefromstring(s::String)::Union{Move, Nothing}
+function movefromstring(s::String)::Union{Move,Nothing}
     if s == "0000"
         return MOVE_NULL
     elseif length(s) < 4

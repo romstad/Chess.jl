@@ -2,12 +2,43 @@ using Dates;
 
 export Game, GameHeader, GameHeaders, GameNode, SimpleGame
 
-export addcomment!, adddata!, addmove!, addmoves!, addnag!, addprecomment!,
-    back!, blackelo, board, comment, continuations, dateplayed, decodemoves,
-    domove!, domoves!, encodemoves, findnodematching, forward!, headervalue,
-    isatbeginning, isatend, isleaf, isterminal, nag, nextmove, ply, precomment,
-    removeallchildren!, removedata!, removenode!, setheadervalue!,
-    tobeginning!, tobeginningofvariation!, toend!, tonode!, undomove!, whiteelo
+export addcomment!,
+    adddata!,
+    addmove!,
+    addmoves!,
+    addnag!,
+    addprecomment!,
+    back!,
+    blackelo,
+    board,
+    comment,
+    continuations,
+    dateplayed,
+    decodemoves,
+    domove!,
+    domoves!,
+    encodemoves,
+    findnodematching,
+    forward!,
+    headervalue,
+    isatbeginning,
+    isatend,
+    isleaf,
+    isterminal,
+    nag,
+    nextmove,
+    ply,
+    precomment,
+    removeallchildren!,
+    removedata!,
+    removenode!,
+    setheadervalue!,
+    tobeginning!,
+    tobeginningofvariation!,
+    toend!,
+    tonode!,
+    undomove!,
+    whiteelo
 
 
 """
@@ -41,7 +72,7 @@ mutable struct GameHeaders
     white::String
     black::String
     result::String
-    fen::Union{String, Nothing}
+    fen::Union{String,Nothing}
     othertags::Vector{GameHeader}
 end
 
@@ -52,8 +83,8 @@ end
 
 
 mutable struct GameHistoryEntry
-    move::Union{Move, Nothing}
-    undo::Union{UndoInfo, Nothing}
+    move::Union{Move,Nothing}
+    undo::Union{UndoInfo,Nothing}
     key::UInt64
 end
 
@@ -76,7 +107,7 @@ function Base.show(io::IO, g::SimpleGame)
     print(io, "SimpleGame:\n ")
     b = deepcopy(g.startboard)
     ply = 1
-    for ghe in g.history
+    for ghe ∈ g.history
         if ply == g.ply
             print(io, "* ")
         end
@@ -97,13 +128,14 @@ end
 
 Constructor that creates a `SimpleGame` from the provided starting position.
 """
-function SimpleGame(startboard::Board=startboard())
-    result = SimpleGame(GameHeaders(),
-                        deepcopy(startboard),
-                        deepcopy(startboard),
-                        GameHistoryEntry[GameHistoryEntry(nothing, nothing,
-                                                          startboard.key)],
-                        1)
+function SimpleGame(startboard::Board = startboard())
+    result = SimpleGame(
+        GameHeaders(),
+        deepcopy(startboard),
+        deepcopy(startboard),
+        GameHistoryEntry[GameHistoryEntry(nothing, nothing, startboard.key)],
+        1,
+    )
     if fen(startboard) ≠ START_FEN
         setheadervalue!(result, "FEN", fen(startboard))
     end
@@ -148,10 +180,10 @@ A `GameNode` is a mutable struct with the following slots:
   dictionary mapping ids to `GameNode`s.
 """
 mutable struct GameNode
-    parent::Union{GameNode, Nothing}
+    parent::Union{GameNode,Nothing}
     board::Board
     children::Vector{GameNode}
-    data::Dict{String, Any}
+    data::Dict{String,Any}
     id::Int
     ply::Int
 end
@@ -170,12 +202,14 @@ Constructor that creates a `GameNode` from a parent node and a move.
 The move must be a legal move from the board at the parent node.
 """
 function GameNode(parent::GameNode, move::Move, id::Int)
-    GameNode(parent,
-             domove(parent.board, move),
-             GameNode[],
-             Dict{String, Any}(),
-             id,
-             parent.ply + 1)
+    GameNode(
+        parent,
+        domove(parent.board, move),
+        GameNode[],
+        Dict{String,Any}(),
+        id,
+        parent.ply + 1,
+    )
 end
 
 
@@ -188,7 +222,7 @@ The resulting `GameNode` has no parent. This constructor is used to create the
 root node of a game.
 """
 function GameNode(board::Board, id::Int, ply::Int = 1)
-    GameNode(nothing, deepcopy(board), GameNode[], Dict{String, Any}(), id, ply)
+    GameNode(nothing, deepcopy(board), GameNode[], Dict{String,Any}(), id, ply)
 end
 
 
@@ -201,7 +235,7 @@ mutable struct Game
     headers::GameHeaders
     root::GameNode
     node::GameNode
-    nodemap::Dict{Int, GameNode}
+    nodemap::Dict{Int,GameNode}
     nodecounter::Int
 end
 
@@ -214,7 +248,7 @@ function Base.show(io::IO, g::Game)
             end
             child = first(node.children)
             print(io, movetosan(node.board, lastmove(child.board)))
-            for child in node.children[2:end]
+            for child ∈ node.children[2:end]
                 print(io, " (")
                 print(io, movetosan(node.board, lastmove(child.board)))
                 if !isempty(child.children)
@@ -287,7 +321,7 @@ Looks up the value for the header with the given name.
 Returns the value as a `String`, or `nothing` if no header with the provided
 name exists.
 """
-function headervalue(ghs::GameHeaders, name::String)::Union{String, Nothing}
+function headervalue(ghs::GameHeaders, name::String)::Union{String,Nothing}
     if name == "Event"
         ghs.event
     elseif name == "Site"
@@ -305,7 +339,7 @@ function headervalue(ghs::GameHeaders, name::String)::Union{String, Nothing}
     elseif name == "FEN" || name == "Fen"
         ghs.fen
     else
-        for gh in ghs.othertags
+        for gh ∈ ghs.othertags
             if gh.name == name
                 return gh.value
             end
@@ -314,11 +348,11 @@ function headervalue(ghs::GameHeaders, name::String)::Union{String, Nothing}
     end
 end
 
-function headervalue(g::SimpleGame, name::String)::Union{String, Nothing}
+function headervalue(g::SimpleGame, name::String)::Union{String,Nothing}
     headervalue(g.headers, name)
 end
 
-function headervalue(g::Game, name::String)::Union{String, Nothing}
+function headervalue(g::Game, name::String)::Union{String,Nothing}
     headervalue(g.headers, name)
 end
 
@@ -328,7 +362,7 @@ const PGN_DATE_FORMAT_2 = DateFormat("y-m")
 const PGN_DATE_FORMAT_3 = DateFormat("y")
 
 
-function parsedate(datestr::String)::Union{Date, Nothing}
+function parsedate(datestr::String)::Union{Date,Nothing}
     datestr = replace(datestr, "." => "-")
     try
         Date(datestr[1:10], PGN_DATE_FORMAT)
@@ -384,11 +418,11 @@ julia> dateplayed(g) == nothing
 true
 ```
 """
-function dateplayed(g::SimpleGame)::Union{Date, Nothing}
+function dateplayed(g::SimpleGame)::Union{Date,Nothing}
     parsedate(headervalue(g, "Date"))
 end
 
-function dateplayed(g::Game)::Union{Date, Nothing}
+function dateplayed(g::Game)::Union{Date,Nothing}
     parsedate(headervalue(g, "Date"))
 end
 
@@ -399,12 +433,12 @@ end
 
 The Elo of the white player (as given by the "WhiteElo" tag), or `nothing`.
 """
-function whiteelo(g::SimpleGame)::Union{Int, Nothing}
+function whiteelo(g::SimpleGame)::Union{Int,Nothing}
     elo = headervalue(g, "WhiteElo")
     elo ≠ nothing ? tryparse(Int, elo) : nothing
 end
 
-function whiteelo(g::Game)::Union{Int, Nothing}
+function whiteelo(g::Game)::Union{Int,Nothing}
     elo = headervalue(g, "WhiteElo")
     elo ≠ nothing ? tryparse(Int, elo) : nothing
 end
@@ -416,12 +450,12 @@ end
 
 The Elo of the black player (as given by the "BlackElo" tag), or `nothing`.
 """
-function blackelo(g::SimpleGame)::Union{Int, Nothing}
+function blackelo(g::SimpleGame)::Union{Int,Nothing}
     elo = headervalue(g, "BlackElo")
     elo ≠ nothing ? tryparse(Int, elo) : nothing
 end
 
-function blackelo(g::Game)::Union{Int, Nothing}
+function blackelo(g::Game)::Union{Int,Nothing}
     elo = headervalue(g, "BlackElo")
     elo ≠ nothing ? tryparse(Int, elo) : nothing
 end
@@ -452,7 +486,7 @@ function setheadervalue!(ghs::GameHeaders, name::String, value::String)
     elseif name == "FEN" || name == "Fen"
         ghs.fen = value
     else
-        for t in ghs.othertags
+        for t ∈ ghs.othertags
             if t.name == name
                 t.value = value
                 return
@@ -628,14 +662,14 @@ the game will also be deleted. If you want to add the new moves as a variation
 instead, make sure you use the `Game` type instead of `SimpleGame`, and use
 `addmoves!` instead of `domoves!`.
 """
-function domoves!(g::SimpleGame, moves::Vararg{Union{Move, String}})
-    for m in moves
+function domoves!(g::SimpleGame, moves::Vararg{Union{Move,String}})
+    for m ∈ moves
         domove!(g, m)
     end
 end
 
-function domoves!(g::Game, moves::Vararg{Union{Move, String}})
-    for m in moves
+function domoves!(g::Game, moves::Vararg{Union{Move,String}})
+    for m ∈ moves
         domove!(g, m)
     end
 end
@@ -687,8 +721,8 @@ function tries to parse them first as UCI moves, then as SAN moves.
 This function works by calling `addmove!` repeatedly for all input moves. It's
 the caller's responsibility to ensure that all moves are legal and unambiguous.
 """
-function addmoves!(g::Game, moves::Vararg{Union{Move, String}})
-    for m in moves
+function addmoves!(g::Game, moves::Vararg{Union{Move,String}})
+    for m ∈ moves
         addmove!(g, m)
     end
     g
@@ -701,11 +735,11 @@ end
 
 The next move in the game, or `nothing` if we're at the end of the game.
 """
-function nextmove(g::SimpleGame)::Union{Move, Nothing}
+function nextmove(g::SimpleGame)::Union{Move,Nothing}
     g.history[g.ply].move
 end
 
-function nextmove(g::Game)::Union{Move, Nothing}
+function nextmove(g::Game)::Union{Move,Nothing}
     if !isleaf(g.node)
         lastmove(first(g.node.children).board)
     end
@@ -950,7 +984,7 @@ end
 
 The comment after the move leading to this node, or `nothing`.
 """
-function comment(n::GameNode)::Union{String, Nothing}
+function comment(n::GameNode)::Union{String,Nothing}
     get(n.data, "comment", nothing)
 end
 
@@ -960,7 +994,7 @@ end
 
 The comment before the move leading to this node, or `nothing`.
 """
-function precomment(n::GameNode)::Union{String, Nothing}
+function precomment(n::GameNode)::Union{String,Nothing}
     get(n.data, "precomment", nothing)
 end
 
@@ -970,7 +1004,7 @@ end
 
 The numeric annotation glyph for the move leading to this node, or `nothing`.
 """
-function nag(n::GameNode)::Union{Int, Nothing}
+function nag(n::GameNode)::Union{Int,Nothing}
     get(n.data, "nag", nothing)
 end
 
@@ -1100,8 +1134,8 @@ end
 function isrepetitiondraw(g::SimpleGame)::Bool
     key = board(g).key
     rcount = 1
-    for i in 2:2:board(g).r50
-        if g.history[g.ply - i].key == key
+    for i ∈ 2:2:board(g).r50
+        if g.history[g.ply-i].key == key
             rcount += 1
             if rcount == 3
                 return true
@@ -1184,7 +1218,7 @@ Finds a node in the game tree that satisfies the predicate `pred`.
 
 Returns a `GameNode`, or `nothing` if no node in the tree satisfies `pred`.
 """
-function findnodematching(node::GameNode, pred)::Union{GameNode, Nothing}
+function findnodematching(node::GameNode, pred)::Union{GameNode,Nothing}
     if pred(node)
         node
     else
@@ -1198,7 +1232,7 @@ function findnodematching(node::GameNode, pred)::Union{GameNode, Nothing}
     end
 end
 
-function findnodematching(g::Game, pred)::Union{GameNode, Nothing}
+function findnodematching(g::Game, pred)::Union{GameNode,Nothing}
     findnodematching(g.root, pred)
 end
 

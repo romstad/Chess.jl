@@ -49,8 +49,20 @@ for c in ALL_COLORS
     end
 end
 
-const ALL_PIECES = [PIECE_WP, PIECE_WN, PIECE_WB, PIECE_WR, PIECE_WQ, PIECE_WK,
-                    PIECE_BP, PIECE_BN, PIECE_BB, PIECE_BR, PIECE_BQ, PIECE_BK]
+const ALL_PIECES = [
+    PIECE_WP,
+    PIECE_WN,
+    PIECE_WB,
+    PIECE_WR,
+    PIECE_WQ,
+    PIECE_WK,
+    PIECE_BP,
+    PIECE_BN,
+    PIECE_BB,
+    PIECE_BR,
+    PIECE_BQ,
+    PIECE_BK,
+]
 
 for p in ALL_PIECES
     @test p == Piece(pcolor(p), ptype(p))

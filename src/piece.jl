@@ -2,11 +2,39 @@ import Base.<, Base.>
 
 export PieceColor, PieceType, Piece
 
-export colorfromchar, coloropp, isok, isslider, pcolor, piecefromchar,
-    piecetypefromchar, ptype, tochar, tounicode
-export BISHOP, BLACK, COLOR_NONE, EMPTY, KING, KNIGHT, PAWN, PIECE_BB, PIECE_BK,
-    PIECE_BN, PIECE_BP, PIECE_BQ, PIECE_BR, PIECE_TYPE_NONE, PIECE_WB, PIECE_WK,
-    PIECE_WN, PIECE_WP, PIECE_WQ, PIECE_WR, QUEEN, ROOK, WHITE
+export colorfromchar,
+    coloropp,
+    isok,
+    isslider,
+    pcolor,
+    piecefromchar,
+    piecetypefromchar,
+    ptype,
+    tochar,
+    tounicode
+export BISHOP,
+    BLACK,
+    COLOR_NONE,
+    EMPTY,
+    KING,
+    KNIGHT,
+    PAWN,
+    PIECE_BB,
+    PIECE_BK,
+    PIECE_BN,
+    PIECE_BP,
+    PIECE_BQ,
+    PIECE_BR,
+    PIECE_TYPE_NONE,
+    PIECE_WB,
+    PIECE_WK,
+    PIECE_WN,
+    PIECE_WP,
+    PIECE_WQ,
+    PIECE_WR,
+    QUEEN,
+    ROOK,
+    WHITE
 
 
 """
@@ -111,7 +139,7 @@ julia> colorfromchar('x') == nothing
 true
 ```
 """
-function colorfromchar(c::Char)::Union{PieceColor, Nothing}
+function colorfromchar(c::Char)::Union{PieceColor,Nothing}
     i = findfirst(isequal(lowercase(c)), "wb")
     if isnothing(i)
         nothing
@@ -250,7 +278,7 @@ julia> piecetypefromchar('a') == nothing
 true
 ```
 """
-function piecetypefromchar(c::Char)::Union{PieceType, Nothing}
+function piecetypefromchar(c::Char)::Union{PieceType,Nothing}
     i = findfirst(isequal(lowercase(c)), "pnbrqk")
     if isnothing(i)
         nothing
@@ -443,7 +471,7 @@ julia> piecefromchar('-') == nothing
 true
 ```
 """
-function piecefromchar(ch::Char)::Union{Piece, Nothing}
+function piecefromchar(ch::Char)::Union{Piece,Nothing}
     c = isuppercase(ch) ? WHITE : BLACK
     t = piecetypefromchar(ch)
     if isnothing(t)
@@ -482,8 +510,7 @@ end
 
 
 function tounicode(p::Piece)::Char
-    chars = ['♙', '♘', '♗', '♖', '♕', '♔', '?', '?',
-             '♟', '♞', '♝', '♜', '♛', '♚']
+    chars = ['♙', '♘', '♗', '♖', '♕', '♔', '?', '?', '♟', '♞', '♝', '♜', '♛', '♚']
     if isok(p)
         chars[p.val]
     else
@@ -500,7 +527,7 @@ Determine whether a piece is a sliding piece.
 """
 function isslider(t::PieceType)::Bool
     t >= BISHOP && t <= QUEEN
-end,
+end
 
 function isslider(p::Piece)::Bool
     isslider(ptype(p))

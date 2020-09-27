@@ -2,8 +2,8 @@ import Base.+, Base.-, Base.*, Base.<, Base.>
 
 export Square, SquareFile, SquareRank, SquareDelta
 
-export distance, file, filefromchar, isok, rank, rankfromchar, squarefromstring,
-    tochar, tostring
+export distance,
+    file, filefromchar, isok, rank, rankfromchar, squarefromstring, tochar, tostring
 
 export FILE_NONE, FILE_A, FILE_B, FILE_C, FILE_D, FILE_E, FILE_F, FILE_G, FILE_H
 export RANK_NONE, RANK_1, RANK_2, RANK_3, RANK_4, RANK_5, RANK_6, RANK_7, RANK_8
@@ -157,7 +157,7 @@ julia> filefromchar('2') == nothing
 true
 ```
 """
-function filefromchar(c::Char)::Union{SquareFile, Nothing}
+function filefromchar(c::Char)::Union{SquareFile,Nothing}
     result = SquareFile(Int(c) - Int('a') + 1)
     isok(result) ? result : nothing
 end
@@ -181,7 +181,7 @@ julia> rankfromchar('x') == nothing
 true
 ```
 """
-function rankfromchar(c::Char)::Union{SquareRank, Nothing}
+function rankfromchar(c::Char)::Union{SquareRank,Nothing}
     result = SquareRank(8 - Int(c) + Int('1'))
     isok(result) ? result : nothing
 end
@@ -387,7 +387,7 @@ julia> squarefromstring("g1f3")
 SQ_G1
 ```
 """
-function squarefromstring(s::String)::Union{Square, Nothing}
+function squarefromstring(s::String)::Union{Square,Nothing}
     if length(s) < 2
         nothing
     else
