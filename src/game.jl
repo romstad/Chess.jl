@@ -111,7 +111,7 @@ function Base.show(io::IO, g::SimpleGame)
         if ply == g.ply
             print(io, "* ")
         end
-        if ghe.move ≠ nothing
+        if !isnothing(ghe.move)
             print(io, movetosan(b, ghe.move), " ")
             domove!(b, ghe.move)
         end
@@ -435,12 +435,12 @@ The Elo of the white player (as given by the "WhiteElo" tag), or `nothing`.
 """
 function whiteelo(g::SimpleGame)::Union{Int,Nothing}
     elo = headervalue(g, "WhiteElo")
-    elo ≠ nothing ? tryparse(Int, elo) : nothing
+    isnothing(elo) ? nothing : tryparse(Int, elo)
 end
 
 function whiteelo(g::Game)::Union{Int,Nothing}
     elo = headervalue(g, "WhiteElo")
-    elo ≠ nothing ? tryparse(Int, elo) : nothing
+    isnothing(elo) ? nothing : tryparse(Int, elo)
 end
 
 
@@ -452,12 +452,12 @@ The Elo of the black player (as given by the "BlackElo" tag), or `nothing`.
 """
 function blackelo(g::SimpleGame)::Union{Int,Nothing}
     elo = headervalue(g, "BlackElo")
-    elo ≠ nothing ? tryparse(Int, elo) : nothing
+    isnothing(elo) ? nothing : tryparse(Int, elo)
 end
 
 function blackelo(g::Game)::Union{Int,Nothing}
     elo = headervalue(g, "BlackElo")
-    elo ≠ nothing ? tryparse(Int, elo) : nothing
+    isnothing(elo) ? nothing : tryparse(Int, elo)
 end
 
 
@@ -1035,7 +1035,7 @@ node.
 All children of the node are also recursively deleted.
 """
 function removenode!(g::Game, node::GameNode = g.node)
-    if node.parent ≠ nothing
+    if !isnothing(node.parent)
         removeallchildren!(g, node)
         filter!(ch -> ch ≠ node, node.parent.children)
         delete!(g.nodemap, node.id)
@@ -1293,7 +1293,7 @@ function encodemoves(g::Game)::Vector{UInt8}
 
     function encodenode(buf, node)
         # Pre-comment
-        if precomment(node) ≠ nothing
+        if !isnothing(precomment(node))
             encodecomment(buf, precomment(node))
         end
 
@@ -1301,13 +1301,13 @@ function encodemoves(g::Game)::Vector{UInt8}
         write(buf, UInt16(lastmove(node.board).val))
 
         # Numeric annotation glyph
-        if nag(node) ≠ nothing
+        if !isnothing(nag(node))
             write(buf, UInt16(NAG))
             write(buf, UInt16(nag(node)))
         end
 
         # Post-comment
-        if comment(node) ≠ nothing
+        if !isnothing(comment(node))
             encodecomment(buf, comment(node))
         end
     end
@@ -1395,7 +1395,7 @@ function decodemoves(bytes::Vector{UInt8}; annotations = false, fen = START_FEN)
             m = Move(Int(x))
             if annotations
                 addmove!(result, m)
-                if precomment ≠ nothing
+                if !isnothing(precomment)
                     addprecomment!(result, precomment)
                     precomment = nothing
                 end
