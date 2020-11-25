@@ -49,6 +49,8 @@ The `Move` type is described in more detail in the API reference. For now, let's
 see how to use `domove` to make a move given in short algebraic notation (SAN):
 
 ```julia-repl
+julia> b = startboard();
+
 julia> domove(b, "e4")
 Board (rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq -):
  r  n  b  q  k  b  n  r
