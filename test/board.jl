@@ -329,3 +329,12 @@ begin
     b = fromfen("8/8/3k1p2/4p3/3K1P2/2B5/8/8 w - -")
     @test see(b, Move(SQ_F4, SQ_E5)) == 0
 end
+
+begin
+    FIRST_FEN = "r1bqkbnr/ppp2pp1/2np4/4p3/6P1/2N1P3/PPPP1PB1/R1BQK1NR b KQkq - 0 6"
+    NEXT_FEN = "r1bqkbn1/ppp2pp1/2np4/4p3/6P1/2N1P3/PPPP1PB1/R1BQK1Nr w Qq -"
+    board = fromfen(FIRST_FEN)
+    mv = movefromstring("h8h1")
+    ui = domove!(board, mv)
+    @test NEXT_FEN == fen(board)
+end
