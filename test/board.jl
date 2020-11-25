@@ -329,3 +329,9 @@ begin
     b = fromfen("8/8/3k1p2/4p3/3K1P2/2B5/8/8 w - -")
     @test see(b, Move(SQ_F4, SQ_E5)) == 0
 end
+
+begin
+    b = fromfen("r1bqk2r/p4pb1/2pp1np1/6P1/2PPp3/2N5/PP3PB1/R1BQK2R b KQkq -")
+    domove!(b, "Rxh1+")
+    @test fen(b) == "r1bqk3/p4pb1/2pp1np1/6P1/2PPp3/2N5/PP3PB1/R1BQK2r w Qq -"
+end
