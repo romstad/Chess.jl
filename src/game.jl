@@ -11,6 +11,7 @@ export addcomment!,
     back!,
     blackelo,
     board,
+    boards,
     comment,
     continuations,
     dateplayed,
@@ -1282,6 +1283,36 @@ end
 
 function is960(g::Game)::Bool
     is960(board(g))
+end
+
+
+function boards(g::SimpleGame)::Vector{Board}
+    saveboard = deepcopy(board(g))
+    saveply = g.ply
+    result = Board[]
+    tobeginning!(g)
+    while !isatend(g)
+        push!(result, deepcopy(board(g)))
+        forward!(g)
+    end
+    push!(result, deepcopy(board(g)))
+    copyto!(g.board, saveboard)
+    g.ply = saveply
+    result
+end
+
+
+function boards(g::Game)::Vector{Board}
+    savenodeid = g.node.id
+    result = Board[]
+    tobeginning!(g)
+    while !isatend(g)
+        push!(result, deepcopy(board(g)))
+        forward!(g)
+    end
+    push!(result, deepcopy(board(g)))
+    tonode!(g, savenodeid)
+    result
 end
 
 

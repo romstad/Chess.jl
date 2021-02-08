@@ -128,15 +128,15 @@ end
 
 
 function copyto!(dest::Board, src::Board)
-    copyto!(dest.board, src.board)
-    copyto!(dest.bycolor, src.bycolor)
-    copyto!(dest.bytype, src.bytype)
+    Base.copyto!(dest.board, src.board)
+    Base.copyto!(dest.bycolor, src.bycolor)
+    Base.copyto!(dest.bytype, src.bytype)
     dest.side = src.side
     dest.castlerights = src.castlerights
-    copyto!(dest.castlefiles, src.castlefiles)
+    Base.copyto!(dest.castlefiles, src.castlefiles)
     dest.epsq = src.epsq
     dest.r50 = src.r50
-    copyto!(dest.ksq, src.ksq)
+    Base.copyto!(dest.ksq, src.ksq)
     dest.move = src.move
     dest.occ = src.occ
     dest.checkers = src.checkers
