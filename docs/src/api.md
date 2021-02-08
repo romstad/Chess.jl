@@ -59,6 +59,8 @@ haslegalmoves
 perft
 divide
 flip
+compress
+decompress
 START_FEN
 ```
 
@@ -81,6 +83,7 @@ whiteelo
 blackelo
 setheadervalue!
 board
+boards
 domove!(g::SimpleGame, m::Move)
 domoves!(g::SimpleGame, moves::Vararg{Union{Move, String}})
 addmove!

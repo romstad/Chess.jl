@@ -1286,6 +1286,12 @@ function is960(g::Game)::Bool
 end
 
 
+"""
+    boards(g::Game)
+    boards(g::SimpleGame)
+
+Returns a vector of all the boards in the main line of the game.
+"""
 function boards(g::SimpleGame)::Vector{Board}
     saveboard = deepcopy(board(g))
     saveply = g.ply
