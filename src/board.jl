@@ -3488,7 +3488,7 @@ Compresses a board into a byte array of maximum 26 bytes.
 Use the inverse function `decompress` to recover a compressed board.
 """
 function compress(b::Board)::Vector{UInt8}
-    io = IOBuffer(UInt8[], read=true, write=true, maxsize=26)
+    io = IOBuffer(UInt8[], read = true, write = true, maxsize = 26)
 
     # Write occupied squares (8 bytes):
     write(io, occupiedsquares(b).val)
