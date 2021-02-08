@@ -18,7 +18,9 @@ export attacksto,
     bishops,
     cancastlekingside,
     cancastlequeenside,
+    compress,
     copyto!,
+    decompress,
     divide,
     domove,
     domove!,
@@ -3473,6 +3475,96 @@ function flip(b::Board)::Board
     result.move = UInt16(flipmove(lastmove(b)).val)
 
     initboard!(result)
+
+    result
+end
+
+
+"""
+    compress(b::Board)
+
+Compresses a board into a byte array of maximum 26 bytes.
+
+Use the inverse function `decompress` to recover a compressed board.
+"""
+function compress(b::Board)::Vector{UInt8}
+    io = IOBuffer(UInt8[], read=true, write=true, maxsize=26)
+
+    # Write occupied squares (8 bytes):
+    write(io, occupiedsquares(b).val)
+
+    # Write square contents, one nibble per occupied square:
+    nibble = 0
+    for s ∈ occupiedsquares(b)
+        x = UInt8(pieceon(b, s).val)
+        if nibble == 0
+            nibble = x
+        else
+            write(io, UInt8((nibble << 4) | x))
+            nibble = 0
+        end
+    end
+    if nibble ≠ 0
+        write(io, UInt8(nibble))
+    end
+
+    # Pack side to move, castle rights and en passant file into one byte:
+    epf = epsquare(b) == SQ_NONE ? 0 : file(epsquare(b)).val
+    write(io, UInt8((b.side - 1) | (b.castlerights << 1) | (epf << 5)))
+
+    # Write castle files (for Chess960):
+    write(io, UInt8(b.castlefiles[1] | (b.castlefiles[2] << 4)))
+
+    take!(io)
+end
+
+
+"""
+    decompress(bytes::Vector{UInt8})
+
+Decompresses a `Board` previously compressed by the `compress` function.
+"""
+function decompress(bytes::Vector{UInt8})::Board
+    result = emptyboard()
+    io = IOBuffer(bytes)
+
+    # Read occupied squares:
+    occupied = SquareSet(read(io, UInt64))
+
+    # Read piece positions:
+    byte = 0
+    for s ∈ occupied
+        piece = EMPTY
+        if byte ≠ 0
+            piece = Piece(byte & 0xf)
+            byte = 0
+        else
+            byte = read(io, UInt8)
+            piece = Piece((byte >> 4) & 0xf)
+        end
+        putpiece!(result, piece, s)
+    end
+
+    byte = read(io, UInt8)
+
+    # Side to move:
+    result.side = (byte & 1) + 1
+
+    # Castle rights:
+    result.castlerights = (byte >> 1) & 0xf
+
+    # En passant square:
+    epf = byte >> 5
+    if epf ≠ 0
+        f = SquareFile(epf)
+        r = sidetomove(result) == WHITE ? RANK_6 : RANK_3
+        result.epsq = Square(f, r).val
+    end
+
+    # Castle rook files (for Chess960):
+    byte = read(io, UInt8)
+    result.castlefiles[1] = byte & 15
+    result.castlefiles[2] = byte >> 4
 
     result
 end

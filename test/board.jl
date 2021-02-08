@@ -335,3 +335,12 @@ begin
     domove!(b, "Rxh1+")
     @test fen(b) == "r1bqk3/p4pb1/2pp1np1/6P1/2PPp3/2N5/PP3PB1/R1BQK2r w Qq -"
 end
+
+begin
+    b = startboard()
+    @test fen(decompress(compress(b))) == fen(b)
+    b = fromfen("4k3/8/8/pP6/8/8/8/4K3 w - a6")
+    @test fen(decompress(compress(b))) == fen(b)
+    b = fromfen("r3k2r/8/8/8/Pp6/8/8/4K3 b kq a3")
+    @test fen(decompress(compress(b))) == fen(b)
+end
