@@ -3498,9 +3498,9 @@ function compress(b::Board)::Vector{UInt8}
     for s ∈ occupiedsquares(b)
         # HACK: Encode a pawn that can be captured en passant differently
         if pieceon(b, s) == PIECE_WP && s == epsquare(b) + DELTA_N
-            x = 7
+            x = UInt8(7)
         elseif pieceon(b, s) == PIECE_BP && s == epsquare(b) + DELTA_S
-            x = 15
+            x = UInt8(15)
         else
             x = UInt8(pieceon(b, s).val)
         end
@@ -3512,12 +3512,11 @@ function compress(b::Board)::Vector{UInt8}
         end
     end
     if nibble ≠ 0
-        write(io, UInt8(nibble))
+        write(io, UInt8(nibble << 4))
     end
 
-    # Pack side to move, castle rights and en passant file into one byte:
-    epf = epsquare(b) == SQ_NONE ? 0 : file(epsquare(b)).val
-    write(io, UInt8((b.side - 1) | (b.castlerights << 1) | (epf << 5)))
+    # Pack side to move and castle rights into one byte:
+    write(io, UInt8((b.side - 1) | (b.castlerights << 1)))
 
     # Write castle files (for Chess960):
     write(io, UInt8(b.castlefiles[1] | (b.castlefiles[2] << 4)))
