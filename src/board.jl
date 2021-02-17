@@ -3496,7 +3496,14 @@ function compress(b::Board)::Vector{UInt8}
     # Write square contents, one nibble per occupied square:
     nibble = 0
     for s ∈ occupiedsquares(b)
-        x = UInt8(pieceon(b, s).val)
+        # HACK: Encode a pawn that can be captured en passant differently
+        if pieceon(b, s) == PIECE_WP && s == epsquare(b) + DELTA_N
+            x = 7
+        elseif pieceon(b, s) == PIECE_BP && s == epsquare(b) + DELTA_S
+            x = 15
+        else
+            x = UInt8(pieceon(b, s).val)
+        end
         if nibble == 0
             nibble = x
         else
@@ -3527,6 +3534,7 @@ Decompresses a `Board` previously compressed by the `compress` function.
 function decompress(bytes::Vector{UInt8})::Board
     result = emptyboard()
     io = IOBuffer(bytes)
+    epsq = SQ_NONE
 
     # Read occupied squares:
     occupied = SquareSet(read(io, UInt64))
@@ -3542,6 +3550,13 @@ function decompress(bytes::Vector{UInt8})::Board
             byte = read(io, UInt8)
             piece = Piece((byte >> 4) & 0xf)
         end
+        if piece == Piece(7)
+            epsq = s - DELTA_N
+            piece = PIECE_WP
+        elseif piece == Piece(15)
+            epsq = s - DELTA_S
+            piece = PIECE_BP
+        end
         putpiece!(result, piece, s)
     end
 
@@ -3554,12 +3569,7 @@ function decompress(bytes::Vector{UInt8})::Board
     result.castlerights = (byte >> 1) & 0xf
 
     # En passant square:
-    epf = byte >> 5
-    if epf ≠ 0
-        f = SquareFile(epf)
-        r = sidetomove(result) == WHITE ? RANK_6 : RANK_3
-        result.epsq = Square(f, r).val
-    end
+    result.epsq = epsq.val
 
     # Castle rook files (for Chess960):
     byte = read(io, UInt8)
