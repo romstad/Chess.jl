@@ -706,7 +706,7 @@ SquareSet:
  #  #  #  #  #  #  #  #
  -  -  -  -  -  -  -  -
  -  -  -  -  -  -  -  -
- ```
+```
 """
 function emptysquares(b::Board)::SquareSet
     -occupiedsquares(b)
