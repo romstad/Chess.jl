@@ -1471,6 +1471,7 @@ function domove!(b::Board, m::Move)::UndoInfo
 
     b.side = coloropp(us).val
     b.r50 += 1
+    b.r50 = min(b.r50, 250)
     b.epsq = SQ_NONE.val
     b.move = m.val
     b.key ⊻= zobsidetomove()
