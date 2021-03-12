@@ -77,7 +77,7 @@ end
 
 
 function readchar(p::PGNReader)::Char
-    if p.unreadchar ≠ nothing
+    if !isnothing(p.unreadchar)
         result = p.unreadchar
         p.unreadchar = nothing
         result
@@ -472,10 +472,10 @@ function readgame(p::PGNReader; annotations = false)
             # Try to parse the symbol as a move in short algebraic notation,
             # and add it to the game if successful
             m = movefromsan(board(result), t.value)
-            if m ≠ nothing
+            if !isnothing(m)
                 if annotations
                     addmove!(result, m)
-                    if precomment ≠ nothing
+                    if !isnothing(precomment)
                         addprecomment!(result, precomment)
                         precomment = nothing
                     end
@@ -590,7 +590,7 @@ function formatmoves(g::Game)::String
             child = first(node.children)
 
             # Pre-comment
-            if precomment(child) ≠ nothing
+            if !isnothing(precomment(child))
                 write(buffer, "{", precomment(child), "} ")
             end
 
@@ -605,12 +605,12 @@ function formatmoves(g::Game)::String
             write(buffer, movetosan(node.board, lastmove(child.board)))
 
             # Numeric Annotation Glyph
-            if Chess.nag(child) ≠ nothing
+            if !isnothing(Chess.nag(child))
                 write(buffer, " \$", string(Chess.nag(child)))
             end
 
             # Post-comment
-            if Chess.comment(child) ≠ nothing
+            if !isnothing(Chess.comment(child))
                 write(buffer, " {", Chess.comment(child), "}")
             end
 
@@ -624,7 +624,7 @@ function formatmoves(g::Game)::String
                 write(buffer, "(")
 
                 # Pre-comment
-                if precomment(child) ≠ nothing
+                if !isnothing(precomment(child))
                     write(buffer, "{", precomment(child), "} ")
                 end
 
@@ -639,12 +639,12 @@ function formatmoves(g::Game)::String
                 write(buffer, movetosan(node.board, lastmove(child.board)))
 
                 # Numeric Annotation Glyph
-                if Chess.nag(child) ≠ nothing
+                if !isnothing(Chess.nag(child))
                     write(buffer, " \$", string(Chess.nag(child)))
                 end
 
                 # Post-comment
-                if Chess.comment(child) ≠ nothing
+                if !isnothing(Chess.comment(child))
                     write(buffer, " {", Chess.comment(child), "}")
                 end
 
@@ -697,7 +697,7 @@ function gametopgn(g)::String
     write(result, formatheader("White", g.headers.white))
     write(result, formatheader("Black", g.headers.black))
     write(result, formatheader("Result", g.headers.result))
-    if headervalue(g, "FEN") ≠ nothing
+    if !isnothing(headervalue(g, "FEN"))
         write(result, formatheader("SetUp", "1"))
         write(result, formatheader("FEN", headervalue(g, "FEN")))
     end
