@@ -169,7 +169,6 @@ function compress!(entries::Vector{BookEntry})
     i = 1
     j = 1
     n = length(entries)
-    iterations = 0
     while j + 1 < n
         for k ∈ j+1:n
             if !mergeable(entries[i], entries[k]) || k == n
@@ -312,7 +311,7 @@ function addgamefile!(
         )
         count += 1
         if count % 1000 == 0
-            println("$count games added, $(length(entries)) entries.")
+            @info "$count games added, $(length(entries)) entries."
         end
     end
     count
@@ -498,7 +497,7 @@ end
 function readentry(f::IO, index::Int, compact = false)::Union{BookEntry,Nothing}
     entrysize = compact ? COMPACT_ENTRY_SIZE : ENTRY_SIZE
     seek(f, 1 + entrysize * index)
-    e = entryfrombytes(read(f, entrysize), compact)
+    entryfrombytes(read(f, entrysize), compact)
 end
 
 
