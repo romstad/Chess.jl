@@ -490,8 +490,21 @@ function readgame(p::PGNReader; annotations = false)
 end
 
 
+function skipgame(p::PGNReader)
+    headers = readheaders(p)
+    while true
+        t = readtoken(p)
+        if terminatesgame(t) || t.ttype == endoffile
+            break
+        elseif t.ttype == leftparen
+            skipvariation(p)
+        end
+    end
+end
+
+
 """
-    gamesinfile(filename::String; annotations=false)
+    gamesinfile(filename::String; annotations=false, skip=0)
 
 Creates a `Channel` of `Game`/`SimpleGame` objects read from the PGN file with
 the provided file name.
@@ -500,11 +513,24 @@ If the optional parameter `annotations` is `true`, the return value will be a
 channel of `Game` objects containing all comments, variations and numeric
 annotation glyphs in the PGN. Otherwise, it will consist of `SimpleGame` objects
 with only the game moves.
+
+The optional parameter `skip` makes the function skip the first `skip` games of
+the file.
 """
-function gamesinfile(filename::String; annotations = false)
+function gamesinfile(filename::String; annotations = false, skip = 0)
     function createchannel(ch::Channel)
         open(filename, "r") do io
             pgnr = PGNReader(io)
+
+            if skip > 0
+                i = 0
+                while !eof(pgnr.io) && i < skip
+                    skipgame(pgnr)
+                    gotonextgame!(pgnr)
+                    i += 1
+                end
+            end
+
             while !eof(pgnr.io)
                 put!(ch, readgame(pgnr, annotations = annotations))
                 gotonextgame!(pgnr)
