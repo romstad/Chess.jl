@@ -568,11 +568,15 @@ function formatheader(name::String, value::String)
 end
 
 
-function formatmoves(g::SimpleGame)::String
+function formatmoves(g::SimpleGame, indicatecurrentnode=false)::String
     result = IOBuffer()
+    ply = g.ply
     g = deepcopy(g)
     tobeginning!(g)
     while !isatend(g)
+        if indicatecurrentnode && ply == g.ply
+            write(result, "👉 ")
+        end
         m = g.history[g.ply].move
         if sidetomove(g.board) == WHITE
             write(result, string(1 + div(g.ply, 2)), ". ")
@@ -580,13 +584,21 @@ function formatmoves(g::SimpleGame)::String
         write(result, movetosan(g.board, m), " ")
         forward!(g)
     end
+    if indicatecurrentnode && ply == g.ply
+        write(result, "👉")
+    end
     String(take!(result))
 end
 
 
-function formatmoves(g::Game)::String
+function formatmoves(g::Game, indicatecurrentnode=false)::String
     function formatvariation(buffer, node, movenum)
         if !isempty(node.children)
+            # Write current node indicator
+            if indicatecurrentnode && node == g.node
+                write(buffer, "👉 ")
+            end
+
             child = first(node.children)
 
             # Pre-comment
@@ -652,6 +664,8 @@ function formatmoves(g::Game)::String
                 if !isempty(child.children)
                     write(buffer, " ")
                     formatvariation(buffer, child, movenum + 1)
+                elseif indicatecurrentnode && child == g.node
+                    write(buffer, " 👉")
                 end
 
                 # Variation end
@@ -668,6 +682,8 @@ function formatmoves(g::Game)::String
                 write(buffer, " ")
             end
             formatvariation(buffer, child, movenum + 1)
+        elseif indicatecurrentnode && node == g.node
+            write(buffer, " 👉")
         end
     end
 

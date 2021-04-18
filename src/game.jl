@@ -105,25 +105,33 @@ mutable struct SimpleGame
 end
 
 
-function Base.show(io::IO, g::SimpleGame)
-    print(io, "SimpleGame:\n ")
+function gamestring(g::SimpleGame)
+    result = IOBuffer()
     b = deepcopy(g.startboard)
     ply = 1
-    for ghe ∈ g.history
-        if ply == g.ply
-            print(io, "* ")
-        end
+    for ghe in g.history
+        ply == g.ply && write(result, "* ")
         if !isnothing(ghe.move)
-            print(io, movetosan(b, ghe.move), " ")
+            write(result, movetosan(b, ghe.move), " ")
             domove!(b, ghe.move)
         end
         ply += 1
     end
-    if ply == g.ply
-        print(io, "* ")
-    end
+    ply == g.ply && write(result, "*")
+    String(take!(result))
 end
 
+
+function Base.show(io::IO, g::SimpleGame)
+    print(io, "SimpleGame:\n ")
+    print(io, gamestring(g))
+end
+
+
+function Base.show(io::IO, ::MIME"text/html", g::SimpleGame)
+    print(io, "SimpleGame:")
+    print(io, Chess.MIME.html(g))
+end
 
 """
     SimpleGame(startboard::Board=startboard())
@@ -242,35 +250,46 @@ mutable struct Game
 end
 
 
-function Base.show(io::IO, g::Game)
-    function formatvariation(node)
+function gamestring(g::Game)
+    function formatvariation(node, buf)
         if !isempty(node.children)
-            if node == g.node
-                print(io, "* ")
-            end
+            node == g.node && write(buf, "* ")
             child = first(node.children)
-            print(io, movetosan(node.board, lastmove(child.board)))
+            write(buf, movetosan(node.board, lastmove(child.board)))
             for child ∈ node.children[2:end]
-                print(io, " (")
-                print(io, movetosan(node.board, lastmove(child.board)))
+                write(buf, " (")
+                write(buf, movetosan(node.board, lastmove(child.board)))
                 if !isempty(child.children)
-                    print(io, " ")
-                    formatvariation(child)
+                    write(buf, " ")
+                    formatvariation(child, buf)
                 elseif child == g.node
-                    print(io, " *")
+                    write(buf, " *")
                 end
-                print(io, ")")
+                write(buf, ")")
             end
-            if !isleaf(child)
-                print(io, " ")
-            end
-            formatvariation(first(node.children))
+            isleaf(child) || write(buf, " ")
+            formatvariation(first(node.children), buf)
         elseif node == g.node
-            print(io, " *")
+            write(buf, " *")
         end
     end
+
+    result = IOBuffer()
+    formatvariation(g.root, result)
+
+    String(take!(result))
+end
+
+
+function Base.show(io::IO, g::Game)
     print(io, "Game:\n ")
-    formatvariation(g.root)
+    print(io, gamestring(g))
+end
+
+
+function Base.show(io::IO, ::MIME"text/html", g::Game)
+    print(io, "Game:\n")
+    print(io, Chess.MIME.html(g))
 end
 
 

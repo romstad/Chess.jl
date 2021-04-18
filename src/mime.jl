@@ -2,6 +2,7 @@ module MIME
 
 using Hiccup
 using ..Chess
+using ..Chess.PGN
 
 export html
 
@@ -129,5 +130,26 @@ function html(ss::SquareSet)
     Node(:div, Dict(:class => "chessboard"), svg(highlight = ss))
 end
 
+function html(g::SimpleGame)
+    Node(
+        :div,
+        Dict(:class => "game"),
+        [
+            svg(board = board(g)),
+            Node(:p, Chess.PGN.formatmoves(g, true))
+        ]
+    )
+end
+
+function html(g::Game)
+    Node(
+        :div,
+        Dict(:class => "game"),
+        [
+            svg(board = board(g)),
+            Node(:p, Chess.PGN.formatmoves(g, true))
+        ]
+    )
+end
 
 end

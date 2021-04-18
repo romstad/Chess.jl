@@ -111,6 +111,7 @@ end
 
 
 function Base.show(io::IO, ::MIME"text/html", ss::SquareSet)
+    print(io, "SquareSet:")
     print(io, Chess.MIME.html(ss))
 end
 

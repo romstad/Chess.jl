@@ -123,6 +123,7 @@ end
 
 
 function Base.show(io::IO, ::MIME"text/html", b::Board)
+    print(io, "Board:")
     print(io, Chess.MIME.html(b))
 end
 
