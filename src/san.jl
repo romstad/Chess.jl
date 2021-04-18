@@ -22,14 +22,14 @@ function movefromsan(b::Board, san::String)::Union{Move,Nothing}
     ms = moves(b)
 
     # Castling moves
-    if length(san) >= 5 && san[1:5] == "O-O-O"
+    if (length(san) ≥ 5 && san[1:5] == "O-O-O") || (length(san) ≥ 3 && san[1:3] == "OOO")
         for m in ms
             if moveislongcastle(b, m)
                 return m
             end
         end
         return nothing
-    elseif length(san) >= 3 && san[1:3] == "O-O"
+    elseif (length(san) >= 3 && san[1:3] == "O-O") || (length(san) ≥ 2 && san[1:2] == "OO")
         for m in ms
             if moveisshortcastle(b, m)
                 return m

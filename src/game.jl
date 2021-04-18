@@ -40,7 +40,9 @@ export addcomment!,
     toend!,
     tonode!,
     undomove!,
-    whiteelo
+    whiteelo,
+    @game,
+    @simplegame
 
 
 """
@@ -1495,4 +1497,50 @@ function decodemoves(bytes::Vector{UInt8}; annotations = false, fen = START_FEN)
 
     tobeginning!(result)
     result
+end
+
+
+"""
+    @simplegame
+
+A macro for initializing a `SimpleGame` with a number of moves.
+
+Castling moves must be indicated without a hyphen (i.e. "OO" or "OOO") in order
+to satisfy Julia's parser.
+
+# Examples
+```julia-repl
+julia> @simplegame d4 Nf6 c4 e6 Nc3 Bb4 Qc2 OO
+SimpleGame:
+ d4 Nf6 c4 e6 Nc3 Bb4 Qc2 O-O *
+```
+"""
+macro simplegame(moves...)
+    quote
+        local g = SimpleGame()
+        $(map(m -> :(domove!(g, $(string(m)))), moves)...)
+    end
+end
+
+
+"""
+    @game
+
+A macro for initializing a `Game` with a number of moves.
+
+Castling moves must be indicated without a hyphen (i.e. "OO" or "OOO") in order
+to satisfy Julia's parser.
+
+# Examples
+```julia-repl
+julia> @game d4 Nf6 c4 e6 Nc3 Bb4 Qc2 OO
+Game:
+ d4 Nf6 c4 e6 Nc3 Bb4 Qc2 O-O *
+```
+"""
+macro game(moves...)
+    quote
+        local g = Game()
+        $(map(m -> :(addmove!(g, $(string(m)))), moves)...)
+    end
 end
