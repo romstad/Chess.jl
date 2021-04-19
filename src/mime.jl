@@ -131,7 +131,7 @@ function html(ss::SquareSet)
 end
 
 function jsify(g)
-	  replace("'$(gametopgn(g))'", "\n" => "\\n")
+    replace("'$(gametopgn(g))'", "\n" => "\\n")
 end
 
 function html(g::SimpleGame)
@@ -145,10 +145,12 @@ function html(g::SimpleGame)
                 :a,
                 Dict(
                     :href => "",
-                    :onclick => "navigator.clipboard.writeText($(jsify(g))).then(function(){},function(){});window.open('https://lichess.org/paste','_blank');"),
-                "Open in lichess"
-            )
-        ]
+                    :onclick =>
+                        "navigator.clipboard.writeText($(jsify(g))).then(function(){},function(){});window.open('https://lichess.org/paste','_blank');",
+                ),
+                "Open in lichess",
+            ),
+        ],
     )
 end
 
@@ -163,10 +165,12 @@ function html(g::Game)
                 :a,
                 Dict(
                     :href => "",
-                    :onclick => "navigator.clipboard.writeText($(jsify(g))).then(function(){},function(){});window.open('https://lichess.org/paste','_blank');"),
-                "Open in lichess"
-            )
-        ]
+                    :onclick =>
+                        "navigator.clipboard.writeText($(jsify(g))).then(function(){},function(){});window.open('https://lichess.org/paste','_blank');",
+                ),
+                "Open in lichess",
+            ),
+        ],
     )
 end
 

@@ -568,7 +568,7 @@ function formatheader(name::String, value::String)
 end
 
 
-function formatmoves(g::SimpleGame, indicatecurrentnode=false)::String
+function formatmoves(g::SimpleGame, indicatecurrentnode = false)::String
     result = IOBuffer()
     ply = g.ply
     g = deepcopy(g)
@@ -591,7 +591,7 @@ function formatmoves(g::SimpleGame, indicatecurrentnode=false)::String
 end
 
 
-function formatmoves(g::Game, indicatecurrentnode=false)::String
+function formatmoves(g::Game, indicatecurrentnode = false)::String
     function formatvariation(buffer, node, movenum)
         if !isempty(node.children)
             # Write current node indicator
