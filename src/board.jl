@@ -3289,31 +3289,25 @@ function fromfen(fen::String)::Union{Board,Nothing}
 end
 
 
-function castlestring(b::Board)::String
+function castlestring(b::Board, buf)
     if b.castlerights == 0
-        "-"
+        write(buf, "-")
     elseif !b.is960
-        ((b.castlerights & 1) ≠ 0 ? "K" : "") *
-        ((b.castlerights & 2) ≠ 0 ? "Q" : "") *
-        ((b.castlerights & 4) ≠ 0 ? "k" : "") *
-        ((b.castlerights & 8) ≠ 0 ? "q" : "")
+        for i = 0:3
+            if (b.castlerights & (1 << i)) ≠ 0
+                write(buf, "KQkq"[i+1])
+            end
+        end
     else
-        (
-            (b.castlerights & 1) ≠ 0 ?
-            string(uppercase(tochar(SquareFile(b.castlefiles[1])))) : ""
-        ) *
-        (
-            (b.castlerights & 2) ≠ 0 ?
-            string(uppercase(tochar(SquareFile(b.castlefiles[2])))) : ""
-        ) *
-        (
-            (b.castlerights & 4) ≠ 0 ?
-            string(lowercase(tochar(SquareFile(b.castlefiles[1])))) : ""
-        ) *
-        (
-            (b.castlerights & 8) ≠ 0 ?
-            string(lowercase(tochar(SquareFile(b.castlefiles[2])))) : ""
-        )
+        for i = 0:3
+            if (b.castlerights & (1 << i)) ≠ 0
+                if i < 2
+                    write(buf, uppercase(tochar(SquareFile(b.castlefiles[(i%2)+1]))))
+                else
+                    write(buf, lowercase(tochar(SquareFile(b.castlefiles[(i%2)+1]))))
+                end
+            end
+        end
     end
 end
 
@@ -3349,7 +3343,8 @@ function fen(b::Board)::String
         end
     end
     write(result, " ", tochar(sidetomove(b)))
-    write(result, " ", castlestring(b))
+    write(result, " ")
+    castlestring(b, result)
     write(result, " ")
     write(result, epsquare(b) == SQ_NONE ? '-' : tostring(epsquare(b)))
 

@@ -1515,14 +1515,18 @@ button to import the game.
 function lichess(g::SimpleGame)
     clipboard(Chess.PGN.gametopgn(g))
     DefaultApplication.open("https://lichess.org/paste")
-    println("Your game was copied to the clipboard. Paste it in the box labeled\n\"Paste the PGN text here\" to import in lichess.")
+    println(
+        "Your game was copied to the clipboard. Paste it in the box labeled\n\"Paste the PGN text here\" to import in lichess.",
+    )
 end
 
 
 function lichess(g::Game)
     clipboard(Chess.PGN.gametopgn(g))
     DefaultApplication.open("https://lichess.org/paste")
-    println("Your game was copied to the clipboard. Paste it in the box labeled\n\"Paste the PGN text here\" to import in lichess.")
+    println(
+        "Your game was copied to the clipboard. Paste it in the box labeled\n\"Paste the PGN text here\" to import in lichess.",
+    )
 end
 
 

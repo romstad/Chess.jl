@@ -247,6 +247,11 @@ begin
     for f in fens
         @test fen(fromfen(f)) == f
     end
+
+    for i in 0:959
+        f = chess960fen(i)
+        @test fen(fromfen(f)) == f
+    end
 end
 
 
