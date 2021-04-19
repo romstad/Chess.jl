@@ -130,13 +130,24 @@ function html(ss::SquareSet)
     Node(:div, Dict(:class => "chessboard"), svg(highlight = ss))
 end
 
+function jsify(g)
+	  replace("'$(gametopgn(g))'", "\n" => "\\n")
+end
+
 function html(g::SimpleGame)
     Node(
         :div,
         Dict(:class => "game"),
         [
             svg(board = board(g)),
-            Node(:p, Chess.PGN.formatmoves(g, true))
+            Node(:p, Chess.PGN.formatmoves(g, true)),
+            Node(
+                :a,
+                Dict(
+                    :href => "",
+                    :onclick => "navigator.clipboard.writeText($(jsify(g))).then(function(){},function(){});window.open('https://lichess.org/paste','_blank');"),
+                "Open in lichess"
+            )
         ]
     )
 end
@@ -147,7 +158,14 @@ function html(g::Game)
         Dict(:class => "game"),
         [
             svg(board = board(g)),
-            Node(:p, Chess.PGN.formatmoves(g, true))
+            Node(:p, Chess.PGN.formatmoves(g, true)),
+            Node(
+                :a,
+                Dict(
+                    :href => "",
+                    :onclick => "navigator.clipboard.writeText($(jsify(g))).then(function(){},function(){});window.open('https://lichess.org/paste','_blank');"),
+                "Open in lichess"
+            )
         ]
     )
 end
