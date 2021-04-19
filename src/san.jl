@@ -1,6 +1,18 @@
 export movefromsan, movetosan, variationtosan
 
 
+function islongcastle(san)
+    (length(san) ≥ 5 && (san[1:5] == "O-O-O" || san[1:5] == "0-0-0")) ||
+        (length(san) ≥ 3 && (san[1:3] == "OOO" || san[1:3] == "000"))
+end
+
+
+function isshortcastle(san)
+    (length(san) ≥ 3 && (san[1:3] == "O-O" || san[1:3] == "0-0")) ||
+        (length(san) ≥ 2 && (san[1:2] == "OO" || san[1:2] == "00"))
+end
+
+
 """
     movefromsan((b::Board, san::String))::Union{Move, Nothing}
 
@@ -22,14 +34,14 @@ function movefromsan(b::Board, san::String)::Union{Move,Nothing}
     ms = moves(b)
 
     # Castling moves
-    if (length(san) ≥ 5 && san[1:5] == "O-O-O") || (length(san) ≥ 3 && san[1:3] == "OOO")
+    if islongcastle(san)
         for m in ms
             if moveislongcastle(b, m)
                 return m
             end
         end
         return nothing
-    elseif (length(san) >= 3 && san[1:3] == "O-O") || (length(san) ≥ 2 && san[1:2] == "OO")
+    elseif isshortcastle(san)
         for m in ms
             if moveisshortcastle(b, m)
                 return m
