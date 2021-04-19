@@ -1,4 +1,5 @@
-using Dates;
+using Dates
+using InteractiveUtils: clipboard
 
 export Game, GameHeader, GameHeaders, GameNode, SimpleGame
 
@@ -26,6 +27,7 @@ export addcomment!,
     isatend,
     isleaf,
     isterminal,
+    lichess,
     nag,
     nextmove,
     ply,
@@ -1422,6 +1424,7 @@ function encodemoves(g::Game)::Vector{UInt8}
     end
 
     buf = IOBuffer(UInt8[], write = true)
+
     encodevariation(buf, g.root)
     take!(buf)
 end
@@ -1498,6 +1501,30 @@ function decodemoves(bytes::Vector{UInt8}; annotations = false, fen = START_FEN)
     tobeginning!(result)
     result
 end
+
+
+"""
+    lichess(g::SimpleGame)
+    lichess(g::Game)
+
+Copies the PGN of `g` to the clipboard and opens lichess' "Import Game" page.
+
+Paste into the box labeled "Paste the PGN text here" and press the "import game"
+button to import the game.
+"""
+function lichess(g::SimpleGame)
+    clipboard(Chess.PGN.gametopgn(g))
+    DefaultApplication.open("https://lichess.org/paste")
+    println("Your game was copied to the clipboard. Paste it in the box labeled\n\"Paste the PGN text here\" to import in lichess.")
+end
+
+
+function lichess(g::Game)
+    clipboard(Chess.PGN.gametopgn(g))
+    DefaultApplication.open("https://lichess.org/paste")
+    println("Your game was copied to the clipboard. Paste it in the box labeled\n\"Paste the PGN text here\" to import in lichess.")
+end
+
 
 
 """
