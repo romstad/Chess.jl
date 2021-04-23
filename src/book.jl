@@ -208,6 +208,7 @@ function addgame!(
     yearlydecay,
     maxply,
     minelo,
+    maxelo,
 )
     result = headervalue(g, "Result")
     if result ≠ "*"
@@ -216,6 +217,9 @@ function addgame!(
         l = result == "0-1" ? 1 : 0
         welo = !isnothing(whiteelo(g)) ? whiteelo(g) : 0
         belo = !isnothing(blackelo(g)) ? blackelo(g) : 0
+        if !(minelo ≤ welo ≤ maxelo) && !(minelo ≤ belo ≤ maxelo)
+            return
+        end
         date = !isnothing(dateplayed(g)) ? dateplayed(g) : Date(1900, 1, 1)
         year = Dates.year(date)
         wscore = computescore(
@@ -254,7 +258,7 @@ function addgame!(
             b = board(g)
             wtm = sidetomove(b) == WHITE
             m = nextmove(g)
-            if wtm && welo >= minelo || !wtm && belo >= minelo
+            if (wtm && minelo ≤ welo ≤ maxelo) || (!wtm && minelo ≤ belo ≤ maxelo)
                 push!(
                     entries,
                     BookEntry(
@@ -291,6 +295,9 @@ function addgamefile!(
     yearlydecay,
     maxply,
     minelo,
+    maxelo,
+    maxgames,
+    maxentries,
     count,
 )
     for g ∈ PGN.gamesinfile(filename)
@@ -308,10 +315,15 @@ function addgamefile!(
             yearlydecay,
             maxply,
             minelo,
+            maxelo,
         )
         count += 1
         if count % 1000 == 0
             @info "$count games added, $(length(entries)) entries."
+        end
+        if (!isnothing(maxgames) && count ≥ maxgames) ||
+            (!isnothing(maxentries) && length(entries) ≥ maxentries)
+            break
         end
     end
     count
@@ -330,7 +342,11 @@ end
                highelofactor = 6.0,
                yearlydecay = 0.85,
                maxply = 60,
-               minelo = 0)
+               minelo = 0,
+               maxelo = 10_000,
+               maxgames = nothing,
+               maxentries = nothing,
+    )
 
 Creates an opening book tree from one or more PGN files.
 
@@ -357,13 +373,19 @@ a move using `pickbookmove`). These are:
 - `scoreunknown`: The base score for all moves in a game with an unknown result.
 - `highelofactor`: Score multiplier for moves played by a player with high
   rating. The base score is multiplied by
-  `max(1.0 0.01 * highelofactor * (2300 - elo))`
+  `max(1.0, 0.01 * highelofactor * (2300 - elo))`
 - `yearlydecay`: Controls exponential yearly reduction of scores. If a game was
   played `n` years ago, all scores are multiplied by `n^yearlydecay`.
 - `maxply`: Maximum depth of the opening tree. If `maxply` equals 60 (the
   default), no moves after move 30 are included in the opening tree.
 - `minelo`: Minimum Elo for book moves. Moves played by players below this
   number are not included in the opening tree.
+- `maxelo`: Maximum Elo for book moves. Moves played by players above this
+  number are not included in the opening tree.
+- `maxgames`: Maximum number of games to include. If no value is supplied, all
+  games in the input PGNs will be used.
+- `maxentries`: Maximum number of book entries to include. If no value is
+  supplied, all entries will be included.
 """
 function createbook(
     pgnfiles::Vararg{String};
@@ -378,6 +400,9 @@ function createbook(
     yearlydecay = 0.85,
     maxply = 60,
     minelo = 0,
+    maxelo = 10_000,
+    maxgames = nothing,
+    maxentries = nothing,
 )
     result = Vector{BookEntry}()
     count = 0
@@ -396,6 +421,9 @@ function createbook(
             yearlydecay,
             maxply,
             minelo,
+            maxelo,
+            maxgames,
+            maxentries,
             count,
         )
     end
