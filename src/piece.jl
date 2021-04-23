@@ -1,4 +1,4 @@
-import Base.<, Base.>
+import Base.<, Base.>, Base.-
 
 export PieceColor, PieceType, Piece
 
@@ -113,6 +113,25 @@ true
 """
 function coloropp(c::PieceColor)::PieceColor
     PieceColor(c.val ⊻ 3)
+end
+
+
+"""
+    -(c::PieceColor)
+
+Returns the opposite of a color. Synonymous to `coloropp`.
+
+# Examples
+```julia-repl
+julia> -WHITE
+BLACK
+
+julia> -BLACK
+WHITE
+```
+"""
+function -(c::PieceColor)
+    coloropp(c)
 end
 
 
