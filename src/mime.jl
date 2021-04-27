@@ -105,12 +105,14 @@ function lichesslink(board)
 end
 
 function description(board)
+    buf = IOBuffer()
+    Chess.castlestring(board, buf)
     Node(
         :div,
         [
             Node(:p, sidetomove(board) == WHITE ? "White to move" : "Black to move"),
             board.castlerights == 0 ? "" :
-            Node(:p, "Castle rights: " * Chess.castlestring(board)),
+            Node(:p, "Castle rights: " * String(take!(buf))),
             epsquare(board) == SQ_NONE ? "" :
             Node(:p, "En passant square: " * tostring(epsquare(board))),
             Node(:p, lichesslink(board)),
