@@ -1,0 +1,6 @@
+[book]
+git-tree-sha1 = "a15968b4c2da3b7d649b77dbe13d41d4c5d245d5"
+
+    [[book.download]]
+    sha256 = "0a51be3e3356d6d50e1659ccda3755c5646d06dd432b8e92cfd1ce41d4d85dc5"
+    url = "https://github.com/romstad/Chess.jl/releases/download/default-book/default-book.tar.gz"
