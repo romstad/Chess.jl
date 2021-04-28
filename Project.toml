@@ -4,6 +4,7 @@ authors = ["Tord Romstad"]
 version = "0.6.0"
 
 [deps]
+Artifacts = "56f22d72-fd6d-98f1-02f0-08ddc0907c33"
 Crayons = "a8cc5b0e-0ffa-5ad4-8c14-923d3ee1735f"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 DefaultApplication = "3f0dd361-4fe0-5fc6-8523-80b14ec94d85"

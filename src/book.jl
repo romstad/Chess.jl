@@ -1,5 +1,6 @@
 module Book
 
+using Artifacts
 using ..Chess, ..Chess.PGN, Dates, Printf, StatsBase
 
 export BookEntry
@@ -530,15 +531,20 @@ end
 
 
 """
-    findbookentries(b::Board, bookfilename::String)
-    findbookentries(key::UInt64, bookfilename::String)
+    findbookentries(b::Board, bookfilename = nothing)
+    findbookentries(key::UInt64, bookfilename = nothing)
 
 Returns all book entries for the given board or key.
+
+If `bookfilename` is nothing, use the default built-in opening book.
 
 The return value is a (possibly empty) `Vector{BookEntry}`, sorted by
 descending scores.
 """
-function findbookentries(key::UInt64, bookfilename::String)::Vector{BookEntry}
+function findbookentries(key::UInt64, bookfilename=nothing)::Vector{BookEntry}
+    if isnothing(bookfilename)
+        bookfilename = joinpath(artifact"book", "default-book.obk")
+    end
     result = Vector{BookEntry}()
     open(bookfilename, "r") do f
         compact = read(f, UInt8) == 1
@@ -559,18 +565,20 @@ function findbookentries(key::UInt64, bookfilename::String)::Vector{BookEntry}
     sort(result, by = e -> -e.score)
 end
 
-function findbookentries(b::Board, bookfilename::String)::Vector{BookEntry}
+function findbookentries(b::Board, bookfilename=nothing)::Vector{BookEntry}
     findbookentries(b.key, bookfilename)
 end
 
 
 """
-    printbookentries(b::Board, bookfilename::String)
+    printbookentries(b::Board, bookfilename = nothing)
 
 
 Pretty-print the move entries for the provided board.
+
+If `bookfilename` is nothing, use the default built-in opening book.
 """
-function printbookentries(b::Board, bookfilename::String)
+function printbookentries(b::Board, bookfilename=nothing)
     entries = findbookentries(b, bookfilename)
     scoresum = sum(map(e -> e.score, entries))
     for e ∈ entries
@@ -592,8 +600,12 @@ end
 
 
 """
-    pickbookmove(b::Board, bookfilename::String;
-                 minscore = 0, mingamecount = 1)
+    pickbookmove(
+        b::Board;
+        bookfile = nothing,
+        minscore = 0,
+        mingamecount = 1
+    )
 
 Picks a book move for the board `b`, returning `nothing` when out of book.
 
@@ -602,14 +614,14 @@ The move is selected with probabilities given by the `score` slots in the
 to exclude moves with low score or low play counts.
 """
 function pickbookmove(
-    b::Board,
-    bookfilename::String;
+    b::Board;
+    bookfile = nothing,
     minscore = 0,
     mingamecount = 1,
 )::Union{Move,Nothing}
     entries = filter(
         e -> e.wins + e.draws + e.losses >= mingamecount && e.score >= minscore,
-        findbookentries(b, bookfilename),
+        findbookentries(b, bookfile),
     )
     if length(entries) == 0
         nothing
