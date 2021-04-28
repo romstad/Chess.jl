@@ -531,25 +531,25 @@ end
 
 
 """
-    findbookentries(b::Board, bookfilename = nothing)
-    findbookentries(key::UInt64, bookfilename = nothing)
+    findbookentries(b::Board, bookfile = nothing)
+    findbookentries(key::UInt64, bookfile = nothing)
 
 Returns all book entries for the given board or key.
 
-If `bookfilename` is nothing, use the default built-in opening book.
+If `bookfile` is nothing, use the default built-in opening book.
 
 The return value is a (possibly empty) `Vector{BookEntry}`, sorted by
 descending scores.
 """
-function findbookentries(key::UInt64, bookfilename=nothing)::Vector{BookEntry}
-    if isnothing(bookfilename)
-        bookfilename = joinpath(artifact"book", "default-book.obk")
+function findbookentries(key::UInt64, bookfile=nothing)::Vector{BookEntry}
+    if isnothing(bookfile)
+        bookfile = joinpath(artifact"book", "default-book.obk")
     end
     result = Vector{BookEntry}()
-    open(bookfilename, "r") do f
+    open(bookfile, "r") do f
         compact = read(f, UInt8) == 1
         entrysize = compact ? COMPACT_ENTRY_SIZE : ENTRY_SIZE
-        entrycount = div(filesize(bookfilename) - 1, entrysize)
+        entrycount = div(filesize(bookfile) - 1, entrysize)
         i = findkey(f, key, 0, entrycount - 1, entrysize)
         if !isnothing(i)
             for j = i:entrycount
@@ -565,21 +565,21 @@ function findbookentries(key::UInt64, bookfilename=nothing)::Vector{BookEntry}
     sort(result, by = e -> -e.score)
 end
 
-function findbookentries(b::Board, bookfilename=nothing)::Vector{BookEntry}
-    findbookentries(b.key, bookfilename)
+function findbookentries(b::Board, bookfile=nothing)::Vector{BookEntry}
+    findbookentries(b.key, bookfile)
 end
 
 
 """
-    printbookentries(b::Board, bookfilename = nothing)
+    printbookentries(b::Board, bookfile = nothing)
 
 
-Pretty-print the move entries for the provided board.
+Pretty-print the book entries for the provided board.
 
-If `bookfilename` is nothing, use the default built-in opening book.
+If `bookfile` is nothing, use the default built-in opening book.
 """
-function printbookentries(b::Board, bookfilename=nothing)
-    entries = findbookentries(b, bookfilename)
+function printbookentries(b::Board, bookfile=nothing)
+    entries = findbookentries(b, bookfile)
     scoresum = sum(map(e -> e.score, entries))
     for e ∈ entries
         @printf(
@@ -608,6 +608,8 @@ end
     )
 
 Picks a book move for the board `b`, returning `nothing` when out of book.
+
+If `bookfile` is `nothing`, uses the built-in default book.
 
 The move is selected with probabilities given by the `score` slots in the
 `BookEntry` objects. The `minscore` and `mingamecount` parameters can be used
