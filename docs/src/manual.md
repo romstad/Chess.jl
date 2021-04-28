@@ -195,7 +195,7 @@ Board (rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -):
  -  -  -  -  -  -  -  -
  P  P  P  P  P  P  P  P
  R  N  B  Q  K  B  N  R
- ```
+```
 
 This is convenient when writing code in a functional style, or when using a
 reactive notebook environment like Pluto. Unfortunately, it also results in a
