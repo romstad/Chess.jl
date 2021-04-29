@@ -858,23 +858,23 @@ side that are attacked, but undefended:
 
 ```julia
 function attacked_but_undefended(board, color)
-	attacker = -color  # The opposite color
+    attacker = -color  # The opposite color
 
-	# Find all attacked squares
-	attacked = SS_EMPTY  # The empty square set
-	for s ∈ pieces(board, attacker)
-		attacked = attacked ∪ attacksfrom(board, s)
-	end
+    # Find all attacked squares
+    attacked = SS_EMPTY  # The empty square set
+    for s ∈ pieces(board, attacker)
+        attacked = attacked ∪ attacksfrom(board, s)
+    end
 
-	# Find all defended squares
-	defended = SS_EMPTY
-	for s ∈ pieces(b, color)
-		defended = defended ∪ attacksfrom(board, s)
-	end
+    # Find all defended squares
+    defended = SS_EMPTY
+    for s ∈ pieces(b, color)
+        defended = defended ∪ attacksfrom(board, s)
+    end
 
-	# Return all attacked, but undefended squares containing pieces of
-	# the desired color:
-	attacked ∩ -defended ∩ pieces(board, color)
+    # Return all attacked, but undefended squares containing pieces of
+    # the desired color:
+    attacked ∩ -defended ∩ pieces(board, color)
 end
 ```
 
@@ -1018,12 +1018,12 @@ moves:
 
 ```julia
 function randomgame()
-	game = SimpleGame()
-	while !isterminal(game)
-		move = rand(moves(board(game)))
-		domove!(game, move)
-	end
-	game
+    game = SimpleGame()
+    while !isterminal(game)
+        move = rand(moves(board(game)))
+        domove!(game, move)
+    end
+    game
 end
 ```
 
@@ -1037,14 +1037,14 @@ returns the fraction of the games that (accidentally) ends in checkmate.
 
 ```julia
 function checkmate_fraction(game_count = 1000)
-	checkmate_count = 0
-	for _ in 1:game_count
-		g = randomgame()
-		if ischeckmate(board(g))
-			checkmate_count += 1
-		end
-	end
-	checkmate_count / game_count
+    checkmate_count = 0
+    for _ in 1:game_count
+        g = randomgame()
+        if ischeckmate(board(g))
+            checkmate_count += 1
+        end
+    end
+    checkmate_count / game_count
 end
 ```
 
@@ -1079,17 +1079,17 @@ much better.
 
 ```julia
 function move_is_mate(board, move)
-	# Do the move
-	u = domove!(board, move)
+    # Do the move
+    u = domove!(board, move)
 
-	# Check if the resulting board is checkmate
-	result = ischeckmate(board)
+    # Check if the resulting board is checkmate
+    result = ischeckmate(board)
 
-	# Undo the move
-	undomove!(board, u)
+    # Undo the move
+    undomove!(board, u)
 
-	# Return result
-	result
+    # Return result
+    result
 end
 ```
 
@@ -1098,13 +1098,13 @@ input and returns a mate in 1 move if there is one, or a random move otherwise.
 
 ```julia
 function mate_or_random(board)
-	ms = moves(board)
-	for move ∈ ms
-		if move_is_mate(board, move)
-			return move
-		end
-	end
-	rand(ms)
+    ms = moves(board)
+    for move ∈ ms
+        if move_is_mate(board, move)
+            return move
+        end
+    end
+    rand(ms)
 end
 ```
 
@@ -1113,12 +1113,12 @@ it uses `mate_or_random` instead of totally random moves:
 
 ```julia
 function almost_random_game()
-	game = SimpleGame()
-	while !isterminal(game)
-		move = mate_or_random(board(game))
-		domove!(game, move)
-	end
-	game
+    game = SimpleGame()
+    while !isterminal(game)
+        move = mate_or_random(board(game))
+        domove!(game, move)
+    end
+    game
 end
 ```
 
@@ -1127,14 +1127,14 @@ out:
 
 ```julia
 function checkmate_fraction_2(game_count = 1000)
-	checkmate_count = 0
-	for _ in 1:game_count
-		g = almost_random_game()
-		if ischeckmate(board(g))
-			checkmate_count += 1
-		end
-	end
-	checkmate_count / game_count
+    checkmate_count = 0
+    for _ in 1:game_count
+        g = almost_random_game()
+        if ischeckmate(board(g))
+            checkmate_count += 1
+        end
+    end
+    checkmate_count / game_count
 end
 ```
 
