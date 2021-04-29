@@ -40,6 +40,7 @@ export addcomment!,
     tobeginning!,
     tobeginningofvariation!,
     toend!,
+    toendofvariation!,
     tonode!,
     undomove!,
     whiteelo,
@@ -1010,6 +1011,22 @@ function tobeginningofvariation!(g::Game)
         if n ≠ first(g.node.children)
             break
         end
+    end
+    g
+end
+
+
+"""
+    toendofvariation!(g::Game)
+
+Go to the end of the variation containing the current node of the game.
+
+Steps forward following the main line from this node until we get to a node
+with no child nodes.
+"""
+function toendofvariation!(g::Game)
+    while !isatend(g)
+        forward!(g)
     end
     g
 end
