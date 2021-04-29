@@ -401,23 +401,23 @@ SquareSet:
  -  -  -  -  -  -  -  -
  -  -  -  -  -  -  -  -
  -  -  -  -  -  -  -  -</code></pre><p>Here is a more complicated example: A function that finds all pieces of a given side that are attacked, but undefended:</p><pre><code class="language-julia">function attacked_but_undefended(board, color)
-	attacker = -color  # The opposite color
+    attacker = -color  # The opposite color
 
-	# Find all attacked squares
-	attacked = SS_EMPTY  # The empty square set
-	for s ∈ pieces(board, attacker)
-		attacked = attacked ∪ attacksfrom(board, s)
-	end
+    # Find all attacked squares
+    attacked = SS_EMPTY  # The empty square set
+    for s ∈ pieces(board, attacker)
+        attacked = attacked ∪ attacksfrom(board, s)
+    end
 
-	# Find all defended squares
-	defended = SS_EMPTY
-	for s ∈ pieces(b, color)
-		defended = defended ∪ attacksfrom(board, s)
-	end
+    # Find all defended squares
+    defended = SS_EMPTY
+    for s ∈ pieces(b, color)
+        defended = defended ∪ attacksfrom(board, s)
+    end
 
-	# Return all attacked, but undefended squares containing pieces of
-	# the desired color:
-	attacked ∩ -defended ∩ pieces(board, color)
+    # Return all attacked, but undefended squares containing pieces of
+    # the desired color:
+    attacked ∩ -defended ∩ pieces(board, color)
 end</code></pre><h3><a class="nav-anchor" id="Iterating-Through-Square-Sets-1" href="#Iterating-Through-Square-Sets-1">Iterating Through Square Sets</a></h3><p>The <code>squares</code> function can be used to convert a <code>SquareSet</code> to a vector of squares:</p><pre><code class="language-julia-repl">julia&gt; squares(SS_FILE_A)
 8-element Vector{Square}:
  SQ_A8
@@ -473,58 +473,58 @@ Board (rnbqkb1r/pppp1ppp/5n2/4p3/2P5/2N5/PP1PPPPP/R1BQKBNR w KQkq -):
  -  -  N  -  -  -  -  -
  P  P  -  P  P  P  P  P
  R  -  B  Q  K  B  N  R</code></pre><h3><a class="nav-anchor" id="Example:-Playing-Random-Games-1" href="#Example:-Playing-Random-Games-1">Example: Playing Random Games</a></h3><p>By putting together things we&#39;ve learned earlier in this tutorial, we can now generate random games. This function generates a <code>SimpleGame</code> containing random moves:</p><pre><code class="language-julia">function randomgame()
-	game = SimpleGame()
-	while !isterminal(game)
-		move = rand(moves(board(game)))
-		domove!(game, move)
-	end
-	game
+    game = SimpleGame()
+    while !isterminal(game)
+        move = rand(moves(board(game)))
+        domove!(game, move)
+    end
+    game
 end</code></pre><p>The only new function in the above code is <code>isterminal</code>, which tests for a game over condition (checkmate or some type of immediate draw).</p><p>Approximately how often do completely random games end in checkmate? Let&#39;s find out. The following function takes an optional number of games as input (by default, one thousand), generates the deseired number of random games, and returns the fraction of the games that (accidentally) ends in checkmate.</p><pre><code class="language-julia">function checkmate_fraction(game_count = 1000)
-	checkmate_count = 0
-	for _ in 1:game_count
-		g = randomgame()
-		if ischeckmate(board(g))
-			checkmate_count += 1
-		end
-	end
-	checkmate_count / game_count
+    checkmate_count = 0
+    for _ in 1:game_count
+        g = randomgame()
+        if ischeckmate(board(g))
+            checkmate_count += 1
+        end
+    end
+    checkmate_count / game_count
 end</code></pre><p>The above code introduces the new function <code>ischeckmate</code>, which tests if a board is a checkmate position.</p><p>Let&#39;s test it:</p><pre><code class="language-julia-repl">julia&gt; checkmate_fraction(10_000)
 0.1546</code></pre><p>It seems that about 15% of all random games end in an accidental checkmate. To me, this is a suprisingly high number.</p><p>What will happen if we make random moves, except that we always play the mating move if there is a mate in one? Let&#39;s find out. As a first step, let&#39;s write a function that checks whether a move is a mate in one.</p><pre><code class="language-julia">move_is_mate_slow(board, move) = ischeckmate(domove(board, move))</code></pre><p>This is simple, elegant and readable. Unfortunately, as the name indicates, it is also kind of slow. The reason is that <code>domove</code> copies the board. Using the destructive <code>domove!</code> function performs much better, at the price of longer and less readable code.</p><p>The function below is functionally equivalent to the one above, but performs much better.</p><pre><code class="language-julia">function move_is_mate(board, move)
-	# Do the move
-	u = domove!(board, move)
+    # Do the move
+    u = domove!(board, move)
 
-	# Check if the resulting board is checkmate
-	result = ischeckmate(board)
+    # Check if the resulting board is checkmate
+    result = ischeckmate(board)
 
-	# Undo the move
-	undomove!(board, u)
+    # Undo the move
+    undomove!(board, u)
 
-	# Return result
-	result
+    # Return result
+    result
 end</code></pre><p>Using the function we just wrote, we can make a function that takes a board as input and returns a mate in 1 move if there is one, or a random move otherwise.</p><pre><code class="language-julia">function mate_or_random(board)
-	ms = moves(board)
-	for move ∈ ms
-		if move_is_mate(board, move)
-			return move
-		end
-	end
-	rand(ms)
+    ms = moves(board)
+    for move ∈ ms
+        if move_is_mate(board, move)
+            return move
+        end
+    end
+    rand(ms)
 end</code></pre><p>The function below is identical to the <code>randomgame</code> function above, except that it uses <code>mate_or_random</code> instead of totally random moves:</p><pre><code class="language-julia">function almost_random_game()
-	game = SimpleGame()
-	while !isterminal(game)
-		move = mate_or_random(board(game))
-		domove!(game, move)
-	end
-	game
+    game = SimpleGame()
+    while !isterminal(game)
+        move = mate_or_random(board(game))
+        domove!(game, move)
+    end
+    game
 end</code></pre><p>What percentage of the games end in checkmate now? Here&#39;s a function to find out:</p><pre><code class="language-julia">function checkmate_fraction_2(game_count = 1000)
-	checkmate_count = 0
-	for _ in 1:game_count
-		g = almost_random_game()
-		if ischeckmate(board(g))
-			checkmate_count += 1
-		end
-	end
-	checkmate_count / game_count
+    checkmate_count = 0
+    for _ in 1:game_count
+        g = almost_random_game()
+        if ischeckmate(board(g))
+            checkmate_count += 1
+        end
+    end
+    checkmate_count / game_count
 end</code></pre><p>If you try to run this function, you should get a number around 0.81. About 81% of all completely random games include at least one opportunity to deliver mate in 1!</p><h3><a class="nav-anchor" id="Variations-1" href="#Variations-1">Variations</a></h3><p>If we create a game with some moves, go back to an earlier place in the game, and call <code>domove!</code> again with a new move, the previous game continuation is overwritten:</p><pre><code class="language-julia-repl">julia&gt; g = @game d4 d5 c4 e6 Nc3 Nf6 Bg5;
 
 julia&gt; back!(g); back!(g); back!(g)
