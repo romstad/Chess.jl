@@ -913,9 +913,6 @@ g5
 h5
 ```
 
-
-## Games
-
 ## Games
 
 There are two types for representing chess games: `SimpleGame` and `Game`.
@@ -1165,7 +1162,7 @@ and to view the game as a *tree of variations*.
 
 Games of type `Game` (but not `SimpleGame`) are able to handle variations.
 
-To add an alternative variation some place in the game, first make the main
+To add an alternative variation at some place in the game, first make the main
 line, then go back to the place where you want to add the alternative move, and
 then do `addmove!`:
 
@@ -1403,24 +1400,31 @@ book.
 To print out the stats for all moves for a position, use `printbookentries`:
 
 ```julia-repl
-julia> printbookentries(@startboard d4 Nf6 c4)
-e6 0.397 46.2% (+71411, =92447, -90924) 3851 3851 1854 2020
-g6 0.380 44.5% (+59494, =63725, -81890) 3958 3958 1879 2020
-c5 0.131 46.0% (+22792, =18340, -28352) 3912 3912 1895 2020
-e5 0.038 41.7% (+3506, =2909, -5490) 3470 3470 1896 2020
-d6 0.026 44.7% (+5124, =5123, -6951) 3505 3505 1890 2020
-c6 0.008 44.4% (+1310, =1832, -1866) 2870 2813 1920 2020
-d5 0.008 28.0% (+239, =204, -773) 2771 2812 1885 2020
-Nc6 0.007 49.4% (+1167, =871, -1205) 2835 2785 1925 2020
-b6 0.005 49.8% (+815, =564, -825) 3542 3542 1912 2020
-a6 0.000 49.0% (+181, =118, -191) 2640 2729 1976 2020
+julia> printbookentries(@startboard d4 Nf6 c4 e6 Nc3)
+move     prob   score     won   drawn    lost    elo oelo  first last
+Bb4    71.92%  48.18%   32327   35691   36120   3936 3936   1854 2020
+d5     20.82%  40.46%    4481    6545    8137   3796 3796   1880 2020
+c5      4.20%  43.13%    1560    1192    2247   3794 3851   1922 2020
+b6      2.16%  34.51%     217     170     488   2652 2762   1902 2020
+Be7     0.51%  27.47%      28      33     101   2585 2640   1911 2020
+c6      0.20%  36.05%      13       5      25   2448 2670   1932 2020
+g6      0.12%  31.94%       9       5      22   2289 2405   1943 2020
+Nc6     0.06%  33.33%       6      10      17   3809 3809   1938 2020
 ```
 
-On each output line, we see the move, the probability that this move will be
-picked (by `pickbookmove`, described below), the percentage score from the point
-of view of the side to move, the number of wins, draws and losses, the maximum
-rating, the maximum opponent rating, the first year played, and the last year
-played.
+The output columns have the following meanings:
+
+* `move`: The move.
+* `prob`: Probability that this move will be played when calling `pickbookmove`.
+* `score`: Percentage score of this move in the games used to produce this
+  book file.
+* `won`: Number of games won with this move.
+* `drawn`: Number of games drawn with this move.
+* `lost`: Number of games lost with this move.
+* `elo`: Maximum Elo of players that played this move.
+* `oelo`: Maximum Elo of opponents against which this move was played.
+* `first`: The first year this move was played.
+* `last`: The last year this move was played.
 
 To pick a book move, use `pickbookmove`:
 

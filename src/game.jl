@@ -987,6 +987,7 @@ function toend!(g::SimpleGame)
 end
 
 function toend!(g::Game)
+    tobeginning!(g)
     while !isatend(g)
         forward!(g)
     end

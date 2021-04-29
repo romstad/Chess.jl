@@ -1,7 +1,12 @@
 module Book
 
 using Artifacts
-using ..Chess, ..Chess.PGN, Dates, Printf, StatsBase
+using Dates
+using Formatting
+using Printf
+using StatsBase
+
+using ..Chess, ..Chess.PGN
 
 export BookEntry
 
@@ -577,15 +582,46 @@ end
 Pretty-print the book entries for the provided board.
 
 If `bookfile` is nothing, use the default built-in opening book.
+
+The output columns have the following meanings:
+
+* `move`: The move.
+* `prob`: Probability that this move will be played when calling `pickbookmove`.
+* `score`: Percentage score of this move in the games used to produce this
+  book file.
+* `won`: Number of games won with this move.
+* `drawn`: Number of games drawn with this move.
+* `lost`: Number of games lost with this move.
+* `elo`: Maximum Elo of players that played this move.
+* `oelo`: Maximum Elo of opponents against which this move was played.
+* `first`: The first year this move was played.
+* `last`: The last year this move was played.
+
+# Examples
+
+```julia-repl
+julia> printbookentries(@startboard d4 Nf6 c4 e6 Nc3)
+move     prob   score     won   drawn    lost    elo oelo  first last
+Bb4    71.92%  48.18%   32327   35691   36120   3936 3936   1854 2020
+d5     20.82%  40.46%    4481    6545    8137   3796 3796   1880 2020
+c5      4.20%  43.13%    1560    1192    2247   3794 3851   1922 2020
+b6      2.16%  34.51%     217     170     488   2652 2762   1902 2020
+Be7     0.51%  27.47%      28      33     101   2585 2640   1911 2020
+c6      0.20%  36.05%      13       5      25   2448 2670   1932 2020
+g6      0.12%  31.94%       9       5      22   2289 2405   1943 2020
+Nc6     0.06%  33.33%       6      10      17   3809 3809   1938 2020
+```
 """
 function printbookentries(b::Board, bookfile=nothing)
     entries = findbookentries(b, bookfile)
     scoresum = sum(map(e -> e.score, entries))
+    printfmt("{1:<5s} {2:>7s} {3:>7s} {4:>7s} {5:>7s} {6:>7s} {7:>6s} {8:>4s} {9:>6s} {10:>4s}\n",
+             "move", "prob", "score", "won", "drawn", "lost", "elo", "oelo", "first", "last")
     for e ∈ entries
-        @printf(
-            "%s %.3f %.1f%% (+%d, =%d, -%d) %d %d %d %d\n",
+        printfmt(
+            "{1:<5s} {2:>6.2f}% {3:>6.2f}% {4:>7d} {5:>7d} {6:>7d} {7:>6d} {8:>4d} {9:>6d} {10:>4d}\n",
             movetosan(b, Move(e.move)),
-            e.score / scoresum,
+            100 * e.score / scoresum,
             100 * ((e.wins + 0.5 * e.draws) / (e.wins + e.draws + e.losses)),
             e.wins,
             e.draws,
