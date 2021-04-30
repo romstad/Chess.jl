@@ -1,7 +1,7 @@
 module MIME
 
 using Hiccup
-using ..Chess
+using ..Chess, ..Chess.PGN
 
 export html
 
@@ -141,7 +141,7 @@ function html(g::SimpleGame)
         Dict(:class => "game"),
         [
             svg(board = board(g)),
-            Node(:p, formatmoves(g, "👉")),
+            Node(:p, Chess.formatmoves(g, "👉")),
             Node(
                 :a,
                 Dict(
@@ -155,13 +155,19 @@ function html(g::SimpleGame)
     )
 end
 
+const GAME_CSS = """
+.game {
+    text-color: blue;
+}
+"""
+
 function html(g::Game)
     Node(
         :div,
-        Dict(:class => "game"),
+        Dict(:class => "game", :style => GAME_CSS),
         [
             svg(board = board(g)),
-            Node(:p, formatmoves(g, "👉")),
+            Node(:p, Chess.formatmoves(g, "👉")),
             Node(
                 :a,
                 Dict(

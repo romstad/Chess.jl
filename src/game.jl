@@ -11,6 +11,7 @@ export addcomment!,
     addprecomment!,
     back!,
     blackelo,
+    blackplayer,
     board,
     boards,
     comment,
@@ -37,6 +38,7 @@ export addcomment!,
     removenode!,
     setdateplayed!,
     setheadervalue!,
+    site,
     tobeginning!,
     tobeginningofvariation!,
     toend!,
@@ -44,6 +46,7 @@ export addcomment!,
     tonode!,
     undomove!,
     whiteelo,
+    whiteplayer,
     @game,
     @simplegame
 
@@ -127,16 +130,44 @@ function gamestring(g::SimpleGame)
 end
 
 
+function formatgameheaders(io::IO, g::SimpleGame)
+    print(io, "(")
+    print(io, whiteplayer(g))
+    print(io, " vs ")
+    print(io, blackplayer(g))
+    if !isnothing(site(g)) && !isnothing(dateplayed(g))
+        print(io, ", ")
+        print(io, site(g))
+        print(io, " ")
+        print(io, year(dateplayed(g)))
+    end
+    print(io, ")")
+end
+
+
 function Base.show(io::IO, g::SimpleGame)
-    print(io, "SimpleGame:\n ")
+    if !isnothing(whiteplayer(g)) && !isnothing(blackplayer(g))
+        print(io, "SimpleGame ")
+        formatgameheaders(io, g)
+        print(io, ":\n ")
+    else
+        print(io, "SimpleGame:\n ")
+    end
     print(io, formatmoves(g, "*"))
 end
 
 
 function Base.show(io::IO, ::MIME"text/html", g::SimpleGame)
-    print(io, "SimpleGame:")
+    if !isnothing(whiteplayer(g)) && !isnothing(blackplayer(g))
+        print(io, "SimpleGame ")
+        formatgameheaders(io, g)
+        print(io, ":")
+    else
+        print(io, "SimpleGame:")
+    end
     print(io, Chess.MIME.html(g))
 end
+
 
 """
     SimpleGame(startboard::Board=startboard())
@@ -286,14 +317,41 @@ function gamestring(g::Game)
 end
 
 
+function formatgameheaders(io::IO, g::Game)
+    print(io, "(")
+    print(io, whiteplayer(g))
+    print(io, " vs ")
+    print(io, blackplayer(g))
+    if !isnothing(site(g)) && !isnothing(dateplayed(g))
+        print(io, ", ")
+        print(io, site(g))
+        print(io, " ")
+        print(io, year(dateplayed(g)))
+    end
+    print(io, ")")
+end
+
+
 function Base.show(io::IO, g::Game)
-    print(io, "Game:\n ")
+    if !isnothing(whiteplayer(g)) && !isnothing(blackplayer(g))
+        print(io, "Game ")
+        formatgameheaders(io, g)
+        print(io, ":\n ")
+    else
+        print(io, "Game:\n ")
+    end
     print(io, formatmoves(g, "*"))
 end
 
 
 function Base.show(io::IO, ::MIME"text/html", g::Game)
-    print(io, "Game:\n")
+    if !isnothing(whiteplayer(g)) && !isnothing(blackplayer(g))
+        print(io, "Game ")
+        formatgameheaders(io, g)
+        print(io, ":")
+    else
+        print(io, "Game:")
+    end
     print(io, Chess.MIME.html(g))
 end
 
@@ -484,6 +542,42 @@ function setdateplayed!(g::Game, date::Date)
 end
 
 
+function whiteplayer(g::SimpleGame)::Union{String,Nothing}
+    result = headervalue(g, "White")
+    result == "?" ? nothing : result
+end
+
+
+function whiteplayer(g::Game)::Union{String,Nothing}
+    result = headervalue(g, "White")
+    result == "?" ? nothing : result
+end
+
+
+function blackplayer(g::SimpleGame)::Union{String,Nothing}
+    result = headervalue(g, "Black")
+    result == "?" ? nothing : result
+end
+
+
+function blackplayer(g::Game)::Union{String,Nothing}
+    result = headervalue(g, "Black")
+    result == "?" ? nothing : result
+end
+
+
+function site(g::SimpleGame)::Union{String,Nothing}
+    result = headervalue(g, "Site")
+    result == "?" ? nothing : result
+end
+
+
+function site(g::Game)::Union{String,Nothing}
+    result = headervalue(g, "Site")
+    result == "?" ? nothing : result
+end
+
+
 """
     whiteelo(g::SimpeGame)
     whiteelo(g::Game)
@@ -499,7 +593,6 @@ function whiteelo(g::Game)::Union{Int,Nothing}
     elo = headervalue(g, "WhiteElo")
     isnothing(elo) ? nothing : tryparse(Int, elo)
 end
-
 
 """
     blackelo(g::SimpeGame)
@@ -1561,7 +1654,7 @@ to satisfy Julia's parser.
 ```julia-repl
 julia> @simplegame d4 Nf6 c4 e6 Nc3 Bb4 Qc2 OO
 SimpleGame:
- d4 Nf6 c4 e6 Nc3 Bb4 Qc2 O-O *
+ 1. d4 Nf6 2. c4 e6 3. Nc3 Bb4 4. Qc2 O-O *
 ```
 """
 macro simplegame(moves...)
@@ -1584,7 +1677,7 @@ to satisfy Julia's parser.
 ```julia-repl
 julia> @game d4 Nf6 c4 e6 Nc3 Bb4 Qc2 OO
 Game:
- d4 Nf6 c4 e6 Nc3 Bb4 Qc2 O-O *
+ 1. d4 Nf6 2. c4 e6 3. Nc3 Bb4 4. Qc2 O-O *
 ```
 """
 macro game(moves...)

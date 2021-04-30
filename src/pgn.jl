@@ -593,7 +593,7 @@ function gametopgn(g)::String
     for gh in g.headers.othertags
         write(result, formatheader(gh.name, gh.value))
     end
-    write(result, "\n", formatmoves(g), g.headers.result, "\n")
+    write(result, "\n", Chess.formatmoves(g), g.headers.result, "\n")
     String(take!(result))
 end
 
