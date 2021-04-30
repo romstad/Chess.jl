@@ -21,7 +21,9 @@ Pluto will now open in a browser window. In the "Open from file" textbox,
 navigate to the location of the downloaded `tutorial.jl` file, and press "Open".
 
 There is also a [static HTML version of the
-tutorial notebook](https://romstad.github.io/Chess.jl/tutorial/).
+tutorial notebook](https://romstad.github.io/Chess.jl/tutorial/). Even if you
+have no interest in using Chess.jl with Pluto, the notebook may be easier to
+read, because of the graphical chess boards.
 
 ## Boards
 
