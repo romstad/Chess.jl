@@ -110,8 +110,7 @@ function description(board)
         :div,
         [
             Node(:p, sidetomove(board) == WHITE ? "White to move" : "Black to move"),
-            board.castlerights == 0 ? "" :
-            Node(:p, "Castle rights: " * String(take!(buf))),
+            board.castlerights == 0 ? "" : Node(:p, "Castle rights: " * String(take!(buf))),
             epsquare(board) == SQ_NONE ? "" :
             Node(:p, "En passant square: " * tostring(epsquare(board))),
             Node(:p, lichesslink(board)),

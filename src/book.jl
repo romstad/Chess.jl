@@ -328,7 +328,7 @@ function addgamefile!(
             @info "$count games added, $(length(entries)) entries."
         end
         if (!isnothing(maxgames) && count ≥ maxgames) ||
-            (!isnothing(maxentries) && length(entries) ≥ maxentries)
+           (!isnothing(maxentries) && length(entries) ≥ maxentries)
             break
         end
     end
@@ -546,7 +546,7 @@ If `bookfile` is nothing, use the default built-in opening book.
 The return value is a (possibly empty) `Vector{BookEntry}`, sorted by
 descending scores.
 """
-function findbookentries(key::UInt64, bookfile=nothing)::Vector{BookEntry}
+function findbookentries(key::UInt64, bookfile = nothing)::Vector{BookEntry}
     if isnothing(bookfile)
         bookfile = joinpath(artifact"book", "default-book.obk")
     end
@@ -570,7 +570,7 @@ function findbookentries(key::UInt64, bookfile=nothing)::Vector{BookEntry}
     sort(result, by = e -> -e.score)
 end
 
-function findbookentries(b::Board, bookfile=nothing)::Vector{BookEntry}
+function findbookentries(b::Board, bookfile = nothing)::Vector{BookEntry}
     findbookentries(b.key, bookfile)
 end
 
@@ -612,11 +612,22 @@ g6      0.12%  31.94%       9       5      22   2289 2405   1943 2020
 Nc6     0.06%  33.33%       6      10      17   3809 3809   1938 2020
 ```
 """
-function printbookentries(b::Board, bookfile=nothing)
+function printbookentries(b::Board, bookfile = nothing)
     entries = findbookentries(b, bookfile)
     scoresum = sum(map(e -> e.score, entries))
-    printfmt("{1:<5s} {2:>7s} {3:>7s} {4:>7s} {5:>7s} {6:>7s} {7:>6s} {8:>4s} {9:>6s} {10:>4s}\n",
-             "move", "prob", "score", "won", "drawn", "lost", "elo", "oelo", "first", "last")
+    printfmt(
+        "{1:<5s} {2:>7s} {3:>7s} {4:>7s} {5:>7s} {6:>7s} {7:>6s} {8:>4s} {9:>6s} {10:>4s}\n",
+        "move",
+        "prob",
+        "score",
+        "won",
+        "drawn",
+        "lost",
+        "elo",
+        "oelo",
+        "first",
+        "last",
+    )
     for e ∈ entries
         printfmt(
             "{1:<5s} {2:>6.2f}% {3:>6.2f}% {4:>7d} {5:>7d} {6:>7d} {7:>6d} {8:>4d} {9:>6d} {10:>4d}\n",
@@ -629,7 +640,7 @@ function printbookentries(b::Board, bookfile=nothing)
             e.elo,
             e.oppelo,
             e.firstyear,
-            e.lastyear
+            e.lastyear,
         )
     end
 end
