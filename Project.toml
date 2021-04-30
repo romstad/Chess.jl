@@ -1,7 +1,7 @@
 name = "Chess"
 uuid = "717200cc-f167-4fd3-b4bf-b5e480529844"
 authors = ["Tord Romstad"]
-version = "0.6.0"
+version = "0.7.0"
 
 [deps]
 Artifacts = "56f22d72-fd6d-98f1-02f0-08ddc0907c33"
