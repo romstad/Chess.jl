@@ -17,7 +17,7 @@ software.
 
 ## Installation
 
-Chess.jl can be installed from the package manager i Julia's REPL:
+Chess.jl can be installed from the package manager at Julia's REPL:
 
 ```
 (@v1.6) pkg> add Chess
