@@ -955,6 +955,10 @@ julia> domove!(g, "e5");
 julia> domove!(g, "Nc3");
 
 julia> domove!(g, "Nf6");
+
+julia> g
+Game:
+ 1. c4 e5 2. Nc3 Nf6 *
 ```
 
 Constructing games this way quickly becomes tedious. For interactive use, there
@@ -963,9 +967,9 @@ for constructing a game from the regular starting position with a sequence of
 moves. The following is equivalent to the above example:
 
 ```julia-repl
-julia> @game c4 e5 Nc3 Nf6
+julia> g = @game c4 e5 Nc3 Nf6
 Game:
- c4 e5 Nc3 Nf6 *
+ 1. c4 e5 2. Nc3 Nf6 *
 ```
 
 There is now a list of moves in the printed representation of the game. The `*`
@@ -976,19 +980,19 @@ beginning or the end of the game by calling `tobeginning!` or `toend!`.
 ```julia-repl
 julia> back!(g)
 Game:
- c4 e5 Nc3 * Nf6
+ 1. c4 e5 2. Nc3 * Nf6
 
 julia> tobeginning!(g)
 Game:
- * c4 e5 Nc3 Nf6
+ * 1. c4 e5 2. Nc3 Nf6
 
 julia> forward!(g)
 Game:
- c4 * e5 Nc3 Nf6
+ 1. c4 * e5 2. Nc3 Nf6
 
 julia> toend!(g)
 Game:
- c4 e5 Nc3 Nf6 *
+ 1. c4 e5 2. Nc3 Nf6 *
 ```
 
 You can obtain the current position board position of the game with the `board`
@@ -1146,15 +1150,17 @@ and call `domove!` again with a new move, the previous game continuation is
 overwritten:
 
 ```julia-repl
-julia> g = @game d4 d5 c4 e6 Nc3 Nf6 Bg5;
+julia> g = @game d4 d5 c4 e6 Nc3 Nf6 Bg5
+Game:
+ 1. d4 d5 2. c4 e6 3. Nc3 Nf6 4. Bg5 *
 
 julia> back!(g); back!(g); back!(g)
 Game:
- d4 d5 c4 e6 * Nc3 Nf6 Bg5
+ 1. d4 d5 2. c4 e6 * 3. Nc3 Nf6 4. Bg5
 
 julia> domove!(g, "Nf3")
 Game:
- d4 d5 c4 e6 Nf3 *
+ 1. d4 d5 2. c4 e6 3. Nf3 *
 ```
 
 This is not always desirable. Sometimes we want to add an *alternative* move,
@@ -1171,15 +1177,15 @@ julia> g = @game d4 d5 c4 e6 Nc3 Nf6 Bg5;
 
 julia> back!(g); back!(g); back!(g)
 Game:
- d4 d5 c4 e6 * Nc3 Nf6 Bg5
+ 1. d4 d5 2. c4 e6 * 3. Nc3 Nf6 4. Bg5
 
 julia> addmove!(g, "Nf3")
 Game:
- d4 d5 c4 e6 Nc3 (Nf3 *) Nf6 Bg5
+ 1. d4 d5 2. c4 e6 3. Nc3 (3. Nf3 *) Nf6 4. Bg5
 ```
 
 Alternative variations are printed in parens in the text representation of a
-game; the `(Nf6 *)` in the above example. As before, the `*` indicates the
+game; the `(3. Nf3 *)` in the above example. As before, the `*` indicates the
 current location in the game tree.
 
 The function `forward!` takes an optional second argument: Which move to follow
@@ -1191,44 +1197,39 @@ Here is how you would go back to the point after 3. Nc3 in the above example:
 ```julia-repl
 julia> back!(g)
 Game:
- d4 d5 c4 e6 * Nc3 (Nf3) Nf6 Bg5
+ 1. d4 d5 2. c4 e6 * 3. Nc3 (3. Nf3) Nf6 4. Bg5
 
 julia> forward!(g, "Nc3")
 Game:
- d4 d5 c4 e6 Nc3 (Nf3) * Nf6 Bg5
+ 1. d4 d5 2. c4 e6 3. Nc3 (3. Nf3) * Nf6 4. Bg5
 ```
 
 Two other functions that are useful for navigating games with variations are
-tobeginningofvariation! and toendofvariation!. See the documentation of these
-functions for details.
+`tobeginningofvariation!` and `toendofvariation!`. See the documentation of
+these functions for details.
 
 Of course, variations can be nested:
 
 ```julia-repl
 julia> g = @game e4 c5 Nf3 Nc6;
 
-julia> back!(g);
+julia> back!(g)
+Game:
+ 1. e4 c5 2. Nf3 * Nc6
 
-julia> back!(g);
+julia> g = @game e4 c5 Nf3 Nc6;
 
-julia> addmove!(g, "c3");
+julia> back!(g); back!(g);
 
-julia> addmove!(g, "Nf6");
+julia> addmove!(g, "c3"); addmove!(g, "Nf6"); addmove!(g, "e5");
 
-julia> addmove!(g, "e5");
+julia> back!(g); back!(g);
 
-julia> back!(g);
-
-julia> back!(g);
-
-julia> addmove!(g, "d5");
-
-julia> addmove!(g, "exd5");
+julia> addmove!(g, "d5"); addmove!(g, "exd5");
 
 julia> g
-
 Game:
- e4 c5 Nf3 (c3 Nf6 (d5 exd5 *) e5) Nc6
+ 1. e4 c5 2. Nf3 (2. c3 Nf6 (2... d5 3. exd5 *) 3. e5) Nc6
 ```
 
 ### Comments
@@ -1237,29 +1238,17 @@ Games of type `Game` (again, not `SimpleGame`) can also be annotated with
 textual comments, by using the `addcomment!` function:
 
 ```julia-repl
-julia> g = @game d4 f5;
+julia>  g = @game d4 f5;
 
-julia> addcomment!(g, "This opening is known as the Dutch Defense")
+julia> addcomment!(g, "This opening is known as the Dutch Defense");
+
+julia> g
+Game:
+ 1. d4 f5 {This opening is known as the Dutch Defense} *
 ```
 
-Comments are not visible in the printed representation of games in the Julia
-REPL. You can see them when using Chess.jl in a Pluto notebook. They will also
-be included in the output if you convert a game to PGN notation:
-
-```julia-repl
-julia> using Chess.PGN
-
-julia> println(gametopgn(g))
-[Event "?"]
-[Site "?"]
-[Date "?"]
-[Round "?"]
-[White "?"]
-[Black "?"]
-[Result "*"]
-
-1. d4 f5 {This opening is known as the Dutch Defense} *
-```
+Comments are printed in curly braces in the textual representation of games, as
+can be seen above.
 
 ### Numeric Annotation Glyphs
 
@@ -1268,16 +1257,20 @@ are a standard way of adding symbolic annotations to a chess game. All integers
 in the range 0 to 139 have a pre-defined meaning, as described in [this
 Wikipedia article](https://en.wikipedia.org/wiki/Numeric_Annotation_Glyphs).
 
-Here is how to add the NAG `$1` ("good move") to the move 1... e5 after 1. e4:
+Here is how to add the NAG `$4` ("very poor move or blunder") to the move 2...
+g4 in the game 1. f4 e5 2. g4 Qh4#:
 
 ```julia-repl
-julia> g = @game e4 e5;
+julia> g = @game f4 e5 g4 Qh4;
 
-julia> addnag!(g, 1)
+julia> back!(g);
+
+julia> addnag!(g, 4);
+
+julia> g
+Game:
+ 1. f4 e5 2. g4 $4 * Qh4#
 ```
-
-Like comments, NAGs are not displayed in the printed representation of games in
-the REPL. They are visible in Pluto, and are included in PGN output.
 
 ## PGN Import and Export
 
@@ -1300,38 +1293,43 @@ before trying the examples in this section.
 ### Creating a Game From a PGN String
 
 Given a PGN string, the `gamefromstring` function creates a game object from the
-string (throwing a `PGNException` on failure). By default, the return value is a
-`SimpleGame` containing only the moves of the game, without any comments,
-variations or numeric annotation glyphs. If the optional named parameter
-`annotations` is `true`, the return value is a `Game` with all annotations
-included:
+string (throwing a `PGNException` on failure). Here's a PGN string for us to
+experiment with:
 
 ```julia-repl
 julia> pgnstring = """
-       [Event "F/S Return Match"]
-       [Site "Belgrade, Serbia JUG"]
-       [Date "1992.11.04"]
-       [Round "29"]
-       [White "Fischer, Robert J."]
-       [Black "Spassky, Boris V."]
-       [Result "1/2-1/2"]
+       [Event "Important Tournament"]
+       [Site "Somewhere"]
+       [Date "2021.04.29"]
+       [Round "42"]
+       [White "Sixpack, Joe"]
+       [Black "Public, John Q"]
+       [Result "0-1"]
 
-       1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O Be7 6. Re1 b5 7. Bb3 d6 8. c3
-       O-O 9. h3 Nb8 10. d4 Nbd7 11. c4 c6 12. cxb5 axb5 13. Nc3 Bb7 14. Bg5 b4 15.
-       Nb1 h6 16. Bh4 c5 17. dxe5 Nxe4 18. Bxe7 Qxe7 19. exd6 Qf6 20. Nbd2 Nxd6 21.
-       Nc4 Nxc4 22. Bxc4 Nb6 23. Ne5 Rae8 24. Bxf7+ Rxf7 25. Nxf7 Rxe1+ 26. Qxe1 Kxf7
-       27. Qe3 Qg5 28. Qxg5 hxg5 29. b3 Ke6 30. a3 Kd6 31. axb4 cxb4 32. Ra5 Nd5 33.
-       f3 Bc8 34. Kf2 Bf5 35. Ra7 g6 36. Ra6+ Kc5 37. Ke1 Nf4 38. g3 Nxh3 39. Kd2 Kb5
-       40. Rd6 Kc5 41. Ra6 Nf2 42. g4 Bd3 43. Re6 1/2-1/2
+       1. f4 e5 2. fxe5 d6 3. exd6 Bxd6 4. Nc3 \$4 {A terrible blunder. White should
+       play} (4. Nf3 {, and Black has insufficient compensation for the pawn.}) Qh4+
+       5. g3 Qxg3+ {Black could also have played} (5... Bxg3+ 6. hxg3 Qxg3#) 6. hxg3
+       Bxg3# 0-1
        """;
+```
 
+Let's try to import it:
+
+```julia-repl
 julia> sg = gamefromstring(pgnstring)
-SimpleGame:
- * e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O Be7 Re1 b5 Bb3 d6 c3 O-O h3 Nb8 d4 Nbd7 c4 c6 cxb5 axb5 Nc3 Bb7 Bg5 b4 Nb1 h6 Bh4 c5 dxe5 Nxe4 Bxe7 Qxe7 exd6 Qf6 Nbd2 Nxd6 Nc4 Nxc4 Bxc4 Nb6 Ne5 Rae8 Bxf7+ Rxf7 Nxf7 Rxe1+ Qxe1 Kxf7 Qe3 Qg5 Qxg5 hxg5 b3 Ke6 a3 Kd6 axb4 cxb4 Ra5 Nd5 f3 Bc8 Kf2 Bf5 Ra7 g6 Ra6+ Kc5 Ke1 Nf4 g3 Nxh3 Kd2 Kb5 Rd6 Kc5 Ra6 Nf2 g4 Bd3 Re6
+SimpleGame (Sixpack, Joe vs Public, John Q, Somewhere 2021):
+ * 1. f4 e5 2. fxe5 d6 3. exd6 Bxd6 4. Nc3 Qh4+ 5. g3 Qxg3+ 6. hxg3 Bxg3#
+```
 
+The result is a `SimpleGame`. All comments, variations and NAGs in the PGN
+string were ignored. If we instead want a `Game` with all annotations included,
+we can supply the value `true` to the optional parameter `annotations`:
+
+```julia-repl
 julia> g = gamefromstring(pgnstring, annotations=true)
-Game:
- * e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O Be7 Re1 b5 Bb3 d6 c3 O-O h3 Nb8 d4 Nbd7 c4 c6 cxb5 axb5 Nc3 Bb7 Bg5 b4 Nb1 h6 Bh4 c5 dxe5 Nxe4 Bxe7 Qxe7 exd6 Qf6 Nbd2 Nxd6 Nc4 Nxc4 Bxc4 Nb6 Ne5 Rae8 Bxf7+ Rxf7 Nxf7 Rxe1+ Qxe1 Kxf7 Qe3 Qg5 Qxg5 hxg5 b3 Ke6 a3 Kd6 axb4 cxb4 Ra5 Nd5 f3 Bc8 Kf2 Bf5 Ra7 g6 Ra6+ Kc5 Ke1 Nf4 g3 Nxh3 Kd2 Kb5 Rd6 Kc5 Ra6 Nf2 g4 Bd3 Re6
+Game (Sixpack, Joe vs Public, John Q, Somewhere 2021):
+ * 1. f4 e5 2. fxe5 d6 3. exd6 Bxd6 4. Nc3 $4 {A terrible blunder. White should
+play} (4. Nf3 {, and Black has insufficient compensation for the pawn.}) Qh4+ 5. g3 Qxg3+ {Black could also have played} (5... Bxg3+ 6. hxg3 Qxg3#) 6. hxg3 Bxg3#
 ```
 
 Unless you really need the annotations, importing to a `SimpleGame` is the
@@ -1342,11 +1340,28 @@ Converting a game to a PGN string is done by the `gametopgn` function. This
 works for both `SimpleGame` and `Game` objects:
 
 ```julia-repl
-julia> gametopgn(sg)
-"[Event \"F/S Return Match\"]\n[Site \"Belgrade, Serbia JUG\"]\n[Date \"1992.11.04\"]\n[Round \"29\"]\n[White \"Fischer, Robert J.\"]\n[Black \"Spassky, Boris V.\"]\n[Result \"1/2-1/2\"]\n\n1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O Be7 6. Re1 b5 7. Bb3 d6 8. c3 O-O 9. h3 Nb8 10. d4 Nbd7 11. c4 c6 12. cxb5 axb5 13. Nc3 Bb7 14. Bg5 b4 15. Nb1 h6 16. Bh4 c5 17. dxe5 Nxe4 18. Bxe7 Qxe7 19. exd6 Qf6 20. Nbd2 Nxd6 21. Nc4 Nxc4 22. Bxc4 Nb6 23. Ne5 Rae8 24. Bxf7+ Rxf7 25. Nxf7 Rxe1+ 26. Qxe1 Kxf7 27. Qe3 Qg5 28. Qxg5 hxg5 29. b3 Ke6 30. a3 Kd6 31. axb4 cxb4 32. Ra5 Nd5 33. f3 Bc8 34. Kf2 Bf5 35. Ra7 g6 36. Ra6+ Kc5 37. Ke1 Nf4 38. g3 Nxh3 39. Kd2 Kb5 40. Rd6 Kc5 41. Ra6 Nf2 42. g4 Bd3 43. Re6 1/2-1/2\n"
+julia> println(gametopgn(sg))
+[Event "Important Tournament"]
+[Site "Somewhere"]
+[Date "2021.04.29"]
+[Round "42"]
+[White "Sixpack, Joe"]
+[Black "Public, John Q"]
+[Result "0-1"]
 
-julia> gametopgn(g)
-"[Event \"F/S Return Match\"]\n[Site \"Belgrade, Serbia JUG\"]\n[Date \"1992.11.04\"]\n[Round \"29\"]\n[White \"Fischer, Robert J.\"]\n[Black \"Spassky, Boris V.\"]\n[Result \"1/2-1/2\"]\n\n1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O Be7 6. Re1 b5 7. Bb3 d6 8. c3 O-O 9. h3 Nb8 10. d4 Nbd7 11. c4 c6 12. cxb5 axb5 13. Nc3 Bb7 14. Bg5 b4 15. Nb1 h6 16. Bh4 c5 17. dxe5 Nxe4 18. Bxe7 Qxe7 19. exd6 Qf6 20. Nbd2 Nxd6 21. Nc4 Nxc4 22. Bxc4 Nb6 23. Ne5 Rae8 24. Bxf7+ Rxf7 25. Nxf7 Rxe1+ 26. Qxe1 Kxf7 27. Qe3 Qg5 28. Qxg5 hxg5 29. b3 Ke6 30. a3 Kd6 31. axb4 cxb4 32. Ra5 Nd5 33. f3 Bc8 34. Kf2 Bf5 35. Ra7 g6 36. Ra6+ Kc5 37. Ke1 Nf4 38. g3 Nxh3 39. Kd2 Kb5 40. Rd6 Kc5 41. Ra6 Nf2 42. g4 Bd3 43. Re6 1/2-1/2\n"
+1. f4 e5 2. fxe5 d6 3. exd6 Bxd6 4. Nc3 Qh4+ 5. g3 Qxg3+ 6. hxg3 Bxg3# 0-1
+
+julia> println(gametopgn(g))
+[Event "Important Tournament"]
+[Site "Somewhere"]
+[Date "2021.04.29"]
+[Round "42"]
+[White "Sixpack, Joe"]
+[Black "Public, John Q"]
+[Result "0-1"]
+
+1. f4 e5 2. fxe5 d6 3. exd6 Bxd6 4. Nc3 $4 {A terrible blunder. White should
+play} (4. Nf3 {, and Black has insufficient compensation for the pawn.}) Qh4+ 5. g3 Qxg3+ {Black could also have played} (5... Bxg3+ 6. hxg3 Qxg3#) 6. hxg3 Bxg3# 0-1
 ```
 
 ### Working With PGN Files
