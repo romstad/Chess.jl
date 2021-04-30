@@ -1594,7 +1594,7 @@ julia> setoption(sf, "Hash", 256);
 
 You can send a game to the engine with `setboard`:
 
-```
+```julia-repl
 julia> g = @simplegame f4 e5 fxe5 d6 exd6 Bxd6 Nc3;
 
 julia> setboard(sf, g)
