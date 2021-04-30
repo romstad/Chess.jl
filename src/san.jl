@@ -281,3 +281,134 @@ end
 function variationtosan(g::Game, v::Vector{Move}; movenumbers = true)::String
     variationtosan(board(g), v, movenumbers = movenumbers, startply = ply(g))
 end
+
+
+function formatmoves(g::SimpleGame, currentnodeindicator = nothing)::String
+    result = IOBuffer()
+    ply = g.ply
+    g = deepcopy(g)
+    tobeginning!(g)
+    while !isatend(g)
+        if !isnothing(currentnodeindicator) && ply == g.ply
+            write(result, currentnodeindicator)
+            write(result, " ")
+        end
+        m = g.history[g.ply].move
+        if sidetomove(g.board) == WHITE
+            write(result, string(1 + div(g.ply, 2)), ". ")
+        end
+        write(result, movetosan(g.board, m), " ")
+        forward!(g)
+    end
+    if !isnothing(currentnodeindicator) && ply == g.ply
+        write(result, currentnodeindicator)
+    end
+    String(take!(result))
+end
+
+
+function formatmoves(g::Game, currentnodeindicator = nothing)
+    function formatvariation(buffer, node, movenum)
+        if !isempty(node.children)
+            # Write current node indicator
+            if !isnothing(currentnodeindicator) && node == g.node
+                write(buffer, currentnodeindicator)
+                write(buffer, " ")
+            end
+
+            child = first(node.children)
+
+            # Pre-comment
+            if !isnothing(precomment(child))
+                write(buffer, "{", precomment(child), "} ")
+            end
+
+            # Move number, if white to move or at the beginning of the game.
+            if sidetomove(node.board) == WHITE
+                write(buffer, string(movenum ÷ 2 + 1), ". ")
+            elseif isnothing(node.parent)
+                write(buffer, string(movenum ÷ 2 + 1), "... ")
+            end
+
+            # Move in SAN notation
+            write(buffer, movetosan(node.board, lastmove(child.board)))
+
+            # Numeric Annotation Glyph
+            if !isnothing(Chess.nag(child))
+                write(buffer, " \$", string(Chess.nag(child)))
+            end
+
+            # Post-comment
+            if !isnothing(Chess.comment(child))
+                write(buffer, " {", Chess.comment(child), "}")
+            end
+
+            if !isleaf(child) || length(node.children) > 1
+                write(buffer, " ")
+            end
+
+            # Recursive annotation variations
+            for child in node.children[2:end]
+                # Variation start
+                write(buffer, "(")
+
+                # Pre-comment
+                if !isnothing(precomment(child))
+                    write(buffer, "{", precomment(child), "} ")
+                end
+
+                # Move number
+                if sidetomove(node.board) == WHITE
+                    write(buffer, string(movenum ÷ 2 + 1), ". ")
+                else
+                    write(buffer, string(movenum ÷ 2 + 1), "... ")
+                end
+
+                # Move in SAN notation
+                write(buffer, movetosan(node.board, lastmove(child.board)))
+
+                # Numeric Annotation Glyph
+                if !isnothing(Chess.nag(child))
+                    write(buffer, " \$", string(Chess.nag(child)))
+                end
+
+                # Post-comment
+                if !isnothing(Chess.comment(child))
+                    write(buffer, " {", Chess.comment(child), "}")
+                end
+
+                # Continuation of variation
+                if !isempty(child.children)
+                    write(buffer, " ")
+                    formatvariation(buffer, child, movenum + 1)
+                elseif !isnothing(currentnodeindicator) && child == g.node
+                    write(buffer, " ")
+                    write(buffer, currentnodeindicator)
+                end
+
+                # Variation end
+                write(buffer, ")")
+
+                # If this is not the last variation, insert a space before the next
+                if child ≠ node.children[end]
+                    write(buffer, " ")
+                end
+            end
+
+            # Continuation of variation
+            if length(node.children) > 1 && !isempty(child.children)
+                write(buffer, " ")
+            end
+            formatvariation(buffer, child, movenum + 1)
+        elseif !isnothing(currentnodeindicator) && node == g.node
+            write(buffer, " ")
+            write(buffer, currentnodeindicator)
+        end
+    end
+
+    result = IOBuffer()
+    formatvariation(result, g.root, sidetomove(g.root.board) == WHITE ? 0 : 1)
+    write(result, " ")
+
+    String(take!(result))
+end

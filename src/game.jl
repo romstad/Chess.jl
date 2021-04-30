@@ -129,7 +129,7 @@ end
 
 function Base.show(io::IO, g::SimpleGame)
     print(io, "SimpleGame:\n ")
-    print(io, gamestring(g))
+    print(io, formatmoves(g, "*"))
 end
 
 
@@ -288,7 +288,7 @@ end
 
 function Base.show(io::IO, g::Game)
     print(io, "Game:\n ")
-    print(io, gamestring(g))
+    print(io, formatmoves(g, "*"))
 end
 
 
