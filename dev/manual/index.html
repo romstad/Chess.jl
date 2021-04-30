@@ -447,23 +447,27 @@ julia&gt; domove!(g, &quot;e5&quot;);
 
 julia&gt; domove!(g, &quot;Nc3&quot;);
 
-julia&gt; domove!(g, &quot;Nf6&quot;);</code></pre><p>Constructing games this way quickly becomes tedious. For interactive use, there is a macro <code>@game</code> (and a similar macro <code>@simplegame</code> for the <code>SimpleGame</code> type) for constructing a game from the regular starting position with a sequence of moves. The following is equivalent to the above example:</p><pre><code class="language-julia-repl">julia&gt; @game c4 e5 Nc3 Nf6
+julia&gt; domove!(g, &quot;Nf6&quot;);
+
+julia&gt; g
 Game:
- c4 e5 Nc3 Nf6 *</code></pre><p>There is now a list of moves in the printed representation of the game. The <code>*</code> symbol still indicates our current position in the game. We can go back one move by calling <code>back!</code>, forward one move by calling <code>forward!</code>, or jump to the beginning or the end of the game by calling <code>tobeginning!</code> or <code>toend!</code>.</p><pre><code class="language-julia-repl">julia&gt; back!(g)
+ 1. c4 e5 2. Nc3 Nf6 *</code></pre><p>Constructing games this way quickly becomes tedious. For interactive use, there is a macro <code>@game</code> (and a similar macro <code>@simplegame</code> for the <code>SimpleGame</code> type) for constructing a game from the regular starting position with a sequence of moves. The following is equivalent to the above example:</p><pre><code class="language-julia-repl">julia&gt; g = @game c4 e5 Nc3 Nf6
 Game:
- c4 e5 Nc3 * Nf6
+ 1. c4 e5 2. Nc3 Nf6 *</code></pre><p>There is now a list of moves in the printed representation of the game. The <code>*</code> symbol still indicates our current position in the game. We can go back one move by calling <code>back!</code>, forward one move by calling <code>forward!</code>, or jump to the beginning or the end of the game by calling <code>tobeginning!</code> or <code>toend!</code>.</p><pre><code class="language-julia-repl">julia&gt; back!(g)
+Game:
+ 1. c4 e5 2. Nc3 * Nf6
 
 julia&gt; tobeginning!(g)
 Game:
- * c4 e5 Nc3 Nf6
+ * 1. c4 e5 2. Nc3 Nf6
 
 julia&gt; forward!(g)
 Game:
- c4 * e5 Nc3 Nf6
+ 1. c4 * e5 2. Nc3 Nf6
 
 julia&gt; toend!(g)
 Game:
- c4 e5 Nc3 Nf6 *</code></pre><p>You can obtain the current position board position of the game with the <code>board</code> function, which returns a value of type <code>Board</code>:</p><pre><code class="language-julia-repl">julia&gt; board(g)
+ 1. c4 e5 2. Nc3 Nf6 *</code></pre><p>You can obtain the current position board position of the game with the <code>board</code> function, which returns a value of type <code>Board</code>:</p><pre><code class="language-julia-repl">julia&gt; board(g)
 Board (rnbqkb1r/pppp1ppp/5n2/4p3/2P5/2N5/PP1PPPPP/R1BQKBNR w KQkq -):
  r  n  b  q  k  b  -  r
  p  p  p  p  -  p  p  p
@@ -525,95 +529,102 @@ end</code></pre><p>What percentage of the games end in checkmate now? Here&#39;s
         end
     end
     checkmate_count / game_count
-end</code></pre><p>If you try to run this function, you should get a number around 0.81. About 81% of all completely random games include at least one opportunity to deliver mate in 1!</p><h3><a class="nav-anchor" id="Variations-1" href="#Variations-1">Variations</a></h3><p>If we create a game with some moves, go back to an earlier place in the game, and call <code>domove!</code> again with a new move, the previous game continuation is overwritten:</p><pre><code class="language-julia-repl">julia&gt; g = @game d4 d5 c4 e6 Nc3 Nf6 Bg5;
+end</code></pre><p>If you try to run this function, you should get a number around 0.81. About 81% of all completely random games include at least one opportunity to deliver mate in 1!</p><h3><a class="nav-anchor" id="Variations-1" href="#Variations-1">Variations</a></h3><p>If we create a game with some moves, go back to an earlier place in the game, and call <code>domove!</code> again with a new move, the previous game continuation is overwritten:</p><pre><code class="language-julia-repl">julia&gt; g = @game d4 d5 c4 e6 Nc3 Nf6 Bg5
+Game:
+ 1. d4 d5 2. c4 e6 3. Nc3 Nf6 4. Bg5 *
 
 julia&gt; back!(g); back!(g); back!(g)
 Game:
- d4 d5 c4 e6 * Nc3 Nf6 Bg5
+ 1. d4 d5 2. c4 e6 * 3. Nc3 Nf6 4. Bg5
 
 julia&gt; domove!(g, &quot;Nf3&quot;)
 Game:
- d4 d5 c4 e6 Nf3 *</code></pre><p>This is not always desirable. Sometimes we want to add an <em>alternative</em> move, and to view the game as a <em>tree of variations</em>.</p><p>Games of type <code>Game</code> (but not <code>SimpleGame</code>!) are able to handle variations.</p><p>To add an alternative variation at some point in the game, first make the main line, then go back to the place where you want to add the alternative move, and then do <code>addmove!</code>. The following example is identical to the one above, except that <code>domove!</code> has been replaced by <code>addmove!</code>:</p><pre><code class="language-julia-repl">julia&gt; g = @game d4 d5 c4 e6 Nc3 Nf6 Bg5;
+ 1. d4 d5 2. c4 e6 3. Nf3 *</code></pre><p>This is not always desirable. Sometimes we want to add an <em>alternative</em> move, and to view the game as a <em>tree of variations</em>.</p><p>Games of type <code>Game</code> (but not <code>SimpleGame</code>!) are able to handle variations.</p><p>To add an alternative variation at some point in the game, first make the main line, then go back to the place where you want to add the alternative move, and then do <code>addmove!</code>. The following example is identical to the one above, except that <code>domove!</code> has been replaced by <code>addmove!</code>:</p><pre><code class="language-julia-repl">julia&gt; g = @game d4 d5 c4 e6 Nc3 Nf6 Bg5;
 
 julia&gt; back!(g); back!(g); back!(g)
 Game:
- d4 d5 c4 e6 * Nc3 Nf6 Bg5
+ 1. d4 d5 2. c4 e6 * 3. Nc3 Nf6 4. Bg5
 
 julia&gt; addmove!(g, &quot;Nf3&quot;)
 Game:
- d4 d5 c4 e6 Nc3 (Nf3 *) Nf6 Bg5</code></pre><p>Alternative variations are printed in parens in the text representation of a game; the <code>(Nf6 *)</code> in the above example. As before, the <code>*</code> indicates the current location in the game tree.</p><p>The function <code>forward!</code> takes an optional second argument: Which move to follow when going forward at a branching point in the tree. If this argument is ommited, the main (i.e. first) move is followed.</p><p>Here is how you would go back to the point after 3. Nc3 in the above example:</p><pre><code class="language-julia-repl">julia&gt; back!(g)
+ 1. d4 d5 2. c4 e6 3. Nc3 (3. Nf3 *) Nf6 4. Bg5</code></pre><p>Alternative variations are printed in parens in the text representation of a game; the <code>(3. Nf3 *)</code> in the above example. As before, the <code>*</code> indicates the current location in the game tree.</p><p>The function <code>forward!</code> takes an optional second argument: Which move to follow when going forward at a branching point in the tree. If this argument is ommited, the main (i.e. first) move is followed.</p><p>Here is how you would go back to the point after 3. Nc3 in the above example:</p><pre><code class="language-julia-repl">julia&gt; back!(g)
 Game:
- d4 d5 c4 e6 * Nc3 (Nf3) Nf6 Bg5
+ 1. d4 d5 2. c4 e6 * 3. Nc3 (3. Nf3) Nf6 4. Bg5
 
 julia&gt; forward!(g, &quot;Nc3&quot;)
 Game:
- d4 d5 c4 e6 Nc3 (Nf3) * Nf6 Bg5</code></pre><p>Two other functions that are useful for navigating games with variations are tobeginningofvariation! and toendofvariation!. See the documentation of these functions for details.</p><p>Of course, variations can be nested:</p><pre><code class="language-julia-repl">julia&gt; g = @game e4 c5 Nf3 Nc6;
+ 1. d4 d5 2. c4 e6 3. Nc3 (3. Nf3) * Nf6 4. Bg5</code></pre><p>Two other functions that are useful for navigating games with variations are <code>tobeginningofvariation!</code> and <code>toendofvariation!</code>. See the documentation of these functions for details.</p><p>Of course, variations can be nested:</p><pre><code class="language-julia-repl">julia&gt; g = @game e4 c5 Nf3 Nc6;
 
-julia&gt; back!(g);
+julia&gt; back!(g)
+Game:
+ 1. e4 c5 2. Nf3 * Nc6
 
-julia&gt; back!(g);
+julia&gt; g = @game e4 c5 Nf3 Nc6;
 
-julia&gt; addmove!(g, &quot;c3&quot;);
+julia&gt; back!(g); back!(g);
 
-julia&gt; addmove!(g, &quot;Nf6&quot;);
+julia&gt; addmove!(g, &quot;c3&quot;); addmove!(g, &quot;Nf6&quot;); addmove!(g, &quot;e5&quot;);
 
-julia&gt; addmove!(g, &quot;e5&quot;);
+julia&gt; back!(g); back!(g);
 
-julia&gt; back!(g);
-
-julia&gt; back!(g);
-
-julia&gt; addmove!(g, &quot;d5&quot;);
-
-julia&gt; addmove!(g, &quot;exd5&quot;);
+julia&gt; addmove!(g, &quot;d5&quot;); addmove!(g, &quot;exd5&quot;);
 
 julia&gt; g
-
 Game:
- e4 c5 Nf3 (c3 Nf6 (d5 exd5 *) e5) Nc6</code></pre><h3><a class="nav-anchor" id="Comments-1" href="#Comments-1">Comments</a></h3><p>Games of type <code>Game</code> (again, not <code>SimpleGame</code>) can also be annotated with textual comments, by using the <code>addcomment!</code> function:</p><pre><code class="language-julia-repl">julia&gt; g = @game d4 f5;
+ 1. e4 c5 2. Nf3 (2. c3 Nf6 (2... d5 3. exd5 *) 3. e5) Nc6</code></pre><h3><a class="nav-anchor" id="Comments-1" href="#Comments-1">Comments</a></h3><p>Games of type <code>Game</code> (again, not <code>SimpleGame</code>) can also be annotated with textual comments, by using the <code>addcomment!</code> function:</p><pre><code class="language-julia-repl">julia&gt;  g = @game d4 f5;
 
-julia&gt; addcomment!(g, &quot;This opening is known as the Dutch Defense&quot;)</code></pre><p>Comments are not visible in the printed representation of games in the Julia REPL. You can see them when using Chess.jl in a Pluto notebook. They will also be included in the output if you convert a game to PGN notation:</p><pre><code class="language-julia-repl">julia&gt; using Chess.PGN
+julia&gt; addcomment!(g, &quot;This opening is known as the Dutch Defense&quot;);
+
+julia&gt; g
+Game:
+ 1. d4 f5 {This opening is known as the Dutch Defense} *</code></pre><p>Comments are printed in curly braces in the textual representation of games, as can be seen above.</p><h3><a class="nav-anchor" id="Numeric-Annotation-Glyphs-1" href="#Numeric-Annotation-Glyphs-1">Numeric Annotation Glyphs</a></h3><p>It is also possible to add <em>numeric annotation glyphs</em> (NAGs) to the game. NAGs are a standard way of adding symbolic annotations to a chess game. All integers in the range 0 to 139 have a pre-defined meaning, as described in <a href="https://en.wikipedia.org/wiki/Numeric_Annotation_Glyphs">this Wikipedia article</a>.</p><p>Here is how to add the NAG <code>$4</code> (&quot;very poor move or blunder&quot;) to the move 2... g4 in the game 1. f4 e5 2. g4 Qh4#:</p><pre><code class="language-julia-repl">julia&gt; g = @game f4 e5 g4 Qh4;
+
+julia&gt; back!(g);
+
+julia&gt; addnag!(g, 4);
+
+julia&gt; g
+Game:
+ 1. f4 e5 2. g4 $4 * Qh4#</code></pre><h2><a class="nav-anchor" id="PGN-Import-and-Export-1" href="#PGN-Import-and-Export-1">PGN Import and Export</a></h2><p>This section describes import and export of chess games in the popular <a href="https://www.chessclub.com/help/PGN-spec">PGN format</a>. PGN is a rather awkward and complicated format, and a lot of the &quot;PGN files&quot; out there on the Internet don&#39;t quite follow the standard, and are broken in various ways. The functions described in this section do a fairly good job of handling correct PGNs (although bugs are possible), but will often fail on the various not-quite-PGNs found on the Internet.</p><p>The PGN functions are found in the submodule <code>Chess.PGN</code>. Please do</p><pre><code class="language-julia-repl">using Chess, Chess.PGN</code></pre><p>before trying the examples in this section.</p><h3><a class="nav-anchor" id="Creating-a-Game-From-a-PGN-String-1" href="#Creating-a-Game-From-a-PGN-String-1">Creating a Game From a PGN String</a></h3><p>Given a PGN string, the <code>gamefromstring</code> function creates a game object from the string (throwing a <code>PGNException</code> on failure). Here&#39;s a PGN string for us to experiment with:</p><pre><code class="language-julia-repl">julia&gt; pgnstring = &quot;&quot;&quot;
+       [Event &quot;Important Tournament&quot;]
+       [Site &quot;Somewhere&quot;]
+       [Date &quot;2021.04.29&quot;]
+       [Round &quot;42&quot;]
+       [White &quot;Sixpack, Joe&quot;]
+       [Black &quot;Public, John Q&quot;]
+       [Result &quot;0-1&quot;]
+
+       1. f4 e5 2. fxe5 d6 3. exd6 Bxd6 4. Nc3 \$4 {A terrible blunder. White should
+       play} (4. Nf3 {, and Black has insufficient compensation for the pawn.}) Qh4+
+       5. g3 Qxg3+ {Black could also have played} (5... Bxg3+ 6. hxg3 Qxg3#) 6. hxg3
+       Bxg3# 0-1
+       &quot;&quot;&quot;;</code></pre><p>Let&#39;s try to import it:</p><pre><code class="language-julia-repl">julia&gt; sg = gamefromstring(pgnstring)
+SimpleGame (Sixpack, Joe vs Public, John Q, Somewhere 2021):
+ * 1. f4 e5 2. fxe5 d6 3. exd6 Bxd6 4. Nc3 Qh4+ 5. g3 Qxg3+ 6. hxg3 Bxg3#</code></pre><p>The result is a <code>SimpleGame</code>. All comments, variations and NAGs in the PGN string were ignored. If we instead want a <code>Game</code> with all annotations included, we can supply the value <code>true</code> to the optional parameter <code>annotations</code>:</p><pre><code class="language-julia-repl">julia&gt; g = gamefromstring(pgnstring, annotations=true)
+Game (Sixpack, Joe vs Public, John Q, Somewhere 2021):
+ * 1. f4 e5 2. fxe5 d6 3. exd6 Bxd6 4. Nc3 $4 {A terrible blunder. White should
+play} (4. Nf3 {, and Black has insufficient compensation for the pawn.}) Qh4+ 5. g3 Qxg3+ {Black could also have played} (5... Bxg3+ 6. hxg3 Qxg3#) 6. hxg3 Bxg3#</code></pre><p>Unless you really need the annotations, importing to a <code>SimpleGame</code> is the preferred choice. A <code>SimpleGame</code> is much faster to create and consumes less memory.</p><p>Converting a game to a PGN string is done by the <code>gametopgn</code> function. This works for both <code>SimpleGame</code> and <code>Game</code> objects:</p><pre><code class="language-julia-repl">julia&gt; println(gametopgn(sg))
+[Event &quot;Important Tournament&quot;]
+[Site &quot;Somewhere&quot;]
+[Date &quot;2021.04.29&quot;]
+[Round &quot;42&quot;]
+[White &quot;Sixpack, Joe&quot;]
+[Black &quot;Public, John Q&quot;]
+[Result &quot;0-1&quot;]
+
+1. f4 e5 2. fxe5 d6 3. exd6 Bxd6 4. Nc3 Qh4+ 5. g3 Qxg3+ 6. hxg3 Bxg3# 0-1
 
 julia&gt; println(gametopgn(g))
-[Event &quot;?&quot;]
-[Site &quot;?&quot;]
-[Date &quot;?&quot;]
-[Round &quot;?&quot;]
-[White &quot;?&quot;]
-[Black &quot;?&quot;]
-[Result &quot;*&quot;]
+[Event &quot;Important Tournament&quot;]
+[Site &quot;Somewhere&quot;]
+[Date &quot;2021.04.29&quot;]
+[Round &quot;42&quot;]
+[White &quot;Sixpack, Joe&quot;]
+[Black &quot;Public, John Q&quot;]
+[Result &quot;0-1&quot;]
 
-1. d4 f5 {This opening is known as the Dutch Defense} *</code></pre><h3><a class="nav-anchor" id="Numeric-Annotation-Glyphs-1" href="#Numeric-Annotation-Glyphs-1">Numeric Annotation Glyphs</a></h3><p>It is also possible to add <em>numeric annotation glyphs</em> (NAGs) to the game. NAGs are a standard way of adding symbolic annotations to a chess game. All integers in the range 0 to 139 have a pre-defined meaning, as described in <a href="https://en.wikipedia.org/wiki/Numeric_Annotation_Glyphs">this Wikipedia article</a>.</p><p>Here is how to add the NAG <code>$1</code> (&quot;good move&quot;) to the move 1... e5 after 1. e4:</p><pre><code class="language-julia-repl">julia&gt; g = @game e4 e5;
-
-julia&gt; addnag!(g, 1)</code></pre><p>Like comments, NAGs are not displayed in the printed representation of games in the REPL. They are visible in Pluto, and are included in PGN output.</p><h2><a class="nav-anchor" id="PGN-Import-and-Export-1" href="#PGN-Import-and-Export-1">PGN Import and Export</a></h2><p>This section describes import and export of chess games in the popular <a href="https://www.chessclub.com/help/PGN-spec">PGN format</a>. PGN is a rather awkward and complicated format, and a lot of the &quot;PGN files&quot; out there on the Internet don&#39;t quite follow the standard, and are broken in various ways. The functions described in this section do a fairly good job of handling correct PGNs (although bugs are possible), but will often fail on the various not-quite-PGNs found on the Internet.</p><p>The PGN functions are found in the submodule <code>Chess.PGN</code>. Please do</p><pre><code class="language-julia-repl">using Chess, Chess.PGN</code></pre><p>before trying the examples in this section.</p><h3><a class="nav-anchor" id="Creating-a-Game-From-a-PGN-String-1" href="#Creating-a-Game-From-a-PGN-String-1">Creating a Game From a PGN String</a></h3><p>Given a PGN string, the <code>gamefromstring</code> function creates a game object from the string (throwing a <code>PGNException</code> on failure). By default, the return value is a <code>SimpleGame</code> containing only the moves of the game, without any comments, variations or numeric annotation glyphs. If the optional named parameter <code>annotations</code> is <code>true</code>, the return value is a <code>Game</code> with all annotations included:</p><pre><code class="language-julia-repl">julia&gt; pgnstring = &quot;&quot;&quot;
-       [Event &quot;F/S Return Match&quot;]
-       [Site &quot;Belgrade, Serbia JUG&quot;]
-       [Date &quot;1992.11.04&quot;]
-       [Round &quot;29&quot;]
-       [White &quot;Fischer, Robert J.&quot;]
-       [Black &quot;Spassky, Boris V.&quot;]
-       [Result &quot;1/2-1/2&quot;]
-
-       1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O Be7 6. Re1 b5 7. Bb3 d6 8. c3
-       O-O 9. h3 Nb8 10. d4 Nbd7 11. c4 c6 12. cxb5 axb5 13. Nc3 Bb7 14. Bg5 b4 15.
-       Nb1 h6 16. Bh4 c5 17. dxe5 Nxe4 18. Bxe7 Qxe7 19. exd6 Qf6 20. Nbd2 Nxd6 21.
-       Nc4 Nxc4 22. Bxc4 Nb6 23. Ne5 Rae8 24. Bxf7+ Rxf7 25. Nxf7 Rxe1+ 26. Qxe1 Kxf7
-       27. Qe3 Qg5 28. Qxg5 hxg5 29. b3 Ke6 30. a3 Kd6 31. axb4 cxb4 32. Ra5 Nd5 33.
-       f3 Bc8 34. Kf2 Bf5 35. Ra7 g6 36. Ra6+ Kc5 37. Ke1 Nf4 38. g3 Nxh3 39. Kd2 Kb5
-       40. Rd6 Kc5 41. Ra6 Nf2 42. g4 Bd3 43. Re6 1/2-1/2
-       &quot;&quot;&quot;;
-
-julia&gt; sg = gamefromstring(pgnstring)
-SimpleGame:
- * e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O Be7 Re1 b5 Bb3 d6 c3 O-O h3 Nb8 d4 Nbd7 c4 c6 cxb5 axb5 Nc3 Bb7 Bg5 b4 Nb1 h6 Bh4 c5 dxe5 Nxe4 Bxe7 Qxe7 exd6 Qf6 Nbd2 Nxd6 Nc4 Nxc4 Bxc4 Nb6 Ne5 Rae8 Bxf7+ Rxf7 Nxf7 Rxe1+ Qxe1 Kxf7 Qe3 Qg5 Qxg5 hxg5 b3 Ke6 a3 Kd6 axb4 cxb4 Ra5 Nd5 f3 Bc8 Kf2 Bf5 Ra7 g6 Ra6+ Kc5 Ke1 Nf4 g3 Nxh3 Kd2 Kb5 Rd6 Kc5 Ra6 Nf2 g4 Bd3 Re6
-
-julia&gt; g = gamefromstring(pgnstring, annotations=true)
-Game:
- * e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O Be7 Re1 b5 Bb3 d6 c3 O-O h3 Nb8 d4 Nbd7 c4 c6 cxb5 axb5 Nc3 Bb7 Bg5 b4 Nb1 h6 Bh4 c5 dxe5 Nxe4 Bxe7 Qxe7 exd6 Qf6 Nbd2 Nxd6 Nc4 Nxc4 Bxc4 Nb6 Ne5 Rae8 Bxf7+ Rxf7 Nxf7 Rxe1+ Qxe1 Kxf7 Qe3 Qg5 Qxg5 hxg5 b3 Ke6 a3 Kd6 axb4 cxb4 Ra5 Nd5 f3 Bc8 Kf2 Bf5 Ra7 g6 Ra6+ Kc5 Ke1 Nf4 g3 Nxh3 Kd2 Kb5 Rd6 Kc5 Ra6 Nf2 g4 Bd3 Re6</code></pre><p>Unless you really need the annotations, importing to a <code>SimpleGame</code> is the preferred choice. A <code>SimpleGame</code> is much faster to create and consumes less memory.</p><p>Converting a game to a PGN string is done by the <code>gametopgn</code> function. This works for both <code>SimpleGame</code> and <code>Game</code> objects:</p><pre><code class="language-julia-repl">julia&gt; gametopgn(sg)
-&quot;[Event \&quot;F/S Return Match\&quot;]\n[Site \&quot;Belgrade, Serbia JUG\&quot;]\n[Date \&quot;1992.11.04\&quot;]\n[Round \&quot;29\&quot;]\n[White \&quot;Fischer, Robert J.\&quot;]\n[Black \&quot;Spassky, Boris V.\&quot;]\n[Result \&quot;1/2-1/2\&quot;]\n\n1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O Be7 6. Re1 b5 7. Bb3 d6 8. c3 O-O 9. h3 Nb8 10. d4 Nbd7 11. c4 c6 12. cxb5 axb5 13. Nc3 Bb7 14. Bg5 b4 15. Nb1 h6 16. Bh4 c5 17. dxe5 Nxe4 18. Bxe7 Qxe7 19. exd6 Qf6 20. Nbd2 Nxd6 21. Nc4 Nxc4 22. Bxc4 Nb6 23. Ne5 Rae8 24. Bxf7+ Rxf7 25. Nxf7 Rxe1+ 26. Qxe1 Kxf7 27. Qe3 Qg5 28. Qxg5 hxg5 29. b3 Ke6 30. a3 Kd6 31. axb4 cxb4 32. Ra5 Nd5 33. f3 Bc8 34. Kf2 Bf5 35. Ra7 g6 36. Ra6+ Kc5 37. Ke1 Nf4 38. g3 Nxh3 39. Kd2 Kb5 40. Rd6 Kc5 41. Ra6 Nf2 42. g4 Bd3 43. Re6 1/2-1/2\n&quot;
-
-julia&gt; gametopgn(g)
-&quot;[Event \&quot;F/S Return Match\&quot;]\n[Site \&quot;Belgrade, Serbia JUG\&quot;]\n[Date \&quot;1992.11.04\&quot;]\n[Round \&quot;29\&quot;]\n[White \&quot;Fischer, Robert J.\&quot;]\n[Black \&quot;Spassky, Boris V.\&quot;]\n[Result \&quot;1/2-1/2\&quot;]\n\n1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O Be7 6. Re1 b5 7. Bb3 d6 8. c3 O-O 9. h3 Nb8 10. d4 Nbd7 11. c4 c6 12. cxb5 axb5 13. Nc3 Bb7 14. Bg5 b4 15. Nb1 h6 16. Bh4 c5 17. dxe5 Nxe4 18. Bxe7 Qxe7 19. exd6 Qf6 20. Nbd2 Nxd6 21. Nc4 Nxc4 22. Bxc4 Nb6 23. Ne5 Rae8 24. Bxf7+ Rxf7 25. Nxf7 Rxe1+ 26. Qxe1 Kxf7 27. Qe3 Qg5 28. Qxg5 hxg5 29. b3 Ke6 30. a3 Kd6 31. axb4 cxb4 32. Ra5 Nd5 33. f3 Bc8 34. Kf2 Bf5 35. Ra7 g6 36. Ra6+ Kc5 37. Ke1 Nf4 38. g3 Nxh3 39. Kd2 Kb5 40. Rd6 Kc5 41. Ra6 Nf2 42. g4 Bd3 43. Re6 1/2-1/2\n&quot;</code></pre><h3><a class="nav-anchor" id="Working-With-PGN-Files-1" href="#Working-With-PGN-Files-1">Working With PGN Files</a></h3><p>Given a file with one or more PGN games, the function <code>gamesinfile</code> returns a <code>Channel</code> of game objects, one for each game in the file. Like <code>gamefromstring</code>, <code>gamesinfile</code> takes an optional named parameter <code>annotations</code>. If <code>annotations</code> is <code>false</code> (the default), you get a channel of <code>SimpleGame</code>s. If it&#39;s <code>true</code>, you get a channel of <code>Game</code>s with the annotations (comments, variations and numeric annotation glyphs) included in the PGN games.</p><p>As an example, here&#39;s a function that scans a PGN file and returns a vector of all games that end in checkmate:</p><pre><code class="language-julia">function checkmategames(pgnfilename::String)
+1. f4 e5 2. fxe5 d6 3. exd6 Bxd6 4. Nc3 $4 {A terrible blunder. White should
+play} (4. Nf3 {, and Black has insufficient compensation for the pawn.}) Qh4+ 5. g3 Qxg3+ {Black could also have played} (5... Bxg3+ 6. hxg3 Qxg3#) 6. hxg3 Bxg3# 0-1</code></pre><h3><a class="nav-anchor" id="Working-With-PGN-Files-1" href="#Working-With-PGN-Files-1">Working With PGN Files</a></h3><p>Given a file with one or more PGN games, the function <code>gamesinfile</code> returns a <code>Channel</code> of game objects, one for each game in the file. Like <code>gamefromstring</code>, <code>gamesinfile</code> takes an optional named parameter <code>annotations</code>. If <code>annotations</code> is <code>false</code> (the default), you get a channel of <code>SimpleGame</code>s. If it&#39;s <code>true</code>, you get a channel of <code>Game</code>s with the annotations (comments, variations and numeric annotation glyphs) included in the PGN games.</p><p>As an example, here&#39;s a function that scans a PGN file and returns a vector of all games that end in checkmate:</p><pre><code class="language-julia">function checkmategames(pgnfilename::String)
     result = SimpleGame[]
     for g in gamesinfile(pgnfilename)
         toend!(g)
