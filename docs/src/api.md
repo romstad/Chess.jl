@@ -5,6 +5,7 @@
 ```@docs
 Board
 startboard
+@startboard
 fromfen
 fen
 pprint(b::Board)
@@ -74,14 +75,20 @@ Game
 Game()
 Game(startboard::Board)
 Game(startfen::String)
+@simplegame
+@game
 GameHeader
 GameHeaders
 GameNode
 headervalue
+whiteplayer
+blackplayer
+site
 dateplayed
 whiteelo
 blackelo
 setheadervalue!
+setdateplayed!
 board
 boards
 domove!(g::SimpleGame, m::Move)

@@ -542,6 +542,12 @@ function setdateplayed!(g::Game, date::Date)
 end
 
 
+"""
+    whiteplayer(g::SimpleGame)
+    whiteplayer(g::Game)
+
+The white player of the game, or `nothing`.
+"""
 function whiteplayer(g::SimpleGame)::Union{String,Nothing}
     result = headervalue(g, "White")
     result == "?" ? nothing : result
@@ -554,6 +560,12 @@ function whiteplayer(g::Game)::Union{String,Nothing}
 end
 
 
+"""
+    blackplayer(g::SimpleGame)
+    blackplayer(g::Game)
+
+The black player of the game, or `nothing`.
+"""
 function blackplayer(g::SimpleGame)::Union{String,Nothing}
     result = headervalue(g, "Black")
     result == "?" ? nothing : result
@@ -566,6 +578,12 @@ function blackplayer(g::Game)::Union{String,Nothing}
 end
 
 
+"""
+    site(g::SimpleGame)
+    site(g::Game)
+
+The site of the game, or `nothing`.
+"""
 function site(g::SimpleGame)::Union{String,Nothing}
     result = headervalue(g, "Site")
     result == "?" ? nothing : result
