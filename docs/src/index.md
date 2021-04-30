@@ -20,5 +20,5 @@ software.
 Chess.jl can be installed from the package manager i Julia's REPL:
 
 ```
-(@v1.5) pkg> add Chess
+(@v1.6) pkg> add Chess
 ```
