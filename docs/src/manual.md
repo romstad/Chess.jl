@@ -1,4 +1,27 @@
-# Manual
+# Tutorial
+
+Chess.jl is designed to work well with [Pluto](https://plutojl.org). For
+interactive use, working with Chess.jl under Pluto is much nicer than from the
+Julia REPL. A slightly modified version of this tutorial also exists as a Pluto
+notebook, available from [this
+link](https://romstad.github.io/Chess.jl/tutorial/tutorial.jl). In order to run
+it, follow these steps:
+
+1. Make sure you have Julia 1.6 or later installed.
+2. Add the packages Chess, Pluto and PlutoUI to your environment.
+3. From the Julia REPL, do:
+
+```julia-repl
+julia> using PlutoUI
+
+julia> Pluto.run()
+```
+
+Pluto will now open in a browser window. In the "Open from file" textbox,
+navigate to the location of the downloaded `tutorial.jl` file, and press "Open".
+
+There is also a [static HTML version of the
+tutorial](https://romstad.github.io/Chess.jl/tutorial/).
 
 ## Boards
 

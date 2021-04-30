@@ -5,7 +5,7 @@ makedocs(;
     format = Documenter.HTML(assets = String[]),
     pages = [
         "Home" => "index.md",
-        "User Guide" => "manual.md",
+        "Tutorial" => "manual.md",
         "API Reference" => "api.md",
         "Index" => "api-index.md",
     ],
