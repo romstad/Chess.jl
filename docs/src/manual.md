@@ -1160,27 +1160,47 @@ Game:
 This is not always desirable. Sometimes we want to add an *alternative* move,
 and to view the game as a *tree of variations*.
 
-Games of type `Game` (but not `SimpleGame`) are able to handle variations.
+Games of type `Game` (but not `SimpleGame`!) are able to handle variations.
 
-To add an alternative variation at some place in the game, first make the main
+To add an alternative variation at some point in the game, first make the main
 line, then go back to the place where you want to add the alternative move, and
-then do `addmove!`:
-
+then do `addmove!`. The following example is identical to the one above, except
+that `domove!` has been replaced by `addmove!`:
 ```julia-repl
-julia> g = @game Nf3 d5 c4;
+julia> g = @game d4 d5 c4 e6 Nc3 Nf6 Bg5;
 
-julia> back!(g);
-
-julia> back!(g);
-
-julia> addmove!(g, "Nf6")
+julia> back!(g); back!(g); back!(g)
 Game:
- Nf3 d5 (Nf6 *) c4
+ d4 d5 c4 e6 * Nc3 Nf6 Bg5
+
+julia> addmove!(g, "Nf3")
+Game:
+ d4 d5 c4 e6 Nc3 (Nf3 *) Nf6 Bg5
 ```
 
 Alternative variations are printed in parens in the text representation of a
 game; the `(Nf6 *)` in the above example. As before, the `*` indicates the
 current location in the game tree.
+
+The function `forward!` takes an optional second argument: Which move to follow
+when going forward at a branching point in the tree. If this argument is
+ommited, the main (i.e. first) move is followed.
+
+Here is how you would go back to the point after 3. Nc3 in the above example:
+
+```julia-repl
+julia> back!(g)
+Game:
+ d4 d5 c4 e6 * Nc3 (Nf3) Nf6 Bg5
+
+julia> forward!(g, "Nc3")
+Game:
+ d4 d5 c4 e6 Nc3 (Nf3) * Nf6 Bg5
+```
+
+Two other functions that are useful for navigating games with variations are
+tobeginningofvariation! and toendofvariation!. See the documentation of these
+functions for details.
 
 Of course, variations can be nested:
 
@@ -1206,6 +1226,7 @@ julia> addmove!(g, "d5");
 julia> addmove!(g, "exd5");
 
 julia> g
+
 Game:
  e4 c5 Nf3 (c3 Nf6 (d5 exd5 *) e5) Nc6
 ```
@@ -1242,9 +1263,9 @@ julia> println(gametopgn(g))
 
 ### Numeric Annotation Glyphs
 
-It is also possible to add *numerical annotation glyphs* (NAGs) to the game.
-NAGs are a standard way of adding symbolic annotations to a chess game. All
-integers in the range 0 to 139 have a pre-defined meaning, as described in [this
+It is also possible to add *numeric annotation glyphs* (NAGs) to the game. NAGs
+are a standard way of adding symbolic annotations to a chess game. All integers
+in the range 0 to 139 have a pre-defined meaning, as described in [this
 Wikipedia article](https://en.wikipedia.org/wiki/Numeric_Annotation_Glyphs).
 
 Here is how to add the NAG `$1` ("good move") to the move 1... e5 after 1. e4:
@@ -1276,12 +1297,12 @@ using Chess, Chess.PGN
 
 before trying the examples in this section.
 
-### Creating a game from a PGN string
+### Creating a Game From a PGN String
 
-Given a PGN string, the `gamefrompgn` function creates a game object from the
-string (throwing a `PGNException` on failure). By default, the return value is
-a `SimpleGame` containing only the moves of the game, without any comments,
-variations or numeric annotatin glyphs. If the optional named parameter
+Given a PGN string, the `gamefromstring` function creates a game object from the
+string (throwing a `PGNException` on failure). By default, the return value is a
+`SimpleGame` containing only the moves of the game, without any comments,
+variations or numeric annotation glyphs. If the optional named parameter
 `annotations` is `true`, the return value is a `Game` with all annotations
 included:
 
@@ -1328,7 +1349,7 @@ julia> gametopgn(g)
 "[Event \"F/S Return Match\"]\n[Site \"Belgrade, Serbia JUG\"]\n[Date \"1992.11.04\"]\n[Round \"29\"]\n[White \"Fischer, Robert J.\"]\n[Black \"Spassky, Boris V.\"]\n[Result \"1/2-1/2\"]\n\n1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O Be7 6. Re1 b5 7. Bb3 d6 8. c3 O-O 9. h3 Nb8 10. d4 Nbd7 11. c4 c6 12. cxb5 axb5 13. Nc3 Bb7 14. Bg5 b4 15. Nb1 h6 16. Bh4 c5 17. dxe5 Nxe4 18. Bxe7 Qxe7 19. exd6 Qf6 20. Nbd2 Nxd6 21. Nc4 Nxc4 22. Bxc4 Nb6 23. Ne5 Rae8 24. Bxf7+ Rxf7 25. Nxf7 Rxe1+ 26. Qxe1 Kxf7 27. Qe3 Qg5 28. Qxg5 hxg5 29. b3 Ke6 30. a3 Kd6 31. axb4 cxb4 32. Ra5 Nd5 33. f3 Bc8 34. Kf2 Bf5 35. Ra7 g6 36. Ra6+ Kc5 37. Ke1 Nf4 38. g3 Nxh3 39. Kd2 Kb5 40. Rd6 Kc5 41. Ra6 Nf2 42. g4 Bd3 43. Re6 1/2-1/2\n"
 ```
 
-### Working with PGN files
+### Working With PGN Files
 
 Given a file with one or more PGN games, the function `gamesinfile` returns a
 `Channel` of game objects, one for each game in the file. Like `gamefromstring`,
@@ -1355,17 +1376,23 @@ end
 
 ## Opening Books
 
-The `Chess.Book` module contains utilities for processing PGN game files and
-building opening trees with move statistics, and for looking up board positions
-in an opening tree. There is a small built-in opening library, and functions for
-creating your own opening libraries from PGN files.
+The opening book function are located not in the main `Chess` module, but in the
+submodule `Chess.Book`.
 
-To use the examples in this section, first do a `using Chess, Chess.Book`.
+```julia-repl
+using Chess.Book
+```
 
-### Finding Opening Book Moves
+The `Chess.Book` module contains functions for processing large PGN files and
+creating opening book files. There is also a small built-in opening book. The
+rest of the examples in this section will use the built-in opening book. For
+information about generating your own books, consult the documentation for the
+`Chess.Book` module.
 
-Given a `Board` value, the function `findbookentries` find all the opening book
-entries for that board position. For instance, this gives us all book moves for
+### Finding Book Moves
+
+Given a `Board`, the function `findbookentries` finds all the opening book
+moves for that board position. For instance, this gives us all book moves for
 the standard opening position:
 
 ```julia-repl
@@ -1391,11 +1418,6 @@ following slots:
   is played when picking a book move to play. The score is computed based on the
   move's win/loss/draw statistics and its popularity, especially in recent games
   and games with strong players.
-
-`findbookentries` takes an optional second argument, the name of an opening book
-file generated using the functions described in the previous section. If an
-opening book file is supplied, that one will be used instead of the built-in
-book.
 
 To print out the stats for all moves for a position, use `printbookentries`:
 
@@ -1439,6 +1461,34 @@ the function documentation for details.
 
 If no book moves are found for the input position, `pickbookmove` returns
 `nothing`.
+
+### Example: Playing Random Openings
+
+Here's a function that generates a game (or rather, the beginning of a game) by
+picking and playing book moves until it reaches a position where no book move is
+found:
+
+```julia
+function random_opening()
+    g = Game()
+    while true
+        move = pickbookmove(board(g))
+        if isnothing(move)
+            break
+        end
+        domove!(g, move)
+    end
+    g
+end
+```
+
+Let's try:
+
+```julia-repl
+julia> random_opening()
+Game:
+ Nf3 c5 c4 Nc6 Nc3 Nf6 e3 g6 d4 cxd4 exd4 d5 cxd5 Nxd5 Qb3 Nxc3 bxc3 Bg7 Be2 O-O O-O Qc7 *
+```
 
 ### Creating Book Files
 
@@ -1496,32 +1546,41 @@ and popular choice is [Stockfish](https://stockfishchess.org). Stockfish is
 used as an example in this section, but any other engine should work just as
 well.
 
-For the remainder of this section, it is assumed that you know the basics of
-how the UCI protocol works, and that `stockfish` is found somewhere in your
-`PATH` environment variable
+For running the examples in this section, it is assumed that you have an
+executable `stockfish` somewhere in your `PATH` environment variable.
+
+The code for interacting with UCI engines is found in the submodule `Chess.UCI`:
+
+```julia-repl
+julia> using Chess.UCI
+```
+
+### Starting and Initializing Engines
+
+An engine is started by calling the runengine function, which takes the path to
+the engine as a parameter:
 
 An engine is started by calling the `runengine` command, which takes the path
 to the engine as a parameter:
 
 ```julia-repl
-julia> using Chess, Chess.UCI
-
-julia> sf = runengine("stockfish");
+julia> sf = runengine("stockfish")
+Engine: Stockfish 160421
 ```
 
-The first thing you want to do after starting a chess engine is probably to
-set some UCI parameter values. This can be done with `setoption`:
+The first thing you want to do after starting a chess engine is probably to set
+some UCI parameter values. This can be done with `setoption`:
 
 ```julia-repl
-julia> setoption(sf, "Hash", 256)
+julia> setoption(sf, "Hash", 256);
 ```
+
+### Searching
 
 You can send a game to the engine with `setboard`:
 
-```julia-repl
-julia> g = SimpleGame();
-
-julia> domoves!(g, "f4", "e5", "fxe5", "d6", "exd6", "Bxd6", "Nc3")
+```
+julia> g = @simplegame f4 e5 fxe5 d6 exd6 Bxd6 Nc3;
 
 julia> setboard(sf, g)
 ```
@@ -1530,23 +1589,12 @@ The second parameter to `setboard` can also be a `Board` or a `Game`.
 
 To ask the engine to search the position you just sent to it, use the `search`
 function. `search` has two required parameters: The engine and the UCI `go`
-command we want to send to it. There is also an optional named parameter
-`infoaction`. This parameter is a function that takes each of the engine's
-`info` output lines and does something to them. Here's an example where we just
-print the engine output with `println` as our `infoaction`:
+command we want to send to it.
+
+Here is the most basic example of using `search`:
 
 ```julia-repl
-julia> search(sf, "go depth 10", infoaction=println)
-info depth 1 seldepth 1 multipv 1 score cp 275 nodes 42 nps 21000 tbhits 0 time 2 pv d6c5
-info depth 2 seldepth 2 multipv 1 score cp 93 nodes 118 nps 59000 tbhits 0 time 2 pv d6c5 g2g3
-info depth 3 seldepth 3 multipv 1 score cp 83 nodes 207 nps 103500 tbhits 0 time 2 pv a7a6 g2g3 d6c5
-info depth 4 seldepth 4 multipv 1 score cp 23 nodes 809 nps 404500 tbhits 0 time 2 pv g8h6 d2d4 h6g4 g2g3
-info depth 5 seldepth 6 multipv 1 score cp -22 nodes 1669 nps 556333 tbhits 0 time 3 pv g8e7 e2e3 e8g8 g1f3 f8e8 d2d4
-info depth 6 seldepth 7 multipv 1 score mate 3 nodes 2293 nps 764333 tbhits 0 time 3 pv d8h4 g2g3 d6g3 h2g3
-info depth 7 seldepth 6 multipv 1 score mate 3 nodes 2337 nps 779000 tbhits 0 time 3 pv d8h4 g2g3 d6g3 h2g3 h4g3
-info depth 8 seldepth 6 multipv 1 score mate 3 nodes 2387 nps 795666 tbhits 0 time 3 pv d8h4 g2g3 d6g3 h2g3 h4g3
-info depth 9 seldepth 6 multipv 1 score mate 3 nodes 2436 nps 812000 tbhits 0 time 3 pv d8h4 g2g3 d6g3 h2g3 h4g3
-info depth 10 seldepth 6 multipv 1 score mate 3 nodes 2502 nps 625500 tbhits 0 time 4 pv d8h4 g2g3 d6g3 h2g3 h4g3
+julia> search(sf, "go depth 10")
 BestMoveInfo (best=d8h4, ponder=g2g3)
 ```
 
@@ -1554,9 +1602,105 @@ The return value is a `BestMoveInfo`, a struct containing the two slots
 `bestmove` (the best move returned by the engine, a `Move`) and `ponder` (the
 ponder move returned by the engine, a `Move` or `nothing`).
 
-In most cases, we want something more easily manipulatable than the raw string
-values sent by the engine's `info` lines in our `infoaction` function. The
-function `parseinfoline` takes care of this. It takes an `info` string as input
-and returns a `SearchInfo` value, a struct that contains the various components
-of the `info` line as its slots. See the documentation for `SearchInfo` in the
-API reference for details.
+The `search` function also takes an optional named parameter `infoaction`. This
+parameter is a function that takes each of the engine's `info` output lines and
+does something to them. Here's an example where we just print the engine output
+with `println` as our `infoaction`:
+
+```julia-repl
+julia> g = @simplegame d4 Nf6 c4 g6 Nc3 d5 cxd5 Nxd5;
+
+julia> setboard(sf, g)
+
+julia> search(sf, "go depth 10", infoaction = println)
+info string NNUE evaluation using nn-62ef826d1a6d.nnue enabled
+info depth 1 seldepth 1 multipv 1 score cp 113 nodes 49 nps 24500 tbhits 0 time 2 pv g1f3
+info depth 2 seldepth 2 multipv 1 score cp 114 nodes 170 nps 85000 tbhits 0 time 2 pv g1f3 d5c3
+info depth 3 seldepth 3 multipv 1 score cp 114 nodes 246 nps 123000 tbhits 0 time 2 pv g1f3 d5c3 b2c3
+info depth 4 seldepth 4 multipv 1 score cp 195 nodes 301 nps 150500 tbhits 0 time 2 pv g1f3 d5c3
+info depth 5 seldepth 5 multipv 1 score cp 224 nodes 886 nps 295333 tbhits 0 time 3 pv g1f3 d5c3 b2c3
+info depth 6 seldepth 6 multipv 1 score cp 113 nodes 1264 nps 316000 tbhits 0 time 4 pv g1f3 d5c3 b2c3 f8g7 e2e4 e8g8
+info depth 7 seldepth 7 multipv 1 score cp 87 nodes 2326 nps 465200 tbhits 0 time 5 pv g1f3 d5c3 b2c3 f8g7 e2e4 e8g8 f1d3
+info depth 8 seldepth 11 multipv 1 score cp 43 nodes 6660 nps 740000 tbhits 0 time 9 pv e2e4 d5c3 b2c3 c7c5 f1b5 c8d7 d1b3 f8g7 b5d7 b8d7
+info depth 9 seldepth 14 multipv 1 score cp 61 nodes 9085 nps 698846 tbhits 0 time 13 pv e2e4 d5c3 b2c3 c7c5 g1f3 c5d4 d1d4
+info depth 10 seldepth 14 multipv 1 score cp 30 nodes 24385 nps 762031 tbhits 0 time 32 pv e2e4 d5c3 b2c3 c7c5 f1b5 c8d7 b5d7 b8d7 g1f3 f8g7 e1g1 e8g8 c1e3
+BestMoveInfo (best=e2e4, ponder=d5c3)
+```
+
+### Parsing Search Output
+
+In most cases, we want something more easily to manipulate than the raw string
+values sent by the engines `info` lines in our `infoaction` function. The
+function `parsesearchinfo` takes care of this. It takes an `info` string as
+input and returns a `SearchInfo` value, a struct that contains the various
+components of the `info` line as its slots.
+
+Let's see how this works:
+
+```julia-repl
+julia> parsesearchinfo("info depth 10 seldepth 14 multipv 1 score cp 30 nodes 24385 nps 762031 tbhits 0 time 32 pv e2e4 d5c3 b2c3 c7c5 f1b5 c8d7 b5d7 b8d7 g1f3 f8g7 e1g1 e8g8 c1e3")
+SearchInfo:
+ depth: 10
+ seldepth: 14
+ time: 32
+ nodes: 24385
+ nps: 762031
+ score: Score(30, false, Chess.UCI.exact)
+ tbhits: 0
+ multipv: 1
+ pv: e2e4 d5c3 b2c3 c7c5 f1b5 c8d7 b5d7 b8d7 g1f3 f8g7 e1g1 e8g8 c1e3
+```
+
+The meaning of most of the slots in this struct should be evident if you are
+familiar with the UCI protocol. If you are not, the two most important slots are
+the `score` and the `pv`.
+
+The `score` is a value of type `Score`. The definition of the `Score` struct
+looks like this:
+
+```julia
+struct Score
+    value::Int
+    ismate::Bool
+    bound::BoundType
+end
+```
+
+There are two types of score: *Centipawn scores* are an evaluation where
+advantages is measured on a scale where 100 means an advantage corresponding to
+the value of one pawn. *Mate scores* are scores of the type "mate in X moves".
+The type of score is indicated by the `ismate` slot, while the numerical value
+is indicated by the `value` slot.
+
+For instance, when `value` is 50 and `ismate` is `false`, it means that the side
+to move has an advantage worth about half a pawn. If `value` is 5 and `ismate`
+is true, it means that the side to move has a forced checkmate in 5 half moves
+or less.
+
+The final slot, `bound`, indicates whether the score is just an upper bound, a
+lower bound, or an exact score. The three possible values are `upper`, `lower`
+and `exact`.
+
+The other interesting slot of `SearchInfo` is the `pv`. This is a vector of
+moves, what the engine considers the best line of play, assuming optimal play
+from both sides.
+
+### Example: Engine vs Engine Games
+
+Using what we have learned, we can easily make a function that generates engine
+vs engine games. Let's use the `random_opening` function we wrote earlier (in
+the section about opening books) to initialize the game with some opening
+position, and let the engine play out the game from there. We'll let the engine
+think 10 thousand nodes per move.
+
+```julia
+function engine_game()
+    g = random_opening()
+    while !isterminal(g)
+        setboard(sf, g)
+        move = search(sf, "go nodes 10000").bestmove
+        domove!(g, move)
+    end
+    g
+end
+```
