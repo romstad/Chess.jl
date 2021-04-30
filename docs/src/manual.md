@@ -1709,13 +1709,86 @@ position, and let the engine play out the game from there. We'll let the engine
 think 10 thousand nodes per move.
 
 ```julia
-function engine_game()
+function engine_game(engine)
     g = random_opening()
     while !isterminal(g)
-        setboard(sf, g)
-        move = search(sf, "go nodes 10000").bestmove
+        setboard(engine, g)
+        move = search(engine, "go nodes 10000").bestmove
         domove!(g, move)
     end
     g
 end
+```
+
+Let's try generating a game using Stockfish:
+
+```julia-repl
+julia> engine_game(sf)
+Game:
+ 1. d4 d5 2. e3 Bf5 3. Bd3 Bxd3 4. Qxd3 c6 5. Nf3 e6 6. Nbd2 Nf6 7. O-O c5 8. dxc5 Nbd7 9. b4 a5 10. c3 Be7 11. h3 O-O 12. e4 Qc7 13. a4 Rfd8 14. Nd4 Ne5 15. Qe3 Ng6 16. Nb5 Qb8 17. Bb2 dxe4 18. Nxe4 Nd5 19. Qe1 h6 20. Ned6 Bf6 21. Rb1 Be7 22. c4 Ndf4 23. g3 Nxh3+ 24. Kg2 Ng5 25. f4 Nh7 26. bxa5 Bxd6 27. cxd6 Rxd6 28. Nxd6 Qxd6 29. Qe4 Qd2+ 30. Rf2 Qxa5 31. f5 exf5 32. Rxf5 Qd2+ 33. Rf2 Qd7 34. Qd5 Qe8 35. Re1 Qf8 36. c5 Ng5 37. Bc1 Rxa4 38. Bxg5 hxg5 39. Qxb7 Qxc5 40. Qxf7+ Kh7 41. Qf3 Rh4 42. Rfe2 Kh6 43. Re6 Qc2+ 44. R1e2 Qxe2+ 45. Qxe2 Kh7 46. Rxg6 Rb4 47. Rxg5 Rh4 48. Qe7 Rh2+ 49. Kxh2 Kh8 50. Qxg7# *
+```
+
+Let's try to make a slightly more sophisticated version of this function, that
+also includes the engine evaluation for each move as a comment in the game.
+
+As a first step, here's a function that creates a human readable string from a
+`Score` value:
+
+```julia
+function scorestring(score, white_to_move)
+    value = white_to_move ? score.value : -score.value
+    if score.ismate && value > 0
+        "+#$(value)"
+    elseif score.ismate
+        "-#$(abs(value))"
+    elseif value > 0
+        "+$(value * 0.01)"
+    else
+        "$(value * 0.01)"
+    end
+end
+```
+
+The function also takes a boolean white_to_move parameter, because we want to
+present the scores always from white's point of view, rather than from the side
+to move's point of view (which is what we get from the engine).
+
+In our improved engine vs engine function, we need to supply an `infoaction` in
+the call to `search`, in order to obtain the engine evaluation. It can be done
+like this:
+
+```julia
+function engine_vs_engine_with_evals(engine)
+    # A variable for keeping track of the score:
+    score = Score(0, true, Chess.UCI.exact)
+
+    # An infoaction function that updates the score:
+    function infoaction(infoline)
+        info = parsesearchinfo(infoline)
+        if !isnothing(info.score)
+            score = info.score
+        end
+    end
+
+    g = random_opening()
+    while !isterminal(g)
+        whitetomove = sidetomove(board(g)) == WHITE
+        setboard(engine, g)
+        # Use the infoaction defined above when calling search:
+        move = search(engine, "go nodes 10000", infoaction=infoaction).bestmove
+        # Add the move to the game:
+        domove!(g, move)
+        # Add the score as a comment:
+        addcomment!(g, scorestring(score, whitetomove))
+    end
+    g
+end
+```
+
+A test game:
+
+```julia-repl
+julia> engine_vs_engine_with_evals()
+Game:
+ 1. Nf3 d5 2. g3 Nf6 3. Bg2 e6 4. O-O Be7 5. d3 O-O 6. Nbd2 c5 7. e4 Nc6 8. e5 Nd7 9. Re1 f6 10. exf6 Nxf6 11. b3 {+1.1} Bd7 {+0.67} 12. Bb2 {+0.68} Ng4 {+0.7000000000000001} 13. h3 {+0.54} Bf6 {+0.65} 14. Bxf6 {+0.62} Nxf6 {+0.85} 15. Ne5 {+0.87} Nxe5 {+1.06} 16. Rxe5 {+0.8} h6 {+0.89} 17. Nf3 {+1.01} a5 {+1.16} 18. a4 {+1.2} Ra6 {+1.32} 19. Re2 {+1.27} Be8 {+1.1500000000000001} 20. Qe1 {+1.07} Bf7 {+1.16} 21. Qd2 {+1.02} Nd7 {+1.3800000000000001} 22. Rae1 {+1.35} Ra8 {+1.3800000000000001} 23. Ne5 {+1.6400000000000001} Nxe5 {+1.9000000000000001} 24. Rxe5 {+1.74} b6 {+1.42} 25. h4 {+1.53} Qd6 {+1.55} 26. Bh3 {+2.02} Rae8 {+1.62} 27. f4 {+1.8900000000000001} Re7 {+1.6400000000000001} 28. f5 {+2.21} Be8 {+1.97} 29. g4 {+2.59} Bd7 {+2.68} 30. g5 {+3.3200000000000003} h5 {+3.3200000000000003} 31. g6 {+4.94} Rf6 {+6.01} 32. Qe2 {+5.98} exf5 {+6.5200000000000005} 33. Rxe7 {+6.72} Rxg6+ {+6.05} 34. Bg2 {+7.32} d4 {+5.89} 35. Kf1 {+7.28} Bc6 {+7.66} 36. Bxc6 {+7.8100000000000005} Qxc6 {+7.9} 37. Re8+ {+7.890000000000001} Kh7 {+8.13} 38. Qxh5+ {+8.15} Rh6 {+8.15} 39. Qxf5+ {+8.32} Rg6 {+8.540000000000001} 40. R1e6 {+8.5} Qg2+ {+8.73} 41. Ke1 {+8.74} Qg1+ {+8.76} 42. Kd2 {+8.88} Qg4 {+8.89} 43. Qf7 {+9.15} Rxe6 {+9.4} 44. Qg8+ {+9.6} Kh6 {+9.57} 45. Rxe6+ {+9.55} Qxe6 {+9.63} 46. Qxe6+ {+9.67} Kh5 {+9.72} 47. Qxb6 {+9.8} Kxh4 {+9.78} 48. Qxa5 {+9.870000000000001} Kh5 {+9.870000000000001} 49. Qxc5+ {+9.870000000000001} g5 {+9.870000000000001} 50. Qxd4 {+10.01} Kg6 {+64.0} 51. Qe4+ {+64.25} Kf6 {+64.26} 52. a5 {+25.27} Kg7 {+75.27} 53. a6 {+#12} Kf7 {+149.45000000000002} 54. a7 {+#5} g4 {+#3} 55. a8=Q {+#3} g3 {+#2} 56. Qf5+ {+#2} Kg7 {+#1} 57. Qaf8# {+#1} *
 ```
