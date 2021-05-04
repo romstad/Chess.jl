@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.14.4
+# v0.14.5
 
 using Markdown
 using InteractiveUtils
@@ -66,7 +66,6 @@ md"""
 Chess.jl is a library for doing computer chess in Julia. It contains utilities for creating and manipulating chess positions and games, reading and writing chess games in the popular [PGN](https://en.wikipedia.org/wiki/Portable_Game_Notation) format (including support for comments and variations), for creating opening trees, and for interacting with [UCI chess engines](http://wbec-ridderkerk.nl/html/UCIProtocol.html).
 
 The library should be suitable for most chess programming tasks, except perhaps for trying to write the strongest possible chess engine. Writing a strong chess engine using Chess.jl is certainly possible, and reaching super-human strength shouldn't be too hard, but for maximum performance, a lower-level language like C, C++, Rust or Nim would probably be better.
-
 
 Most of the functions described in this tutorial are located in the `Chess` module:
 """
@@ -1290,6 +1289,30 @@ For instance, when `value` is 50 and `ismate` is `false`, it means that the side
 
 The final slot, `bound`, indicates whether the score is just an upper bound, a lower bound, or an exact score. The three possible values are `upper`, `lower` and `exact`.
 
+When presenting scores to humans, the `scorestring` function is useful. For centipawn scores, it converts the score to a scale of pawn=1.0, and outputs the score with a single decimal:
+"""
+
+# ╔═╡ 08dc0954-02b2-49d2-b3a9-b99d8c41a125
+scorestring(Score(-87, false, Chess.UCI.exact))
+
+# ╔═╡ b8806c05-7158-4774-a5f7-80f579f44388
+md"""
+Mate in N scores are displayed as `#N`:
+"""
+
+# ╔═╡ 69f1f5fc-b538-45b3-8e41-3d4822d638ec
+scorestring(Score(6, true, Chess.UCI.exact))
+
+# ╔═╡ e72113f2-1608-4e16-adc1-eb359096dbdc
+md"""
+UCI chess engines always output scores from the point of view of the current side to move. This is not always what we want; often we want scores from white's point of view (i.e. positive scores mean that white is better, while negative scores mean that black is better). `scorestring` takes an optional named parameter `invertsign` that can be used to invert the sign:
+"""
+
+# ╔═╡ 07d590d0-3775-468b-a9a3-99d26393d91a
+scorestring(Score(-140, false, Chess.UCI.exact), invertsign=true)
+
+# ╔═╡ f0206a54-b71b-42b6-84da-2b87f348eced
+md"""
 The other interesting slot of `SearchInfo` is the `pv`. This is a vector of moves, what the engine considers the best line of play, assuming optimal play from both sides.
 """
 
@@ -1323,40 +1346,6 @@ engine_game(sf)
 md"""
 Let's try to build a slightly more sophisticated function for running engine vs engine matches, that also includes the engine evaluation for each move as a comment in the game.
 
-As a first step, here's a function that creates a human readable string from a `Score` value:
-"""
-
-# ╔═╡ 108d1e9c-812b-4fc5-b6a3-85de68226a35
-function scorestring(score, white_to_move)
-	value = white_to_move ? score.value : -score.value
-	if score.ismate && value > 0
-		"+#$(value)"
-	elseif score.ismate
-		"-#$(abs(value))"
-	elseif value > 0
-		"+$(value * 0.01)"
-	else
-		"$(value * 0.01)"
-	end
-end
-
-# ╔═╡ a94d01f5-d6e7-4eb9-875d-1db5479bf3b9
-md"""
-The function also takes a boolean `white_to_move` parameter, because we want to present the scores always from white's point of view, rather than from the side to move's point of view (which is what we get from the engine).
-
-Let's try a couple of examples:
-"""
-
-# ╔═╡ f7dfe739-408b-4c6f-b900-2d308aea9cf4
-# Centipawn score, black to move
-scorestring(Score(-12, false, Chess.UCI.exact), false)
-
-# ╔═╡ f3836407-0bc3-45d7-8610-5828f539eb45
-# Mate score, white to move
-scorestring(Score(5, true, Chess.UCI.exact), true)
-
-# ╔═╡ afa9b3c3-db11-4bfb-9893-b102b67c7309
-md"""
 In our improved engine vs engine function, we need to supply an `infoaction` in the call to `search`, in order to obtain the engine evaluation. It can be done like this:
 """
 
@@ -1382,7 +1371,7 @@ function engine_vs_engine_with_evals(engine)
 		# Add the move to the game:
 		domove!(g, move)
 		# Add the score as a comment:
-		addcomment!(g, scorestring(score, whitetomove))
+		addcomment!(g, scorestring(score, invertsign = !whitetomove))
 	end
 	g
 end
@@ -1605,16 +1594,17 @@ engine_vs_engine_with_evals(sf)
 # ╟─b941833a-0efa-45e8-a59f-a7007653cfc6
 # ╟─29d1ada2-75ce-4a77-a136-f761052c0637
 # ╟─e6961baa-90c2-4b5d-9bfa-f71355330509
+# ╠═08dc0954-02b2-49d2-b3a9-b99d8c41a125
+# ╟─b8806c05-7158-4774-a5f7-80f579f44388
+# ╠═69f1f5fc-b538-45b3-8e41-3d4822d638ec
+# ╠═e72113f2-1608-4e16-adc1-eb359096dbdc
+# ╠═07d590d0-3775-468b-a9a3-99d26393d91a
+# ╟─f0206a54-b71b-42b6-84da-2b87f348eced
 # ╟─41bdb293-d905-4fda-ac48-fa5926222bc7
 # ╠═69feaef9-d4b1-4d12-86f6-0aadf030f8eb
 # ╟─3654e4d9-8e0a-4154-805a-330fc29ae64c
 # ╠═7e1db1d9-0a8b-4056-8a21-9a6c04ad3d9d
 # ╟─727ff4b9-6f52-481d-8155-792bc35803db
-# ╠═108d1e9c-812b-4fc5-b6a3-85de68226a35
-# ╟─a94d01f5-d6e7-4eb9-875d-1db5479bf3b9
-# ╠═f7dfe739-408b-4c6f-b900-2d308aea9cf4
-# ╠═f3836407-0bc3-45d7-8610-5828f539eb45
-# ╟─afa9b3c3-db11-4bfb-9893-b102b67c7309
 # ╠═f16db75f-9d13-4650-a025-705ca32a9404
 # ╟─e753394e-ad69-47b8-8639-d60a22275c72
 # ╠═5c6f4050-b7a8-4f56-aad1-f418b51e2cad
