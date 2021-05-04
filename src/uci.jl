@@ -1,5 +1,7 @@
 module UCI
 
+using Formatting
+
 using ..Chess
 
 export BestMoveInfo, BoundType, Engine, Option, OptionType, OptionValue, Score, SearchInfo
@@ -10,6 +12,7 @@ export mpvsearch,
     parsesearchinfo,
     quit,
     runengine,
+    scorestring,
     search,
     sendcommand,
     sendisready,
@@ -380,6 +383,45 @@ struct Score
     value::Int
     ismate::Bool
     bound::BoundType
+end
+
+
+"""
+    scorestring(s::Score; invertsign=false)
+
+Creates a human-readable string from a `Score` s.
+
+If `invertsign` is `true`, the sign of the `value` slot of the score will be
+inverted. UCI engines always give evaluations from the point of view of the
+current side to move, but it's often more convenient to have the scores
+always from White's point of view.
+
+# Examples
+
+```julia-repl
+julia> s1 = Score(158, false, Chess.UCI.exact);
+
+julia> s2 = Score(-5, true, Chess.UCI.exact);
+
+julia> scorestring(s1)
+"+1.6"
+
+julia> scorestring(s1, invertsign=true)
+"-1.6"
+
+julia> scorestring(s2)
+"-#5"
+```
+"""
+function scorestring(s::Score; invertsign=false)
+    value = invertsign ? -s.value : s.value
+    if !s.ismate
+        format("{1:+.1f}", value * 0.01)
+    elseif value > 0
+        format("+#{1:d}", abs(value))
+    else
+        format("-#{1:d}", abs(value))
+    end
 end
 
 

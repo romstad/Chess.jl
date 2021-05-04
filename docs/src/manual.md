@@ -1721,6 +1721,33 @@ The final slot, `bound`, indicates whether the score is just an upper bound, a
 lower bound, or an exact score. The three possible values are `upper`, `lower`
 and `exact`.
 
+When presenting scores to humans, the `scorestring` function is useful. For
+centipawn scores, it converts the score to a scale of pawn=1.0, and outputs the
+score with a single decimal:
+
+```julia-repl
+julia> scorestring(Score(-87, false, Chess.UCI.exact))
+"-0.9"
+```
+
+Mate in N scores are displayed as `#N`:
+
+```julia-repl
+julia> scorestring(Score(6, true, Chess.UCI.exact))
+"+#6"
+```
+
+UCI chess engines always output scores from the point of view of the current
+side to move. This is not always what we want; often we want scores from white's
+point of view (i.e. positive scores mean that white is better, while negative
+scores mean that black is better). `scorestring` takes an optional named
+parameter `invertsign` that can be used to invert the sign:
+
+```julia-repl
+julia> scorestring(Score(-140, false, Chess.UCI.exact), invertsign=true)
+"+1.4"
+```
+
 The other interesting slot of `SearchInfo` is the `pv`. This is a vector of
 moves, what the engine considers the best line of play, assuming optimal play
 from both sides.
@@ -1755,28 +1782,6 @@ Game:
 
 Let's try to make a slightly more sophisticated version of this function, that
 also includes the engine evaluation for each move as a comment in the game.
-
-As a first step, here's a function that creates a human readable string from a
-`Score` value:
-
-```julia
-function scorestring(score, white_to_move)
-    value = white_to_move ? score.value : -score.value
-    if score.ismate && value > 0
-        "+#$(value)"
-    elseif score.ismate
-        "-#$(abs(value))"
-    elseif value > 0
-        "+$(value * 0.01)"
-    else
-        "$(value * 0.01)"
-    end
-end
-```
-
-The function also takes a boolean white_to_move parameter, because we want to
-present the scores always from white's point of view, rather than from the side
-to move's point of view (which is what we get from the engine).
 
 In our improved engine vs engine function, we need to supply an `infoaction` in
 the call to `search`, in order to obtain the engine evaluation. It can be done
