@@ -308,6 +308,34 @@ end
 
 
 function formatmoves(g::Game, currentnodeindicator = nothing)
+
+    function formatchild(buffer, node, child, movenum, blackmovenum)
+        # Pre-comment
+        if !isnothing(precomment(child))
+            write(buffer, "{", precomment(child), "} ")
+        end
+
+        # Move number, if white to move or at the beginning of the game.
+        if sidetomove(node.board) == WHITE
+            write(buffer, string(movenum ÷ 2 + 1), ". ")
+        elseif blackmovenum || isnothing(node.parent)
+            write(buffer, string(movenum ÷ 2 + 1), "... ")
+        end
+
+        # Move in SAN notation
+        write(buffer, movetosan(node.board, lastmove(child.board)))
+
+        # Numeric Annotation Glyph
+        if !isnothing(Chess.nag(child))
+            write(buffer, " \$", string(Chess.nag(child)))
+        end
+
+        # Post-comment
+        if !isnothing(Chess.comment(child))
+            write(buffer, " {", Chess.comment(child), "}")
+        end
+    end
+
     function formatvariation(buffer, node, movenum)
         if !isempty(node.children)
             # Write current node indicator
@@ -317,31 +345,7 @@ function formatmoves(g::Game, currentnodeindicator = nothing)
             end
 
             child = first(node.children)
-
-            # Pre-comment
-            if !isnothing(precomment(child))
-                write(buffer, "{", precomment(child), "} ")
-            end
-
-            # Move number, if white to move or at the beginning of the game.
-            if sidetomove(node.board) == WHITE
-                write(buffer, string(movenum ÷ 2 + 1), ". ")
-            elseif isnothing(node.parent)
-                write(buffer, string(movenum ÷ 2 + 1), "... ")
-            end
-
-            # Move in SAN notation
-            write(buffer, movetosan(node.board, lastmove(child.board)))
-
-            # Numeric Annotation Glyph
-            if !isnothing(Chess.nag(child))
-                write(buffer, " \$", string(Chess.nag(child)))
-            end
-
-            # Post-comment
-            if !isnothing(Chess.comment(child))
-                write(buffer, " {", Chess.comment(child), "}")
-            end
+            formatchild(buffer, node, child, movenum, false)
 
             if !isleaf(child) || length(node.children) > 1
                 write(buffer, " ")
@@ -352,30 +356,7 @@ function formatmoves(g::Game, currentnodeindicator = nothing)
                 # Variation start
                 write(buffer, "(")
 
-                # Pre-comment
-                if !isnothing(precomment(child))
-                    write(buffer, "{", precomment(child), "} ")
-                end
-
-                # Move number
-                if sidetomove(node.board) == WHITE
-                    write(buffer, string(movenum ÷ 2 + 1), ". ")
-                else
-                    write(buffer, string(movenum ÷ 2 + 1), "... ")
-                end
-
-                # Move in SAN notation
-                write(buffer, movetosan(node.board, lastmove(child.board)))
-
-                # Numeric Annotation Glyph
-                if !isnothing(Chess.nag(child))
-                    write(buffer, " \$", string(Chess.nag(child)))
-                end
-
-                # Post-comment
-                if !isnothing(Chess.comment(child))
-                    write(buffer, " {", Chess.comment(child), "}")
-                end
+                formatchild(buffer, node, child, movenum, true)
 
                 # Continuation of variation
                 if !isempty(child.children)
@@ -389,7 +370,8 @@ function formatmoves(g::Game, currentnodeindicator = nothing)
                 # Variation end
                 write(buffer, ")")
 
-                # If this is not the last variation, insert a space before the next
+                # If this is not the last variation, insert a space before the
+                # next
                 if child ≠ node.children[end]
                     write(buffer, " ")
                 end

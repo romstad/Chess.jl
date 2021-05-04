@@ -1,6 +1,7 @@
 module MIME
 
 using Hiccup
+using HypertextLiteral
 using ..Chess, ..Chess.PGN
 
 export html
@@ -166,7 +167,7 @@ function html(g::Game)
         Dict(:class => "game", :style => GAME_CSS),
         [
             svg(board = board(g)),
-            Node(:p, Chess.formatmoves(g, "👉")),
+            Node(:p, format_game(g)),
             Node(
                 :a,
                 Dict(
@@ -178,6 +179,96 @@ function html(g::Game)
             ),
         ],
     )
+end
+
+
+function format_game(g::Game)
+
+    function movestyle(depth)
+	      if depth == 0
+		        "font-weight: bold; color: #000000;"
+	      elseif depth == 1
+		        "font-weight: bold; color: #777777;"
+	      else
+		        "font-weight: bold; color: #bbbbbb;"
+	      end
+    end
+
+    function fmt_move(node, child, movenum, depth, blackmovenum)
+        ms = movetosan(node.board, lastmove(child.board))
+        space = blackmovenum ? "" : " "
+        if sidetomove(node.board) == WHITE
+            @htl("<span style=$(movestyle(depth))>$space$(string(movenum ÷ 2 + 1)). $ms</span>")
+        elseif blackmovenum || isnothing(node.parent)
+            @htl("<span style=$(movestyle(depth))>$space$(string(movenum ÷ 2 + 1))... $ms</span>")
+        else
+            @htl("<span style=$(movestyle(depth))>$space$ms</span>")
+        end
+    end
+
+    COMMENT_STYLE = "color: blue;"
+
+    function fmt_precomment(comment)
+        if isnothing(comment)
+            @htl("")
+        else
+            @htl("<span style='$COMMENT_STYLE'>$comment</span> ")
+        end
+    end
+
+    function fmt_comment(comment)
+        if isnothing(comment)
+            @htl("")
+        else
+            @htl(" <span style='$COMMENT_STYLE'>$comment</span>")
+        end
+    end
+
+    function fmt_nag(nag)
+        if isnothing(nag)
+            @htl("")
+        else
+            @htl(" <span style='$COMMENT_STYLE'>\$$nag</span>")
+        end
+    end
+
+    function fmt_child(child, movenum, blackmovenum, depth)
+        move = fmt_move(child.parent, child, movenum, depth, blackmovenum)
+        precmt = fmt_precomment(precomment(child))
+        cmt = fmt_comment(comment(child))
+        nag = fmt_nag(Chess.nag(child))
+
+        @htl("$precmt$move$nag$cmt")
+    end
+
+    function fmt_subvars(node, movenum, depth)
+        if length(node.children) < 2
+            @htl("")
+        else
+            vars = [
+                @htl(" ($(fmt_child(c, movenum, true, depth+1))$(fmt_var(c, movenum+1, depth+1)))")
+                for c in node.children[2:end]
+            ]
+            @htl("$vars")
+        end
+    end
+
+    function fmt_var(node, movenum, depth)
+        if !isempty(node.children)
+            cni = node == g.node ? " 👉" : ""
+            child = first(node.children)
+            childhtml = fmt_child(child, movenum, false, depth)
+            cont = fmt_var(child, movenum + 1, depth)
+            subvars = fmt_subvars(node, movenum, depth)
+            @htl("$cni$(fmt_child(child, movenum, false, depth))$subvars$cont")
+        elseif node == g.node
+            @htl(" 👉")
+        else
+            @htl("")
+        end
+    end
+
+    fmt_var(g.root, 0, 0)
 end
 
 end
