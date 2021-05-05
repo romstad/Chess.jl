@@ -1,5 +1,7 @@
 module UCI
 
+import Base.-
+
 using Formatting
 
 using ..Chess
@@ -13,6 +15,7 @@ export mpvsearch,
     quit,
     runengine,
     scorestring,
+    scoretofloat,
     search,
     sendcommand,
     sendisready,
@@ -421,6 +424,54 @@ function scorestring(s::Score; invertsign=false)
         format("+#{1:d}", abs(value))
     else
         format("-#{1:d}", abs(value))
+    end
+end
+
+
+function -(b::BoundType)
+    if b == lower
+        upper
+    elseif b == upper
+        lower
+    else
+        exact
+    end
+end
+
+
+-(s::Score) = Score(-s.value, s.ismate, -s.bound)
+
+
+"""
+    scoretofloat(s::Score, λ = 0.005)
+
+Converts a `Score` to a float in the range [-1, 1].
+
+The parameter `λ` controls how fast the return value converges towards ±1 when
+the centipawn score departs from zero.
+
+Mate scores are mapped to +1 or -1.
+
+# Examples
+
+```julia-repl
+julia> scoretofloat(Score(100, false, Chess.UCI.exact))
+0.2449186624037092
+
+julia> scoretofloat(Score(100, false, Chess.UCI.exact), 0.003)
+0.14888503362331806
+
+julia> scoretofloat(Score(-3, true, Chess.UCI.exact))
+-1.0
+```
+"""
+function scoretofloat(s::Score, λ = 0.005)
+    if !s.ismate
+        2 / (1 + exp(-λ * s.value)) - 1
+    elseif s.value > 0
+        1.0
+    else
+        -1.0
     end
 end
 
