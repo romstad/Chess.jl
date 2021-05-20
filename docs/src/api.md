@@ -60,6 +60,8 @@ haslegalmoves
 perft
 divide
 flip
+flop
+rotate
 compress
 decompress
 START_FEN
