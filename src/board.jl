@@ -33,6 +33,7 @@ export attacksto,
     epsquare,
     fen,
     flip,
+    flop,
     fromfen,
     haslegalmoves,
     is960,
@@ -66,6 +67,7 @@ export attacksto,
     rooklike,
     rookattacks,
     rooks,
+    rotate,
     see,
     sidetomove,
     startboard,
@@ -3390,12 +3392,12 @@ end
 """
     flip(b::Board)
 
-Returns an identical board, but flipped horizontally, and with the opposite
+Returns an identical board, but flipped vertically, and with the opposite
 side to move.
 
 # Examples
 ```julia-repl
-julia> b = domoves!(startboard(), "d4", "Nf6", "c4", "e6", "Nc3", "Bb4", "e3", "O-O")
+julia> b = @startboard d4 Nf6 c4 e6 Nc3 Bb4 e3 OO
 Board (rnbq1rk1/pppp1ppp/4pn2/8/1bPP4/2N1P3/PP3PPP/R1BQKBNR w KQ -):
  r  n  b  q  -  r  k  -
  p  p  p  p  -  p  p  p
@@ -3471,6 +3473,158 @@ function flip(b::Board)::Board
 
     result.r50 = b.r50
     result.move = UInt16(flipmove(lastmove(b)).val)
+
+    initboard!(result)
+
+    result
+end
+
+
+"""
+    flop(b::Board)
+
+Returns an identical board, but flipped horizontally.
+
+All castling rights will be deleted.
+
+# Examples
+```julia-repl
+julia> b = @startboard d4 Nf6 c4 e6 Nc3 Bb4 e3 OO
+Board (rnbq1rk1/pppp1ppp/4pn2/8/1bPP4/2N1P3/PP3PPP/R1BQKBNR w KQ -):
+ r  n  b  q  -  r  k  -
+ p  p  p  p  -  p  p  p
+ -  -  -  -  p  n  -  -
+ -  -  -  -  -  -  -  -
+ -  b  P  P  -  -  -  -
+ -  -  N  -  P  -  -  -
+ P  P  -  -  -  P  P  P
+ R  -  B  Q  K  B  N  R
+
+julia> flop(b)
+Board (1kr1qbnr/ppp1pppp/2np4/8/4PPb1/3P1N2/PPP3PP/RNBKQB1R w - -):
+ -  k  r  -  q  b  n  r
+ p  p  p  -  p  p  p  p
+ -  -  n  p  -  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  -  -  P  P  b  -
+ -  -  -  P  -  N  -  -
+ P  P  P  -  -  -  P  P
+ R  N  B  K  Q  B  -  R
+```
+"""
+function flop(b::Board)::Board
+
+    flopsquare(s) = Square(((s.val - 1) ⊻ 56) + 1)
+
+    function flopmove(m)
+        f = from(m)
+        t = to(m)
+        if ispromotion(m)
+            Move(flopsquare(f), flopsquare(t), promotion(m))
+        else
+            Move(flopsquare(f), flopsquare(t))
+        end
+    end
+
+    result = emptyboard()
+    for s ∈ occupiedsquares(b)
+        p = pieceon(b, s)
+        putpiece!(result, p, flopsquare(s))
+    end
+
+    result.side = b.side
+    if result.side == BLACK
+        result.key ⊻ zobsidetomove()
+    end
+
+    result.castlerights = 0
+    result.key ⊻= zobcastle(result.castlerights)
+
+    if epsquare(b) != SQ_NONE
+        s = flopsquare(epsquare(b))
+        result.epsq = s.val
+        result.key ⊻= zobep(s)
+    end
+
+    result.r50 = b.r50
+    result.move = UInt16(flopmove(lastmove(b)).val)
+
+    initboard!(result)
+
+    result
+end
+
+
+"""
+    rotate(b::Board)
+
+Returns an identical board, but rotated 180 degrees.
+
+All castling rights will be deleted.
+
+# Examples
+```julia-repl
+julia> b = @startboard d4 Nf6 c4 e6 Nc3 Bb4 e3 OO
+Board (rnbq1rk1/pppp1ppp/4pn2/8/1bPP4/2N1P3/PP3PPP/R1BQKBNR w KQ -):
+ r  n  b  q  -  r  k  -
+ p  p  p  p  -  p  p  p
+ -  -  -  -  p  n  -  -
+ -  -  -  -  -  -  -  -
+ -  b  P  P  -  -  -  -
+ -  -  N  -  P  -  -  -
+ P  P  -  -  -  P  P  P
+ R  -  B  Q  K  B  N  R
+
+julia> rotate(b)
+Board (rnbkqb1r/ppp3pp/3p1n2/4ppB1/8/2NP4/PPP1PPPP/1KR1QBNR b - -):
+ r  n  b  k  q  b  -  r
+ p  p  p  -  -  -  p  p
+ -  -  -  p  -  n  -  -
+ -  -  -  -  p  p  B  -
+ -  -  -  -  -  -  -  -
+ -  -  N  P  -  -  -  -
+ P  P  P  -  P  P  P  P
+ -  K  R  -  Q  B  N  R
+```
+"""
+function rotate(b::Board)::Board
+
+    rotatesquare(s) = Square(65 - s.val)
+
+    rotatecolor(p) = Piece(-pcolor(p), ptype(p))
+
+    function rotatemove(m)
+        f = from(m)
+        t = to(m)
+        if ispromotion(m)
+            Move(rotatesquare(f), rotatesquare(t), promotion(m))
+        else
+            Move(rotatesquare(f), rotatesquare(t))
+        end
+    end
+
+    result = emptyboard()
+    for s ∈ occupiedsquares(b)
+        p = pieceon(b, s)
+        putpiece!(result, rotatecolor(p), rotatesquare(s))
+    end
+
+    result.side = UInt8(coloropp(sidetomove(b)).val)
+    if result.side == BLACK
+        result.key ⊻= zobsidetomove()
+    end
+
+    result.castlerights = 0
+    result.key ⊻= zobcastle(result.castlerights)
+
+    if epsquare(b) != SQ_NONE
+        s = rotatesquare(epsquare(b))
+        result.epsq = s.val
+        result.key ⊻= zobep(s)
+    end
+
+    result.r50 = b.r50
+    result.move = UInt16(rotatemove(lastmove(b)).val)
 
     initboard!(result)
 
