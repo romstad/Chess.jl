@@ -53,6 +53,10 @@ export attacksto,
     lichess,
     lichessurl,
     movecount,
+    moveiscapture,
+    moveiscastle,
+    moveischeck,
+    moveisep,
     moves,
     occupiedsquares,
     pawns,
@@ -747,6 +751,11 @@ function queensidecastlefile(b::Board)::SquareFile
 end
 
 
+"""
+    moveiscastle(b::Board, m::Move)
+
+Returns `true` if the move `m` is a castling move.
+"""
 function moveiscastle(b::Board, m::Move)::Bool
     f = from(m)
     t = to(m)
@@ -762,6 +771,26 @@ end
 
 function moveislongcastle(b::Board, m::Move)::Bool
     moveiscastle(b, m) && file(from(m)) > file(to(m))
+end
+
+
+"""
+    moveisep(b::Board, m::Move)::Bool
+
+Returns `true` if the move `m` is an en passant capture.
+"""
+function moveisep(b::Board, m::Move)::Bool
+    ptype(pieceon(b, from(m))) == PAWN && to(m) == epsquare(b)
+end
+
+
+"""
+    moveiscapture(b::Board, m::Move)::Bool
+
+Returns `true` if the move `m` is a capture.
+"""
+function moveiscapture(b::Board, m::Move)::Bool
+    pcolor(pieceon(b, to(m))) == -sidetomove(b) || moveisep(b, m)
 end
 
 
@@ -1137,6 +1166,115 @@ end
 
 
 """
+    moveischeck(b::Board, m::Move)
+
+Determine whether the move `m` is a checking move.
+
+Doesn't yet handle the (unusual) case of castling checks.
+
+# Examples
+```julia-repl
+julia> b = @startboard e4 c5 Nf3 d6;
+
+julia> moveischeck(b, Move(SQ_F1, SQ_B5))
+true
+
+julia> moveischeck(b, Move(SQ_D2, SQ_D4))
+false
+```
+"""
+function moveischeck(b::Board, m::Move)::Bool
+    us = sidetomove(b)
+    them = -us
+    ksq = kingsquare(b, them)
+    f = from(m)
+    t = to(m)
+    piece = pieceon(b, f)
+    pt = ptype(piece)
+    occ = occupiedsquares(b)
+
+    # Plain checks
+    if pt == PAWN
+        if ksq ∈ pawnattacks(us, t)
+            return true
+        end
+    elseif pt == KNIGHT
+        if ksq ∈ knightattacks(t)
+            return true
+        end
+    elseif pt == BISHOP
+        if ksq ∈ bishopattacksempty(t) && isempty(squaresbetween(t, ksq) ∩ occ)
+            return true
+        end
+    elseif pt == ROOK
+        if ksq ∈ rookattacksempty(t) && isempty(squaresbetween(t, ksq) ∩ occ)
+            return true
+        end
+    elseif pt == QUEEN
+        if ksq ∈ queenattacksempty(t) && isempty(squaresbetween(t, ksq) ∩ occ)
+            return true
+        end
+    end
+
+    # Discovered checks
+    if f ∈ bishopattacksempty(ksq)
+        for bq ∈ bishopattacksempty(ksq) ∩ bishoplike(b, us)
+            btw = squaresbetween(ksq, bq)
+            if f ∈ btw && t ∉ btw && issingleton(btw ∩ occ)
+                return true
+            end
+        end
+    elseif f ∈ rookattacksempty(ksq)
+        for rq ∈ rookattacksempty(ksq) ∩ rooklike(b, us)
+            btw = squaresbetween(ksq, rq)
+            if f ∈ btw && t ∉ btw && issingleton(btw ∩ occ)
+                return true
+            end
+        end
+    end
+
+    # Promotion checks
+    if ispromotion(m)
+        prom = promotion(m)
+        if prom == QUEEN
+            newocc = occ - f + t
+            if ksq ∈ queenattacks(newocc, t)
+                return true
+            end
+        elseif prom == KNIGHT
+            return ksq ∈ knightattacks(t)
+        elseif prom == ROOK
+            newocc = occ - f + t
+            if ksq ∈ rookattacks(newocc, t)
+                return true
+            end
+        else
+            newocc = occ - f + t
+            if ksq ∈ bishopattacks(newocc, t)
+                return true
+            end
+        end
+    end
+
+    # En passant checks
+    if moveisep(b, m)
+        capsq = Square(file(t), rank(f))
+        newocc = occ - f + t - capsq
+        if !isempty(bishopattacks(newocc, ksq) ∩ bishoplike(us))
+            return true
+        end
+        if !isempty(rookattacks(newocc, ksq) ∩ rooklike(us))
+            return true
+        end
+    end
+
+    # TODO: Castling checks
+
+    return false
+end
+
+
+"""
     pinned(b::Board)
 
 The set of squares containing pinned pieces for the current side to move.
@@ -1294,6 +1432,28 @@ function findpinned(b::Board)::SquareSet
     end
     pinned
 end
+
+
+function discovered_check_candidates(b::Board, c::PieceColor)::SquareSet
+    ksq = kingsquare(b, -c)
+    occ = occupiedsquares(b)
+    ourpieces = pieces(b, c)
+    sliders =
+        (bishopattacksempty(ksq) ∩ bishoplike(b, c)) ∪
+        (rookattacksempty(ksq) ∩ rooklike(b, c))
+    result = SS_EMPTY
+
+    for s ∈ sliders
+        blockers = squaresbetween(s, ksq) ∩ occ
+        if issingleton(blockers) && !isempty(blockers ∪ ourpieces)
+            result = result ∪ blockers
+        end
+    end
+    result
+end
+
+
+discovered_check_candidates(b::Board) = discovered_check_candidates(b, sidetomove(b))
 
 
 """

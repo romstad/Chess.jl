@@ -6,7 +6,8 @@ import Base.+,
 
 export SquareSet
 
-export bishopattacks,
+export adjacentfilesquares,
+    bishopattacks,
     bishopattacksempty,
     filesquares,
     isempty,
@@ -306,6 +307,7 @@ const RANK_SQUARES = SVector(
 
 """
     filesquares(f::SquareFile)
+    filesquares(s::Square)
 
 The set of all squares on the provided file.
 
@@ -314,15 +316,20 @@ The set of all squares on the provided file.
 ```julia-repl
 julia> filesquares(FILE_G) == SS_FILE_G
 true
+
+julia> filesquares(SQ_C5) == SS_FILE_C
+true
 ```
 """
 function filesquares(f::SquareFile)::SquareSet
     FILE_SQUARES[f.val]
 end
 
+filesquares(s::Square) = filesquares(file(s))
 
 """
     ranksquares(r::SquareRank)
+    ranksquares(s::Square)
 
 The set of all squares on the provided rank.
 
@@ -331,11 +338,16 @@ The set of all squares on the provided rank.
 ```julia-repl
 julia> ranksquares(RANK_2) == SS_RANK_2
 true
+
+julia> ranksquares(SQ_C5) == SS_RANK_5
+true
 ```
 """
 function ranksquares(r::SquareRank)::SquareSet
     RANK_SQUARES[r.val]
 end
+
+ranksquares(s::Square) = ranksquares(rank(s))
 
 
 """
@@ -1074,6 +1086,67 @@ SquareSet:
 function squaresbetween(s1::Square, s2::Square)::SquareSet
     @inbounds SQUARES_BETWEEN[s1.val, s2.val]
 end
+
+
+const ADJACENT_FILE_SQUARES = SVector(
+    SS_FILE_B,
+    SS_FILE_A ∪ SS_FILE_C,
+    SS_FILE_B ∪ SS_FILE_D,
+    SS_FILE_C ∪ SS_FILE_E,
+    SS_FILE_D ∪ SS_FILE_F,
+    SS_FILE_E ∪ SS_FILE_G,
+    SS_FILE_F ∪ SS_FILE_H,
+    SS_FILE_G,
+)
+
+"""
+    adjacentfilesquares(f::SquareFile)
+    adjacentfilesquares(s::Square)
+
+The set of all squares on files adjacent to the input file.
+
+# Examples
+
+```julia-repl
+julia> adjacentfilesquares(FILE_F)
+SquareSet:
+ -  -  -  -  #  -  #  -
+ -  -  -  -  #  -  #  -
+ -  -  -  -  #  -  #  -
+ -  -  -  -  #  -  #  -
+ -  -  -  -  #  -  #  -
+ -  -  -  -  #  -  #  -
+ -  -  -  -  #  -  #  -
+ -  -  -  -  #  -  #  -
+
+julia> adjacentfilesquares(FILE_A)
+SquareSet:
+ -  #  -  -  -  -  -  -
+ -  #  -  -  -  -  -  -
+ -  #  -  -  -  -  -  -
+ -  #  -  -  -  -  -  -
+ -  #  -  -  -  -  -  -
+ -  #  -  -  -  -  -  -
+ -  #  -  -  -  -  -  -
+ -  #  -  -  -  -  -  -
+
+julia> adjacentfilesquares(SQ_D4)
+SquareSet:
+ -  -  #  -  #  -  -  -
+ -  -  #  -  #  -  -  -
+ -  -  #  -  #  -  -  -
+ -  -  #  -  #  -  -  -
+ -  -  #  -  #  -  -  -
+ -  -  #  -  #  -  -  -
+ -  -  #  -  #  -  -  -
+ -  -  #  -  #  -  -  -
+```
+"""
+function adjacentfilesquares(f::SquareFile)::SquareSet
+    ADJACENT_FILE_SQUARES[f.val]
+end
+
+adjacentfilesquares(s::Square) = adjacentfilesquares(file(s))
 
 
 function colorpprint(ss::SquareSet)

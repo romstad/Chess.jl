@@ -416,7 +416,7 @@ julia> scorestring(s2)
 "-#5"
 ```
 """
-function scorestring(s::Score; invertsign=false)
+function scorestring(s::Score; invertsign = false)
     value = invertsign ? -s.value : s.value
     if !s.ismate
         format("{1:+.1f}", value * 0.01)

@@ -185,22 +185,26 @@ end
 function format_game(g::Game)
 
     function movestyle(depth)
-	      if depth == 0
-		        "font-weight: bold; color: #000000;"
-	      elseif depth == 1
-		        "font-weight: bold; color: #777777;"
-	      else
-		        "font-weight: bold; color: #bbbbbb;"
-	      end
+        if depth == 0
+            "font-weight: bold; color: #000000;"
+        elseif depth == 1
+            "font-weight: bold; color: #777777;"
+        else
+            "font-weight: bold; color: #bbbbbb;"
+        end
     end
 
     function fmt_move(node, child, movenum, depth, blackmovenum)
         ms = movetosan(node.board, lastmove(child.board))
         space = blackmovenum ? "" : " "
         if sidetomove(node.board) == WHITE
-            @htl("<span style=$(movestyle(depth))>$space$(string(movenum ÷ 2 + 1)). $ms</span>")
+            @htl(
+                "<span style=$(movestyle(depth))>$space$(string(movenum ÷ 2 + 1)). $ms</span>"
+            )
         elseif blackmovenum || isnothing(node.parent)
-            @htl("<span style=$(movestyle(depth))>$space$(string(movenum ÷ 2 + 1))... $ms</span>")
+            @htl(
+                "<span style=$(movestyle(depth))>$space$(string(movenum ÷ 2 + 1))... $ms</span>"
+            )
         else
             @htl("<span style=$(movestyle(depth))>$space$ms</span>")
         end
@@ -246,8 +250,9 @@ function format_game(g::Game)
             @htl("")
         else
             vars = [
-                @htl(" ($(fmt_child(c, movenum, true, depth+1))$(fmt_var(c, movenum+1, depth+1)))")
-                for c in node.children[2:end]
+                @htl(
+                    " ($(fmt_child(c, movenum, true, depth+1))$(fmt_var(c, movenum+1, depth+1)))"
+                ) for c in node.children[2:end]
             ]
             @htl("$vars")
         end
