@@ -141,7 +141,7 @@ can still castle in either direction, the third component would be `KQkq`. In a
 position where white can only castle queenside and black only kingside, it would
 be `Qk`.
 
-The fourth coponent (`-` in the example) is the square on which an en passant
+The fourth component (`-` in the example) is the square on which an en passant
 capture is possible. The dash means that no en passant capture is possible in
 our case. If an en passant capture had been possible on e3, the fourth component
 would have been `e3`.
@@ -157,10 +157,24 @@ which takes two parameters: A chess board and a move. The move can be either a
 value of the `Move` type (you'll learn about this type later in this tutorial)
 or a string representing a move in UCI or SAN notation.
 
-Here's an example of using `domove` to make a move given by a string in short algebraic notation (SAN):
+Here's an example of using `domove` to make a move given by a string in short
+algebraic notation (SAN):
 
 ```julia-repl
+julia> b = startboard();
+
+julia> domove(b, "d4")
+Board (rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq -):
+ r  n  b  q  k  b  n  r
+ p  p  p  p  p  p  p  p
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  -  P  -  -  -  -
+ -  -  -  -  -  -  -  -
+ P  P  P  -  P  P  P  P
+ R  N  B  Q  K  B  N  R
 ```
+
 Given a chess board, you will usually want to modify the board by making some
 moves. The most straightforward way to do this is with the `domove` function,
 which takes two parameters: A chess board and a move. The move can be either a
