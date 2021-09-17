@@ -12,7 +12,7 @@ it, follow these steps:
 3. From the Julia REPL, do:
 
 ```julia-repl
-julia> using PlutoUI
+julia> using Pluto
 
 julia> Pluto.run()
 ```
