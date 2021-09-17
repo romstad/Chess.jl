@@ -1260,10 +1260,10 @@ function moveischeck(b::Board, m::Move)::Bool
     if moveisep(b, m)
         capsq = Square(file(t), rank(f))
         newocc = occ - f + t - capsq
-        if !isempty(bishopattacks(newocc, ksq) ∩ bishoplike(us))
+        if !isempty(bishopattacks(newocc, ksq) ∩ bishoplike(b, us))
             return true
         end
-        if !isempty(rookattacks(newocc, ksq) ∩ rooklike(us))
+        if !isempty(rookattacks(newocc, ksq) ∩ rooklike(b, us))
             return true
         end
     end
