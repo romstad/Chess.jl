@@ -3438,11 +3438,15 @@ function fromfen(fen::String)::Union{Board,Nothing}
     end
     result.key ⊻= zobcastle(result.castlerights)
 
+    # En passant square
     comp = get(components, 4, "-")
     s = squarefromstring(String(comp))
     if !isnothing(s)
-        result.epsq = s.val
-        result.key ⊻= zobep(s)
+        us = sidetomove(result)
+        if !isempty(pawnattacks(-us, s) ∩ pawns(result, us))
+            result.epsq = s.val
+            result.key ⊻= zobep(s)
+        end
     end
 
     initboard!(result)
