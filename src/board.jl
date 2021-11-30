@@ -3448,6 +3448,16 @@ function fromfen(fen::String)::Union{Board,Nothing}
             result.key ⊻= zobep(s)
         end
     end
+    
+    # half move clock
+    comp = get(components, 5, "0")
+    try
+        r50 = parse(Int, comp)
+        assert(r50 ≥ 0)
+        result.r50 = r50
+    catch e
+        throw(ArgumentError("Invalid half move clock."))
+    end
 
     initboard!(result)
 
