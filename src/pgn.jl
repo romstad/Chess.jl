@@ -415,13 +415,18 @@ end
 
 
 """
-    readgame(p::PGNReader; annotations=false)
+    readgame(p::PGNReader; annotations=false, movelist::MoveList=MoveList(200)))
 
 Attempts to parse a PGN game and use it to create a `Game` or a `SimpleGame`.
 
 If the optional parameter `annotations` is `true`, the return value will be a
 `Game` containing all comments, variations and numeric annotation glyphs in the
 PGN. Otherwise, it will be a `SimpleGame` with only the game moves.
+
+An optional, pre-allocated `MoveList` can be supplied, which will be passed to 
+all move generation functions (`movefromsan`, `moves`, etc.) in order to save
+space. For long games, this provides a large speed-up and space reduction. It 
+is up to the caller to ensure that `movelist` has sufficient capacity.
 
 This function assumes that the `PGNReader` is pointed at the beginning of a
 game. If you are not sure this is the case, call `gotonextgame!` on the
@@ -430,7 +435,7 @@ game. If you are not sure this is the case, call `gotonextgame!` on the
 If parsing fails or the notation contains illegal or ambiguous moves, the
 function raises a `PGNException`.
 """
-function readgame(p::PGNReader; annotations = false)
+function readgame(p::PGNReader; annotations = false, movelist::MoveList = MoveList(200))
     headers = readheaders(p)
     if isnothing(headers.fen)
         result = annotations ? Game() : SimpleGame()
@@ -471,7 +476,7 @@ function readgame(p::PGNReader; annotations = false)
         elseif t.ttype == symbol && !nullmoveseen
             # Try to parse the symbol as a move in short algebraic notation,
             # and add it to the game if successful
-            m = movefromsan(board(result), t.value)
+            m = movefromsan(board(result), t.value, movelist)
             if !isnothing(m)
                 if annotations
                     addmove!(result, m)
@@ -504,7 +509,7 @@ end
 
 
 """
-    gamesinfile(filename::String; annotations=false, skip=0)
+    gamesinfile(filename::String; annotations=false, skip=0, movelist::MoveList=MoveList(200))
 
 Creates a `Channel` of `Game`/`SimpleGame` objects read from the PGN file with
 the provided file name.
@@ -514,10 +519,15 @@ channel of `Game` objects containing all comments, variations and numeric
 annotation glyphs in the PGN. Otherwise, it will consist of `SimpleGame` objects
 with only the game moves.
 
+An optional, pre-allocated `MoveList` can be supplied, which will be passed to 
+all move generation functions (`movefromsan`, `moves`, etc.) in order to save
+space. For long games/files, this provides a large speed-up and space reduction. 
+It is up to the caller to ensure that `movelist` has sufficient capacity.
+
 The optional parameter `skip` makes the function skip the first `skip` games of
 the file.
 """
-function gamesinfile(filename::String; annotations = false, skip = 0)
+function gamesinfile(filename::String; annotations = false, skip = 0, movelist::MoveList = MoveList(200))
     function createchannel(ch::Channel)
         open(filename, "r") do io
             pgnr = PGNReader(io)
@@ -532,7 +542,7 @@ function gamesinfile(filename::String; annotations = false, skip = 0)
             end
 
             while !eof(pgnr.io)
-                put!(ch, readgame(pgnr, annotations = annotations))
+                put!(ch, readgame(pgnr, annotations = annotations, movelist))
                 gotonextgame!(pgnr)
             end
         end
