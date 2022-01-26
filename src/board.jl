@@ -1377,25 +1377,25 @@ function updatecastlerights!(b::Board, f::Square, t::Square)
     crights = b.castlerights
     if t == kingsquare(b, WHITE)
         b.castlerights &= ~3
-    elseif t == kingsquare(b, BLACK)
+    end
+    if t == kingsquare(b, BLACK)
         b.castlerights &= ~12
-    else
-        if f == Square(kingsidecastlefile(b), RANK_1) ||
-           t == Square(kingsidecastlefile(b), RANK_1)
-            b.castlerights &= ~1
-        end
-        if f == Square(queensidecastlefile(b), RANK_1) ||
-           t == Square(queensidecastlefile(b), RANK_1)
-            b.castlerights &= ~2
-        end
-        if f == Square(kingsidecastlefile(b), RANK_8) ||
-           t == Square(kingsidecastlefile(b), RANK_8)
-            b.castlerights &= ~4
-        end
-        if f == Square(queensidecastlefile(b), RANK_8) ||
-           t == Square(queensidecastlefile(b), RANK_8)
-            b.castlerights &= ~8
-        end
+    end
+    if f == Square(kingsidecastlefile(b), RANK_1) ||
+        t == Square(kingsidecastlefile(b), RANK_1)
+        b.castlerights &= ~1
+    end
+    if f == Square(queensidecastlefile(b), RANK_1) ||
+        t == Square(queensidecastlefile(b), RANK_1)
+        b.castlerights &= ~2
+    end
+    if f == Square(kingsidecastlefile(b), RANK_8) ||
+        t == Square(kingsidecastlefile(b), RANK_8)
+        b.castlerights &= ~4
+    end
+    if f == Square(queensidecastlefile(b), RANK_8) ||
+        t == Square(queensidecastlefile(b), RANK_8)
+        b.castlerights &= ~8
     end
     b.key ⊻= zobcastle(crights)
     b.key ⊻= zobcastle(b.castlerights)
