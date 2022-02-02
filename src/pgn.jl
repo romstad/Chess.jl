@@ -4,7 +4,7 @@ using ..Chess
 
 export PGNException, PGNReader
 
-export gamesinfile, gotonextgame!, gamefromstring, gametopgn, readgame
+export gamesinfile, gamesfromstream, gotonextgame!, gamefromstring, gametopgn, readgame
 
 struct PGNException <: Exception
     message::String
@@ -527,24 +527,43 @@ It is up to the caller to ensure that `movelist` has sufficient capacity.
 The optional parameter `skip` makes the function skip the first `skip` games of
 the file.
 """
-function gamesinfile(filename::String; annotations = false, skip = 0, movelist::MoveList = MoveList(200))
+gamesinfile(filename::String; annotations = false, skip = 0, movelist::MoveList = MoveList(200)) = gamesfromstream(open(filename, "r"), annotations = annotations, skip = skip, movelist = MoveList(200))
+
+"""
+    gamesfromstream(stream::IO; annotations=false, skip=0, movelist::MoveList=MoveList(200))
+
+Creates a `Channel` of `Game`/`SimpleGame` objects read from a stream. For reading
+from a file, see `gamesinfile`.
+
+If the optional parameter `annotations` is `true`, the return value will be a
+channel of `Game` objects containing all comments, variations and numeric
+annotation glyphs in the PGN. Otherwise, it will consist of `SimpleGame` objects
+with only the game moves.
+          
+An optional, pre-allocated `MoveList` can be supplied, which will be passed to 
+all move generation functions (`movefromsan`, `moves`, etc.) in order to save
+space. For long games/files, this provides a large speed-up and space reduction. 
+It is up to the caller to ensure that `movelist` has sufficient capacity.
+
+The optional parameter `skip` makes the function skip the first `skip` games of
+the file.
+"""
+function gamesfromstream(stream::IO; annotations = false, skip = 0, movelist::Movelist = MoveList(200))
     function createchannel(ch::Channel)
-        open(filename, "r") do io
-            pgnr = PGNReader(io)
-
-            if skip > 0
-                i = 0
-                while !eof(pgnr.io) && i < skip
-                    skipgame(pgnr)
-                    gotonextgame!(pgnr)
-                    i += 1
-                end
-            end
-
-            while !eof(pgnr.io)
-                put!(ch, readgame(pgnr, annotations = annotations, movelist))
+        pgnr = PGNReader(stream)
+        
+        if skip > 0
+            i = 0
+            while !eof(pgnr.io) && i < skip
+                skipgame(pgnr)
                 gotonextgame!(pgnr)
+                i += 1
             end
+        end
+
+        while !eof(pgnr.io)
+            put!(ch, readgame(pgnr, annotations = annotations, movelist = movelist))
+            gotonextgame!(pgnr)
         end
     end
     Channel(createchannel)
@@ -552,19 +571,25 @@ end
 
 
 """
-    gamefromstring(s::String; annotations=false)
+    gamefromstring(s::String; annotations=false, movelist::MoveList=MoveList(200))
 
 Attempts to create a `Game` or `SimpleGame` object from the provided PGN string.
 
 If the optional parameter `annotations` is `true`, the return value will be a
 `Game` containing all comments, variations and numeric annotation glyphs in the
 PGN. Otherwise, it will be a `SimpleGame` with only the game moves.
+            
+An optional, pre-allocated `MoveList` can be supplied, which will be passed to 
+all move generation functions (`movefromsan`, `moves`, etc.) in order to save
+space. If reading many games, reusing a movelist can provide a large speed-up 
+and space reduction. It is up to the caller to ensure that `movelist` has 
+sufficient capacity.
 
 If the string does not parse as valid PGN, or if the notation contains illegal
-or ambiguous moves, the function raises a `PGNException`
+or ambiguous moves, the function raises a `PGNException`.
 """
-function gamefromstring(s::String; annotations = false)
-    readgame(PGNReader(IOBuffer(s)), annotations = annotations)
+function gamefromstring(s::String; annotations = false, movelist::MoveList=MoveList(200))
+    readgame(PGNReader(IOBuffer(s)), annotations = annotations, movelist = movelist)
 end
 
 
