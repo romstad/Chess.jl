@@ -4,7 +4,7 @@ using ..Chess
 
 export PGNException, PGNReader
 
-export gamesinfile, gotonextgame!, gamefromstring, gametopgn, readgame
+export gamesinfile, gamesfromstream, gotonextgame!, gamefromstring, gametopgn, readgame
 
 struct PGNException <: Exception
     message::String
