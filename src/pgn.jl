@@ -517,24 +517,38 @@ with only the game moves.
 The optional parameter `skip` makes the function skip the first `skip` games of
 the file.
 """
-function gamesinfile(filename::String; annotations = false, skip = 0)
+gamesinfile(filename::String; annotations = false, skip = 0) = gamesfromstream(open(filename, "r"), annotations = annotations, skip = skip)
+
+"""
+    gamesfromstream(stream::IO; annotations=false, skip=0)
+
+Creates a `Channel` of `Game`/`SimpleGame` objects read from a stream. For reading
+from a file, see `gamesinfile`.
+
+If the optional parameter `annotations` is `true`, the return value will be a
+channel of `Game` objects containing all comments, variations and numeric
+annotation glyphs in the PGN. Otherwise, it will consist of `SimpleGame` objects
+with only the game moves.
+
+The optional parameter `skip` makes the function skip the first `skip` games of
+the file.
+"""
+function gamesfromstream(stream::IO; annotations = false, skip = 0)
     function createchannel(ch::Channel)
-        open(filename, "r") do io
-            pgnr = PGNReader(io)
+        pgnr = PGNReader(stream)
 
-            if skip > 0
-                i = 0
-                while !eof(pgnr.io) && i < skip
-                    skipgame(pgnr)
-                    gotonextgame!(pgnr)
-                    i += 1
-                end
-            end
-
-            while !eof(pgnr.io)
-                put!(ch, readgame(pgnr, annotations = annotations))
+        if skip > 0
+            i = 0
+            while !eof(pgnr.io) && i < skip
+                skipgame(pgnr)
                 gotonextgame!(pgnr)
+                i += 1
             end
+        end
+
+        while !eof(pgnr.io)
+            put!(ch, readgame(pgnr, annotations = annotations))
+            gotonextgame!(pgnr)
         end
     end
     Channel(createchannel)
