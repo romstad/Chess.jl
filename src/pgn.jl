@@ -548,7 +548,7 @@ It is up to the caller to ensure that `movelist` has sufficient capacity.
 The optional parameter `skip` makes the function skip the first `skip` games of
 the file.
 """
-function gamesfromstream(stream::IO; annotations = false, skip = 0, movelist::Movelist = MoveList(200))
+function gamesfromstream(stream::IO; annotations = false, skip = 0, movelist::MoveList = MoveList(200))
     function createchannel(ch::Channel)
         pgnr = PGNReader(stream)
         
