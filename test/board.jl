@@ -349,3 +349,14 @@ begin
     b = fromfen("r3k2r/8/8/8/Pp6/8/8/4K3 b kq a3")
     @test fen(decompress(compress(b))) == fen(b)
 end
+
+# test for issue #26
+begin
+    b = fromfen("6Q1/8/5Q2/2p1B3/1bPpP3/1P3P2/PkPN2B1/R3K3 b Q - 0 48")
+    @test !cancastlekingside(b, WHITE)
+    @test cancastlequeenside(b, WHITE)
+
+    domove!(b, "Kxa1")
+    @test !cancastlekingside(b, WHITE)
+    @test !cancastlequeenside(b, WHITE)
+end
