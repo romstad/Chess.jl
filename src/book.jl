@@ -381,7 +381,7 @@ a move using `pickbookmove`). These are:
   rating. The base score is multiplied by
   `max(1.0, 0.01 * highelofactor * (2300 - elo))`
 - `yearlydecay`: Controls exponential yearly reduction of scores. If a game was
-  played `n` years ago, all scores are multiplied by `n^yearlydecay`.
+  played `n` years ago, all scores are multiplied by `yearlydecay^n`.
 - `maxply`: Maximum depth of the opening tree. If `maxply` equals 60 (the
   default), no moves after move 30 are included in the opening tree.
 - `minelo`: Minimum Elo for book moves. Moves played by players below this
