@@ -2,13 +2,13 @@ export movefromsan, movetosan, variationtosan
 
 
 function islongcastle(san)
-    (length(san) ≥ 5 && (san[1:5] == "O-O-O" || san[1:5] == "0-0-0")) ||
+    @views (length(san) ≥ 5 && (san[1:5] == "O-O-O" || san[1:5] == "0-0-0")) ||
         (length(san) ≥ 3 && (san[1:3] == "OOO" || san[1:3] == "000"))
 end
 
 
 function isshortcastle(san)
-    (length(san) ≥ 3 && (san[1:3] == "O-O" || san[1:3] == "0-0")) ||
+    @views (length(san) ≥ 3 && (san[1:3] == "O-O" || san[1:3] == "0-0")) ||
         (length(san) ≥ 2 && (san[1:2] == "OO" || san[1:2] == "00"))
 end
 
@@ -81,8 +81,7 @@ function movefromsan(b::Board, san::String)::Union{Move,Nothing}
 
     # Destination square
     if left < right
-        #t = squarefromstring(s[end - 1:end])
-        t = squarefromstring(s[right-1:right])
+        @views t = squarefromstring(s[right-1:right])
         right -= 2
     else
         return nothing

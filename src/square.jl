@@ -360,7 +360,7 @@ end
 
 
 """
-    squarefromstring(s::String)
+    squarefromstring(s::AbstractString)
 
 Tries to convert a string to a `Square`.
 
@@ -387,7 +387,7 @@ julia> squarefromstring("g1f3")
 SQ_G1
 ```
 """
-function squarefromstring(s::String)::Union{Square,Nothing}
+function squarefromstring(s::AbstractString)::Union{Square,Nothing}
     if length(s) < 2
         nothing
     else
