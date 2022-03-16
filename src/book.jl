@@ -666,7 +666,7 @@ function pickbookmove(
     b::Board;
     bookfile = nothing,
     minscore = 0,
-    mingamecount = 1,
+    mingamecount = 0,
 )::Union{Move,Nothing}
     entries = filter(
         e -> e.wins + e.draws + e.losses >= mingamecount && e.score >= minscore,
