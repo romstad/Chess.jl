@@ -19,15 +19,17 @@ A type for reading PGN data from a stream.
 mutable struct PGNReader
     io::IO
     unreadchar::Union{Char,Nothing}
+    buff::IOBuffer
 end
 
+resetbuff(p::PGNReader) = truncate(p.buff, 0)
 
 """
     PGNReader(io::IO)
 
 Initializes a `PGNReader` from an `IO` object.
 """
-PGNReader(io::IO) = PGNReader(io, nothing)
+PGNReader(io::IO) = PGNReader(io, nothing, IOBuffer())
 
 
 @enum TokenType begin
@@ -113,7 +115,9 @@ end
 function readstring(p::PGNReader)::Token
     c = readchar(p)
     @assert c == '"'
-    result = IOBuffer()
+
+    resetbuff(p)
+    result = p.buff
 
     while true
         if eof(p.io)
@@ -144,7 +148,10 @@ function readsymbol(p::PGNReader)::Token
     @assert issymbolstart(c)
 
     tt = isdigit(c) ? integer : symbol
-    result = IOBuffer()
+    
+    resetbuff(p)
+    result = p.buff
+
     write(result, c)
 
     while !eof(p.io)
@@ -221,7 +228,10 @@ end
 function readnag(p::PGNReader)::Token
     c = readchar(p)
     @assert c == '$'
-    result = IOBuffer()
+
+    resetbuff(p)
+    result = p.buff
+
     c = readchar(p)
     while isdigit(c)
         write(result, c)
@@ -238,7 +248,10 @@ end
 function readfakenag(p::PGNReader)::Token
     c = readchar(p)
     @assert c == '!' || c == '?'
-    result = IOBuffer()
+
+    resetbuff(p)
+    result = p.buff
+
     write(result, c)
     c = readchar(p)
     while c == '!' || c == '?'
@@ -269,7 +282,10 @@ end
 function readcomment(p::PGNReader)::Token
     c = readchar(p)
     @assert c == '{'
-    result = IOBuffer()
+    
+    resetbuff(p)
+    result = p.buff
+
     c = readchar(p)
     while c ≠ '}'
         write(result, c)
@@ -285,7 +301,10 @@ end
 function readlinecomment(p::PGNReader)::Token
     c = readchar(p)
     @assert c == ';'
-    result = IOBuffer()
+
+    resetbuff(p)
+    result = p.buff
+
     c = readchar(p)
     while c ≠ '\n'
         write(result, c)
