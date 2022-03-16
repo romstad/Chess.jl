@@ -172,7 +172,8 @@ end
 """
     SimpleGame(startboard::Board=startboard())
 
-Constructor that creates a `SimpleGame` from the provided starting position.
+Constructor that creates a `SimpleGame` from the provided starting position. If
+no board is provided, the default `startboard()` is used.
 """
 function SimpleGame(startboard::Board = startboard())
     result = SimpleGame(
@@ -201,6 +202,15 @@ FEN string.
 function SimpleGame(startfen::String)
     SimpleGame(fromfen(startfen))
 end
+
+
+"""
+    SimpleGame(s::SimpleGame)
+
+Constructor that creates a (deep) copy of a given `SimpleGame`. The returned
+game is rewound to the beginning.
+"""
+SimpleGame(s::SimpleGame) = tobeginning!(deepcopy(s))
 
 
 """
@@ -357,11 +367,12 @@ end
 
 
 """
-    Game(startboard::Board)
+    Game(startboard::Board=startboard())
 
-Constructor that creates a `Game` from the provided starting position.
+Constructor that creates a `Game` from the provided starting position. If no
+board is provided, the default `startboard()` is used.
 """
-function Game(startboard::Board)
+function Game(startboard::Board = startboard())
     root = GameNode(startboard, 1)
     result = Game(GameHeaders(), root, root, Dict(root.id => root), 1)
     if fen(startboard) ≠ START_FEN
@@ -384,16 +395,54 @@ function Game(startfen::String)
     Game(fromfen(startfen))
 end
 
+"""
+    Game(g::Game)
+
+Constructor that creates a (deep) copy of a given `Game`. The returned game is
+rewound to the beginning.
+"""
+Game(g::Game) = tobeginning!(deepcopy(g))
 
 """
-    Game()
+    Game(s::SimpleGame)
 
-Constructor that creates a new `Game` from the regular starting position.
+Constructor that creates a `Game` from a `SimpleGame`. The `SimpleGame` headers
+are (deep) copied, and no attempt to verify that the `othertags` headers are
+valid.
 """
-function Game()
-    Game(startboard())
+function Game(s::SimpleGame)
+    g = Game(s.startboard)
+    g.headers = deepcopy(s.headers)
+    for h in s.history
+        if !isnothing(h.move)
+            domove!(g, h.move)
+        else
+            break
+        end
+    end
+    tobeginning!(g)
 end
 
+
+"""
+    SimpleGame(g::Game)
+
+Constructor that creates a `SimpleGame` from a `Game`. Only the main line of
+the `Game` is recorded. The `Game` headers are (deep) copied, and no attempt
+to verify that the `othertags` headers are valid.
+"""
+function SimpleGame(g::Game)
+    s = SimpleGame(g.root.board)
+    s.headers = deepcopy(g.headers)
+
+    cur = g.root
+    while !isempty(cur.children)
+        domove!(s, lastmove(first(cur.children).board))
+        cur = first(cur.children)
+    end
+
+    tobeginning!(s)
+end
 
 """
     headervalue(ghs::GameHeaders, name::String)
