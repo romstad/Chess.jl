@@ -69,12 +69,14 @@ end
 
 
 function issymbolstart(c::Char)::Bool
-    occursin(c, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-")
+    ('a' <= c <= 'z') || ('A' <= c <= 'Z') || ('0' <= c <= '9') || (c == '-')
 end
 
 
 function issymbolcontinuation(c::Char)::Bool
-    occursin(c, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_+#=:-/")
+    (('a' <= c <= 'z') || ('A' <= c <= 'Z') || ('0' <= c <= '9') || (c == '-')
+    || (c == '_') || (c == '+') || (c == '#') || (c == '=') || (c == ':')
+    || (c == '/'))
 end
 
 
