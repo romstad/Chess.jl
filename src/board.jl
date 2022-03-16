@@ -80,6 +80,84 @@ export attacksto,
     @startboard
 
 
+
+"""
+    MoveList
+
+An iterable type containing a a list of moves, as produced by legal move
+generators.
+"""
+mutable struct MoveList <: AbstractArray{Move,1}
+    moves::Array{Move,1}
+    count::Int
+end
+
+
+function Base.iterate(list::MoveList, state = 1)
+    if state > list.count
+        nothing
+    else
+        (list.moves[state], state + 1)
+    end
+end
+
+
+function Base.length(list::MoveList)
+    list.count
+end
+
+
+function Base.eltype(::Type{MoveList})
+    Move
+end
+
+
+function Base.size(list::MoveList)
+    (list.count,)
+end
+
+
+function Base.IndexStyle(::Type{<:MoveList})
+    IndexLinear()
+end
+
+
+function Base.getindex(list::MoveList, i::Int)
+    list.moves[i]
+end
+
+
+function MoveList(capacity::Int)
+    MoveList(Array{Move}(undef, capacity), 0)
+end
+
+
+"""
+    push!(list::MoveList, m::Move)
+
+Add a new move to the move list.
+"""
+function push!(list::MoveList, m::Move)
+    list.count += 1
+    list.moves[list.count] = m
+end
+
+
+"""
+    recycle!(list::MoveList)
+
+Recycle the move list in order to re-use for generating new moves.
+
+This is useful when you want to avoid allocating too much heap memory. If you
+have a `MoveList` lying around that you no longer need, consider reusing it
+instead of creating a new one the next time you need to generate some moves.
+"""
+function recycle!(list::MoveList)
+    list.count = 0
+end
+
+
+
 """
     Board
 
@@ -1033,6 +1111,7 @@ end
 """
     see(b::Board, m::Move)::Int
     see(b::Board, m::String)::Int
+    see(b::Board, m::String, movelist::MoveList)::Int
 
 Static exchange evaluator.
 
@@ -1040,6 +1119,12 @@ This function estimates the material gain/loss of a move without doing any
 search, just looking at the attackers and defenders of the destination square,
 including X-ray attackers and defenders. It does not consider pins, overloaded
 pieces, etc., and is therefore only reliable as a very rough guess.
+
+In the `m::String`, `see` internally calls `movesfromsan`, which can be 
+supplied  a pre-allocated `MoveList`in order to save time/space due to 
+unnecessary allocations. If provided, the `movelist` parameter will be 
+passed to `moves`. It is up to the caller to ensure that `movelist` has 
+sufficient capacity.
 
 # Examples
 
@@ -1070,6 +1155,23 @@ Board (7q/4k1b1/3p4/4n3/8/2BK1N2/4R3/4R3 w - -):
  -  -  -  -  R  -  -  -
 
 julia> see(b, "Nxe5")
+1
+
+julia> b = fromfen("7q/4k1b1/3p4/4n3/8/2BK1N2/4R3/4R3 w - - 0 1")
+Board (7q/4k1b1/3p4/4n3/8/2BK1N2/4R3/4R3 w - -):
+ -  -  -  -  -  -  -  q
+ -  -  -  -  k  -  b  -
+ -  -  -  p  -  -  -  -
+ -  -  -  -  n  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  B  K  -  N  -  -
+ -  -  -  -  R  -  -  -
+ -  -  -  -  R  -  -  -
+
+julia> movelist = MoveList(200)
+0-element MoveList
+
+julia> see(b, "Nxe5", movelist)
 1
 ```
 """
@@ -1133,10 +1235,11 @@ function see(b::Board, m::Move)::Int
     swaplist[1]
 end
 
-function see(b::Board, m::String)::Int
+see(b::Board, m::String)::Int = see(b, m, MoveList(200))
+function see(b::Board, m::String, movelist::MoveList)::Int
     mv = movefromstring(m)
     if isnothing(mv)
-        mv = movefromsan(b, m)
+        mv = movefromsan(b, m, movelist)
     end
     if isnothing(mv)
         throw("Illegal or ambiguous move: $m")
@@ -1780,7 +1883,7 @@ end
 
 """
     domoves!(b::Board, moves::Vararg{Move})
-    domoves!(b::Board, moves::Vararg{String})
+    domoves!(b::Board, moves::Vararg{String}; movelist::MoveList = MoveList(200))
 
 Destructively modify the board b by making a sequence of moves.
 
@@ -1790,6 +1893,12 @@ as UCI moves first, and as SAN moves if UCI move parsing fails.
 It's the caller's responsibility to make sure all moves are legal. If a
 plain move is illegal, the consequences are undefined. If a move string cannot
 be parsed as an unambiguous legal move, the function throws an exception.
+
+In the `move::Vararg{String}` case, `movefromsan` is called. This can be 
+supplied a pre-allocated `MoveList` in order to save time/space due to 
+unnecessary allocations. If provided, the `movelist` parameter will be passed 
+to `movefromsan`. It is up to the caller to ensure that `movelist` has sufficient 
+capacity.
 
 There is also a non-destructive version of this version, named `domoves`.
 
@@ -1821,12 +1930,13 @@ function domoves!(b::Board, moves::Vararg{Move})::Board
         domove!(b, m)
     end
     b
-end,
-function domoves!(b::Board, moves::Vararg{String})::Board
+end
+
+function domoves!(b::Board, moves::Vararg{String}; movelist::MoveList=MoveList(200))::Board
     for m ∈ moves
         mv = movefromstring(m)
         if isnothing(mv)
-            mv = movefromsan(b, m)
+            mv = movefromsan(b, m, movelist)
         end
         if isnothing(mv)
             throw("Illegal or ambiguous move: $m")
@@ -1839,7 +1949,7 @@ end
 
 """
     domoves(b::Board, moves::Vararg{Move})
-    domoves(b::Board, moves::Vararg{String})
+    domoves(b::Board, moves::Vararg{String}; movelist::MoveList = MoveList(200))
 
 Return the board achieved from a starting board `b` by making a sequence of
 moves.
@@ -1853,6 +1963,12 @@ It's the caller's responsibility to make sure all moves are legal. If a
 plain move is illegal, the consequences are undefined. If a move string cannot
 be parsed as an unambiguous legal move, the function throws an exception.
 
+In the `move::Vararg{String}` case, `movefromsan` is called. This can be 
+supplied a pre-allocated `MoveList` in order to save time/space due to 
+unnecessary allocations. If provided, the `movelist` parameter will be passed 
+to `movefromsan`. It is up to the caller to ensure that `movelist` has sufficient 
+capacity.
+
 There is also a destructive version of this version, named `domoves!`
 
 # Examples
@@ -1860,6 +1976,20 @@ There is also a destructive version of this version, named `domoves!`
 julia> b = startboard();
 
 julia> domoves(b, "d4", "Nf6", "c4", "e6", "Nc3", "Bb4")
+Board (rnbqk2r/pppp1ppp/4pn2/8/1bPP4/2N5/PP2PPPP/R1BQKBNR w KQkq -):
+ r  n  b  q  k  -  -  r
+ p  p  p  p  -  p  p  p
+ -  -  -  -  p  n  -  -
+ -  -  -  -  -  -  -  -
+ -  b  P  P  -  -  -  -
+ -  -  N  -  -  -  -  -
+ P  P  -  -  P  P  P  P
+ R  -  B  Q  K  B  N  R
+
+julia> movelist = MoveList(200)
+0-element MoveList
+
+julia> domoves(b, "d4", "Nf6", "c4", "e6", "Nc3", "Bb4"; movelist=movelist)
 Board (rnbqk2r/pppp1ppp/4pn2/8/1bPP4/2N5/PP2PPPP/R1BQKBNR w KQkq -):
  r  n  b  q  k  -  -  r
  p  p  p  p  -  p  p  p
@@ -1880,9 +2010,9 @@ function domoves(b::Board, moves::Vararg{Move})::Board
     b
 end
 
-function domoves(b::Board, moves::Vararg{String})::Board
+function domoves(b::Board, moves::Vararg{String}; movelist::MoveList=MoveList(200))::Board
     b = deepcopy(b)
-    domoves!(b, moves...)
+    domoves!(b, moves...; movelist)
 end
 
 
@@ -1963,83 +2093,6 @@ function donullmove!(b::Board)::UndoInfo
 
     result
 end
-
-
-"""
-    MoveList
-
-An iterable type containing a a list of moves, as produced by legal move
-generators.
-"""
-mutable struct MoveList <: AbstractArray{Move,1}
-    moves::Array{Move,1}
-    count::Int
-end
-
-
-function Base.iterate(list::MoveList, state = 1)
-    if state > list.count
-        nothing
-    else
-        (list.moves[state], state + 1)
-    end
-end
-
-
-function Base.length(list::MoveList)
-    list.count
-end
-
-
-function Base.eltype(::Type{MoveList})
-    Move
-end
-
-
-function Base.size(list::MoveList)
-    (list.count,)
-end
-
-
-function Base.IndexStyle(::Type{<:MoveList})
-    IndexLinear()
-end
-
-
-function Base.getindex(list::MoveList, i::Int)
-    list.moves[i]
-end
-
-
-function MoveList(capacity::Int)
-    MoveList(Array{Move}(undef, capacity), 0)
-end
-
-
-"""
-    push!(list::MoveList, m::Move)
-
-Add a new move to the move list.
-"""
-function push!(list::MoveList, m::Move)
-    list.count += 1
-    list.moves[list.count] = m
-end
-
-
-"""
-    recycle!(list::MoveList)
-
-Recycle the move list in order to re-use for generating new moves.
-
-This is useful when you want to avoid allocating too much heap memory. If you
-have a `MoveList` lying around that you no longer need, consider reusing it
-instead of creating a new one the next time you need to generate some moves.
-"""
-function recycle!(list::MoveList)
-    list.count = 0
-end
-
 
 function genpawnpushes(b::Board, list::MoveList)
     us = sidetomove(b)

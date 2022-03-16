@@ -350,6 +350,14 @@ begin
     @test fen(decompress(compress(b))) == fen(b)
 end
 
+begin
+    movelist = MoveList(200)
+    b = startboard()
+    new_board = domoves(b, "d4", "Nf6", "c4", "e6", "Nc3", "Bb4")
+    new_board_pre = domoves(b, "d4", "Nf6", "c4", "e6", "Nc3", "Bb4", movelist=movelist)
+    @test fen(new_board) == fen(new_board_pre)
+end
+
 # test for issue #26
 begin
     b = fromfen("6Q1/8/5Q2/2p1B3/1bPpP3/1P3P2/PkPN2B1/R3K3 b Q - 0 48")
