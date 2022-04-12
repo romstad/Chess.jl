@@ -77,6 +77,9 @@ export attacksto,
     startboard,
     startboard960,
     undomove!,
+    @addmoves!,
+    @domoves,
+    @domoves!,
     @startboard
 
 
@@ -4099,5 +4102,71 @@ macro startboard(moves...)
         local b = startboard()
         $(map(m -> :(domove!(b, $(string(m)))), moves)...)
         b
+    end
+end
+
+
+"""
+    @domoves(board, moves...)
+
+A macro for updating `board` with a sequence of moves, returning a new board.
+
+Castling moves must be indicated without a hyphen (i.e. "OO" or "OOO") in order
+to satisfy Julia's parser.
+
+# Examples
+```julia-repl
+julia> b = @startboard d4 d5;
+
+julia> @domoves b c4 e6
+Board (rnbqkbnr/ppp2ppp/4p3/3p4/2PP4/8/PP2PPPP/RNBQKBNR w KQkq -):
+ r  n  b  q  k  b  n  r
+ p  p  p  -  -  p  p  p
+ -  -  -  -  p  -  -  -
+ -  -  -  p  -  -  -  -
+ -  -  P  P  -  -  -  -
+ -  -  -  -  -  -  -  -
+ P  P  -  -  P  P  P  P
+ R  N  B  Q  K  B  N  R
+```
+"""
+macro domoves(board::Board, moves...)
+    quote
+        local b = deepcopy($(esc(board)))
+        $(map(m -> :(domove!(b, $(string(m)))), moves)...)
+        b
+    end
+end
+
+
+"""
+    @domoves!(board, moves...)
+
+A macro for destructively updating `board` with a sequence of moves.
+
+Castling moves must be indicated without a hyphen (i.e. "OO" or "OOO") in order
+to satisfy Julia's parser.
+
+# Examples
+```
+julia> b = @startboard Nf3 Nf6;
+
+julia> @domoves b g3 g6;
+
+julia> b
+Board (rnbqkb1r/pppppppp/5n2/8/8/5N2/PPPPPPPP/RNBQKB1R w KQkq -):
+ r  n  b  q  k  b  -  r
+ p  p  p  p  p  p  p  p
+ -  -  -  -  -  n  -  -
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  -  -  -
+ -  -  -  -  -  N  -  -
+ P  P  P  P  P  P  P  P
+ R  N  B  Q  K  B  -  R
+```
+"""
+macro domoves!(board, moves...)
+    quote
+        $(map(m -> :(domove!($(esc(board)), $(string(m)))), moves)...)
     end
 end

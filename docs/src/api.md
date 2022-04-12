@@ -51,6 +51,8 @@ donullmove!(b::Board)
 undomove!
 domoves(b::Board, moves::Vararg{Move})
 domoves!(b::Board, moves::Vararg{Move})
+@domoves(b::Board, moves...)
+@domoves!(b::Board, moves...)
 MoveList
 push!(list::MoveList, m::Move)
 recycle!
@@ -95,8 +97,10 @@ board
 boards
 domove!(g::SimpleGame, m::Move)
 domoves!(g::SimpleGame, moves::Vararg{Union{Move, String}})
+@domoves!(g::Union{SimpleGame,Game}, moves...)
 addmove!
 addmoves!
+@addmoves!
 nextmove
 ply
 isatbeginning

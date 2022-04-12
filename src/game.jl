@@ -47,6 +47,7 @@ export addcomment!,
     undomove!,
     whiteelo,
     whiteplayer,
+    @addmoves!,
     @game,
     @simplegame
 
@@ -1751,5 +1752,68 @@ macro game(moves...)
     quote
         local g = Game()
         $(map(m -> :(addmove!(g, $(string(m)))), moves)...)
+    end
+end
+
+
+"""
+    @domoves!(game, moves...)
+
+A macro for adding moves to `game`, deleting existing continuations.
+
+Castling moves must be indicated without a hyphen (i.e. "OO" or "OOO") in order
+to satisfy Julia's parser.
+
+This macro will delete any pre-existing continuations from the current point in
+the game. If this is not desired, use the `@addmoves!` macro instead.
+
+# Examples
+```julia-repl
+julia> g = @game e4 e5 Nf3; back!(g); back!(g)
+Game:
+ 1. e4 * e5 2. Nf3
+
+julia> @domoves! g c5 b4 cxb4
+Game:
+ 1. e4 c5 2. b4 cxb4 *
+```
+"""
+macro domoves!(game::Union{SimpleGame,Game}, moves...)
+    quote
+        $(map(m -> :(domove!($(esc(game)), $(string(m)))), moves)...)
+    end
+end
+
+
+"""
+    @addmoves!(game, moves...)
+
+A macro for adding a sequence of moves to the game `game`.
+
+Castling moves must be indicated without a hyphen (i.e. "OO" or "OOO") in order
+to satisfy Julia's parser.
+
+# Examples
+```julia-repl
+julia> g = @game e4 c5
+Game:
+ 1. e4 c5 *
+
+julia> @addmoves! g Nf3 Nc6
+Game:
+ 1. e4 c5 2. Nf3 Nc6 *
+
+julia> g = @game e4 e5 Nf3; back!(g); back!(g)
+Game:
+ 1. e4 * e5 2. Nf3
+
+julia> @addmoves! g c5 b4 cxb4
+Game:
+ 1. e4 e5 (1... c5 2. b4 cxb4 *) 2. Nf3
+```
+"""
+macro addmoves!(game, moves...)
+    quote
+        $(map(m -> :(addmove!($(esc(game)), $(string(m)))), moves)...)
     end
 end
