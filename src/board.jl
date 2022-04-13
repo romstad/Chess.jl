@@ -1123,10 +1123,10 @@ search, just looking at the attackers and defenders of the destination square,
 including X-ray attackers and defenders. It does not consider pins, overloaded
 pieces, etc., and is therefore only reliable as a very rough guess.
 
-In the `m::String`, `see` internally calls `movesfromsan`, which can be 
-supplied  a pre-allocated `MoveList`in order to save time/space due to 
-unnecessary allocations. If provided, the `movelist` parameter will be 
-passed to `moves`. It is up to the caller to ensure that `movelist` has 
+In the `m::String`, `see` internally calls `movesfromsan`, which can be
+supplied  a pre-allocated `MoveList`in order to save time/space due to
+unnecessary allocations. If provided, the `movelist` parameter will be
+passed to `moves`. It is up to the caller to ensure that `movelist` has
 sufficient capacity.
 
 # Examples
@@ -1897,10 +1897,10 @@ It's the caller's responsibility to make sure all moves are legal. If a
 plain move is illegal, the consequences are undefined. If a move string cannot
 be parsed as an unambiguous legal move, the function throws an exception.
 
-In the `move::Vararg{String}` case, `movefromsan` is called. This can be 
-supplied a pre-allocated `MoveList` in order to save time/space due to 
-unnecessary allocations. If provided, the `movelist` parameter will be passed 
-to `movefromsan`. It is up to the caller to ensure that `movelist` has sufficient 
+In the `move::Vararg{String}` case, `movefromsan` is called. This can be
+supplied a pre-allocated `MoveList` in order to save time/space due to
+unnecessary allocations. If provided, the `movelist` parameter will be passed
+to `movefromsan`. It is up to the caller to ensure that `movelist` has sufficient
 capacity.
 
 There is also a non-destructive version of this version, named `domoves`.
@@ -1966,10 +1966,10 @@ It's the caller's responsibility to make sure all moves are legal. If a
 plain move is illegal, the consequences are undefined. If a move string cannot
 be parsed as an unambiguous legal move, the function throws an exception.
 
-In the `move::Vararg{String}` case, `movefromsan` is called. This can be 
-supplied a pre-allocated `MoveList` in order to save time/space due to 
-unnecessary allocations. If provided, the `movelist` parameter will be passed 
-to `movefromsan`. It is up to the caller to ensure that `movelist` has sufficient 
+In the `move::Vararg{String}` case, `movefromsan` is called. This can be
+supplied a pre-allocated `MoveList` in order to save time/space due to
+unnecessary allocations. If provided, the `movelist` parameter will be passed
+to `movefromsan`. It is up to the caller to ensure that `movelist` has sufficient
 capacity.
 
 There is also a destructive version of this version, named `domoves!`
