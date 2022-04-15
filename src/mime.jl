@@ -7,15 +7,20 @@ using ..Chess, ..Chess.PGN
 export html
 
 const BOARD_SIZE = 280
-const DARK_SQUARE_COLOR = "#a4704b"
+
+const DARK_SQUARE_COLOR = "#c3936a"
 const LIGHT_SQUARE_COLOR = "#ffd7a6"
 const HIGHLIGHT_COLOR = "#47d18b"
 
+const DARK_SQUARE_COLOR_DARK_MODE = "#00796b"
+const LIGHT_SQUARE_COLOR_DARK_MODE = "#3ca59b"
+const HIGHLIGHT_COLOR_DARK_MODE = "#d23600"
+
 function squarecolor(file, rank)
     if iseven(file + rank)
-        LIGHT_SQUARE_COLOR
+        "light-square"
     else
-        DARK_SQUARE_COLOR
+        "dark-square"
     end
 end
 
@@ -34,10 +39,10 @@ function squarehighlight(s)
     Node(
         :circle,
         Dict(
+            :class => "highlight",
             :cx => f + 0.5,
             :cy => r + 0.5,
-            :r => 0.4,
-            :fill => HIGHLIGHT_COLOR,
+            :r => 0.3,
             :opacity => 0.5,
         ),
     )
@@ -53,7 +58,7 @@ function square(file::Int, rank::Int, piece)
         Node(
             :rect,
             Dict(
-                :fill => squarecolor(file, rank),
+                :class => squarecolor(file, rank),
                 :x => file,
                 :y => rank,
                 :width => 1,
@@ -119,16 +124,57 @@ function description(board)
     )
 end
 
+function stylenode()
+    Node(
+        :style,
+        Dict(:soped => "true"),
+        """
+        .dark-square {
+            fill: $DARK_SQUARE_COLOR;
+            stroke-width: 0;
+        }
+        .light-square {
+            fill: $LIGHT_SQUARE_COLOR;
+            stroke-width: 0;
+        }
+        .highlight {
+            fill: $HIGHLIGHT_COLOR;
+        }
+        @media (prefers-color-scheme: dark) {
+            .dark-square {
+                fill: $DARK_SQUARE_COLOR_DARK_MODE;
+            }
+            .light-square {
+                fill: $LIGHT_SQUARE_COLOR_DARK_MODE;
+            }
+            .highlight {
+                fill: $HIGHLIGHT_COLOR_DARK_MODE;
+            }
+        }
+        """
+    )
+end
+
 function html(board::Board; highlight = SS_EMPTY)
     Node(
         :div,
         Dict(:class => "chessboard"),
-        [svg(board = board, highlight = highlight), description(board)],
+        [
+            stylenode(),
+            svg(board = board, highlight = highlight), description(board)
+        ],
     )
 end
 
 function html(ss::SquareSet)
-    Node(:div, Dict(:class => "chessboard"), svg(highlight = ss))
+    Node(
+        :div,
+        Dict(:class => "chessboard"),
+        [
+            stylenode(),
+            svg(highlight = ss)
+        ]
+    )
 end
 
 function jsify(g)
@@ -194,29 +240,74 @@ function format_game(g::Game)
         end
     end
 
+    function moveclass(depth)
+        if depth == 0
+            "move-depth-0"
+        elseif depth == 1
+            "move-depth-1"
+        else
+            "move-depth-2"
+        end
+    end
+
+    function movestyles()
+        Node(
+            :style,
+            Dict(:scoped => "true"),
+            """
+                .move-depth-0 {
+                    font-weight: bold; color: #000000;
+                }
+                .move-depth-1 {
+                    font-weight: bold; color: #777777;
+                }
+                .move-depth-2 {
+                    font-weight: bold; color: #bbbbbb;
+                }
+                .comment {
+                    color: blue;
+                }
+                @media (prefers-color-scheme: dark) {
+                    .move-depth-0 {
+                        font-weight: bold; color: #ffffff;
+                    }
+                    .move-depth-1 {
+                        font-weight: bold; color: #aaaaaa;
+                    }
+                    .move-depth-2 {
+                        font-weight: bold; color: #666666;
+                    }
+                    .comment {
+                        color: #00d9a3;
+                    }
+                }
+            """
+        )
+    end
+
     function fmt_move(node, child, movenum, depth, blackmovenum)
         ms = movetosan(node.board, lastmove(child.board))
         space = blackmovenum ? "" : " "
         if sidetomove(node.board) == WHITE
             @htl(
-                "<span style=$(movestyle(depth))>$space$(string(movenum ÷ 2 + 1)). $ms</span>"
+                "<span class=$(moveclass(depth))>$space$(string(movenum ÷ 2 + 1)). $ms</span>"
             )
         elseif blackmovenum || isnothing(node.parent)
             @htl(
-                "<span style=$(movestyle(depth))>$space$(string(movenum ÷ 2 + 1))... $ms</span>"
+                "<span class=$(moveclass(depth))>$space$(string(movenum ÷ 2 + 1))... $ms</span>"
             )
         else
-            @htl("<span style=$(movestyle(depth))>$space$ms</span>")
+            @htl(
+                "<span class=$(moveclass(depth))>$space$ms</span>"
+            )
         end
     end
-
-    COMMENT_STYLE = "color: blue;"
 
     function fmt_precomment(comment)
         if isnothing(comment)
             @htl("")
         else
-            @htl("<span style='$COMMENT_STYLE'>$comment</span> ")
+            @htl("<span class=\"comment\">$comment</span> ")
         end
     end
 
@@ -224,7 +315,7 @@ function format_game(g::Game)
         if isnothing(comment)
             @htl("")
         else
-            @htl(" <span style='$COMMENT_STYLE'>$comment</span>")
+            @htl("<span class=\"comment\"> $comment</span>")
         end
     end
 
@@ -232,7 +323,7 @@ function format_game(g::Game)
         if isnothing(nag)
             @htl("")
         else
-            @htl(" <span style='$COMMENT_STYLE'>\$$nag</span>")
+            @htl(" <span class=\"comment\">\$$nag</span>")
         end
     end
 
@@ -273,7 +364,7 @@ function format_game(g::Game)
         end
     end
 
-    fmt_var(g.root, 0, 0)
+    @htl("$(movestyles())$(fmt_var(g.root, 0, 0))")
 end
 
 end
