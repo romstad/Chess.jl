@@ -3039,7 +3039,7 @@ function hascastles(b::Board)::Bool
         end
     end
     if cancastlekingside(b, us)
-        rf = Square(kingsidecastlefile(b), rank(ksq))
+        rf = Square(kingsidecastlefile(b), rank(kf))
         rt = Square(FILE_F, rank(kf))
         kt = Square(FILE_G, rank(kf))
         if castleislegal(b, kf, kt, rf, rt)
