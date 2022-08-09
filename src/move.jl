@@ -156,7 +156,7 @@ end
 
 
 """
-    movefromstring(s::String)
+    movefromstring(s::AbstractString)
 
 Convert a UCI move string to a move.
 
@@ -178,7 +178,7 @@ julia> movefromstring("") == nothing
 true
 ```
 """
-function movefromstring(s::String)::Union{Move,Nothing}
+function movefromstring(s::AbstractString)::Union{Move,Nothing}
     if s == "0000"
         return MOVE_NULL
     elseif length(s) < 4

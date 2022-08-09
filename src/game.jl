@@ -195,12 +195,12 @@ end
 
 
 """
-    SimpleGame(startfen::String)
+    SimpleGame(startfen::AbstractString)
 
 Constructor that creates a `SimpleGame` from the position given by the provided
 FEN string.
 """
-function SimpleGame(startfen::String)
+function SimpleGame(startfen::AbstractString)
     SimpleGame(fromfen(startfen))
 end
 
@@ -387,12 +387,12 @@ end
 
 
 """
-    Game(startfen::String)
+    Game(startfen::AbstractString)
 
 Constructor that creates a `Game` from the position given by the provided FEN
 string.
 """
-function Game(startfen::String)
+function Game(startfen::AbstractString)
     Game(fromfen(startfen))
 end
 
@@ -446,16 +446,16 @@ function SimpleGame(g::Game)
 end
 
 """
-    headervalue(ghs::GameHeaders, name::String)
-    headervalue(g::SimpleGame, name::String)
-    headervalue(g::Game, name::String)
+    headervalue(ghs::GameHeaders, name::AbstractString)
+    headervalue(g::SimpleGame, name::AbstractString)
+    headervalue(g::Game, name::AbstractString)
 
 Looks up the value for the header with the given name.
 
 Returns the value as a `String`, or `nothing` if no header with the provided
 name exists.
 """
-function headervalue(ghs::GameHeaders, name::String)::Union{String,Nothing}
+function headervalue(ghs::GameHeaders, name::AbstractString)::Union{String,Nothing}
     if name == "Event"
         ghs.event
     elseif name == "Site"
@@ -482,11 +482,11 @@ function headervalue(ghs::GameHeaders, name::String)::Union{String,Nothing}
     end
 end
 
-function headervalue(g::SimpleGame, name::String)::Union{String,Nothing}
+function headervalue(g::SimpleGame, name::AbstractString)::Union{String,Nothing}
     headervalue(g.headers, name)
 end
 
-function headervalue(g::Game, name::String)::Union{String,Nothing}
+function headervalue(g::Game, name::AbstractString)::Union{String,Nothing}
     headervalue(g.headers, name)
 end
 
@@ -496,7 +496,7 @@ const PGN_DATE_FORMAT_2 = DateFormat("y-m")
 const PGN_DATE_FORMAT_3 = DateFormat("y")
 
 
-function parsedate(datestr::String)::Union{Date,Nothing}
+function parsedate(datestr::AbstractString)::Union{Date,Nothing}
     datestr = replace(datestr, "." => "-")
     try
         Date(datestr[1:10], PGN_DATE_FORMAT)
@@ -680,13 +680,13 @@ end
 
 
 """
-    setheadervalue!(ghs::GameHeaders, name::String, value::String)
-    setheadervalue!(g::SimpleGame, name::String, value::String)
-    setheadervalue!(g::Game, name::String, value::String)
+    setheadervalue!(ghs::GameHeaders, name::AbstractString, value::AbstractString)
+    setheadervalue!(g::SimpleGame, name::AbstractString, value::AbstractString)
+    setheadervalue!(g::Game, name::AbstractString, value::AbstractString)
 
 Sets a header value, creating the header if it doesn't exist.
 """
-function setheadervalue!(ghs::GameHeaders, name::String, value::String)
+function setheadervalue!(ghs::GameHeaders, name::AbstractString, value::AbstractString)
     if name == "Event"
         ghs.event = value
     elseif name == "Site"
@@ -714,11 +714,11 @@ function setheadervalue!(ghs::GameHeaders, name::String, value::String)
     end
 end
 
-function setheadervalue!(g::SimpleGame, name::String, value::String)
+function setheadervalue!(g::SimpleGame, name::AbstractString, value::AbstractString)
     setheadervalue!(g.headers, name, value)
 end
 
-function setheadervalue!(g::Game, name::String, value::String)
+function setheadervalue!(g::Game, name::AbstractString, value::AbstractString)
     setheadervalue!(g.headers, name, value)
 end
 
@@ -814,9 +814,9 @@ end
 
 """
     domove!(g::SimpleGame, m::Move)
-    domove!(g::SimpleGame, m::String)
+    domove!(g::SimpleGame, m::AbstractString)
     domove!(g::Game, m::Move)
-    domove!(g::Game, m::String)
+    domove!(g::Game, m::AbstractString)
 
 Adds a new move at the current location in the game move list.
 
@@ -843,7 +843,7 @@ function domove!(g::SimpleGame, m::Move)
     g
 end
 
-function domove!(g::SimpleGame, m::String)
+function domove!(g::SimpleGame, m::AbstractString)
     mv = movefromstring(m)
     if isnothing(mv)
         mv = movefromsan(board(g), m)
@@ -857,7 +857,7 @@ function domove!(g::Game, m::Move)
     g
 end
 
-function domove!(g::Game, m::String)
+function domove!(g::Game, m::AbstractString)
     removeallchildren!(g)
     addmove!(g, m)
 end
@@ -895,7 +895,7 @@ end
 
 """
     addmove!(g::Game, m::Move)
-    addmove!(g::Game, m::String)
+    addmove!(g::Game, m::AbstractString)
 
 Adds the move `m` to the game `g` at the current node.
 
@@ -919,7 +919,7 @@ function addmove!(g::Game, m::Move)
     g
 end
 
-function addmove!(g::Game, m::String)
+function addmove!(g::Game, m::AbstractString)
     mv = movefromstring(m)
     if isnothing(mv)
         mv = movefromsan(board(g), m)
@@ -1064,7 +1064,7 @@ end
     forward!(g::SimpleGame)
     forward!(g::Game)
     forward!(g::Game, m::Move)
-    forward!(g::Game, m::String)
+    forward!(g::Game, m::AbstractString)
 
 Go one step forward in the game by replaying a previously retracted move.
 
@@ -1097,7 +1097,7 @@ function forward!(g::Game, m::Move)
     g
 end
 
-function forward!(g::Game, m::String)
+function forward!(g::Game, m::AbstractString)
     mv = movefromstring(m)
     if isnothing(mv)
         mv = movefromsan(board(g), m)
@@ -1281,77 +1281,77 @@ end
 
 
 """
-    adddata!(n::GameNode, key::String, value)
+    adddata!(n::GameNode, key::AbstractString, value)
 
 Add a piece of data to the given node's data dictionary.
 
 This is a low-level function that is mainly used to add comments and NAGs, but
 can also be used to add any type of custom annotation data to a game node.
 """
-function adddata!(n::GameNode, key::String, value)
+function adddata!(n::GameNode, key::AbstractString, value)
     n.data[key] = value
 end
 
 
 """
-    adddata!(g::Game, key::String, value)
+    adddata!(g::Game, key::AbstractString, value)
 
 Add a piece of data to the current game node's data dictionary.
 
 This is a low-level function that is mainly used to add comments and NAGs, but
 can also be used to add any type of custom annotation data to a game node.
 """
-function adddata!(g::Game, key::String, value)
+function adddata!(g::Game, key::AbstractString, value)
     adddata!(g.node, key, value)
 end
 
 
 """
-    removedata!(n::GameNode, key::String)
+    removedata!(n::GameNode, key::AbstractString)
 
 Remove a piece of data from the game node's data dictionary.
 
 This is a low-level function that is mainly used to delete comments and NAGs.
 """
-function removedata!(n::GameNode, key::String)
+function removedata!(n::GameNode, key::AbstractString)
     delete!(n.data, key)
 end
 
 
 """
-    removedata!(n::GameNode, key::String)
+    removedata!(n::GameNode, key::AbstractString)
 
 Remove a piece of data from the current game node's data dictionary.
 
 This is a low-level function that is mainly used to delete comments and NAGs.
 """
-function removedata!(g::Game, key::String)
+function removedata!(g::Game, key::AbstractString)
     removedata!(g.node, key)
 end
 
 
 """
-    addcomment!(g::Game, comment::String)
+    addcomment!(g::Game, comment::AbstractString)
 
 Adds a comment to the current game node.
 
 In PGN and other text ouput formats, the comment is printed _after_ the move
 leading to the node.
 """
-function addcomment!(g::Game, comment::String)
+function addcomment!(g::Game, comment::AbstractString)
     adddata!(g, "comment", comment)
 end
 
 
 """
-    addprecomment!(g::Game, comment::String)
+    addprecomment!(g::Game, comment::AbstractString)
 
 Adds a pre-comment to the current game node.
 
 In PGN and other text ouput formats, the comment is printed _before_ the move
 leading to the node.
 """
-function addprecomment!(g::Game, comment::String)
+function addprecomment!(g::Game, comment::AbstractString)
     adddata!(g, "precomment", comment)
 end
 

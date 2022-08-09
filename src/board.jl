@@ -270,7 +270,7 @@ end
 """
     pieceon(b::Board, s::Square)
     pieceon(b::Board, f::SquareFile, r::SquareRank)
-    pieceon(b::Board, s::String)
+    pieceon(b::Board, s::AbstractString)
 
 Find the piece on the given square of the board.
 
@@ -300,7 +300,7 @@ function pieceon(b::Board, f::SquareFile, r::SquareRank)::Piece
     pieceon(b, Square(f, r))
 end
 
-function pieceon(b::Board, s::String)
+function pieceon(b::Board, s::AbstractString)
     pieceon(b, squarefromstring(s))
 end
 
@@ -1113,8 +1113,8 @@ end
 
 """
     see(b::Board, m::Move)::Int
-    see(b::Board, m::String)::Int
-    see(b::Board, m::String, movelist::MoveList)::Int
+    see(b::Board, m::AbstractString)::Int
+    see(b::Board, m::AbstractString, movelist::MoveList)::Int
 
 Static exchange evaluator.
 
@@ -1123,7 +1123,7 @@ search, just looking at the attackers and defenders of the destination square,
 including X-ray attackers and defenders. It does not consider pins, overloaded
 pieces, etc., and is therefore only reliable as a very rough guess.
 
-In the `m::String`, `see` internally calls `movesfromsan`, which can be
+In the `m::AbstractString`, `see` internally calls `movesfromsan`, which can be
 supplied  a pre-allocated `MoveList`in order to save time/space due to
 unnecessary allocations. If provided, the `movelist` parameter will be
 passed to `moves`. It is up to the caller to ensure that `movelist` has
@@ -1238,8 +1238,8 @@ function see(b::Board, m::Move)::Int
     swaplist[1]
 end
 
-see(b::Board, m::String)::Int = see(b, m, MoveList(200))
-function see(b::Board, m::String, movelist::MoveList)::Int
+see(b::Board, m::AbstractString)::Int = see(b, m, MoveList(200))
+function see(b::Board, m::AbstractString, movelist::MoveList)::Int
     mv = movefromstring(m)
     if isnothing(mv)
         mv = movefromsan(b, m, movelist)
@@ -1564,7 +1564,7 @@ discovered_check_candidates(b::Board) = discovered_check_candidates(b, sidetomov
 
 """
     domove(b::Board, m::Move)
-    domove(b::Board, m::String)
+    domove(b::Board, m::AbstractString)
 
 Do the move `m` on the board `b`, and return the new board.
 
@@ -1652,7 +1652,7 @@ function domove(b::Board, m::Move)::Board
     result
 end
 
-function domove(b::Board, m::String)::Board
+function domove(b::Board, m::AbstractString)::Board
     mv = movefromstring(m)
     if isnothing(mv)
         mv = movefromsan(b, m)
@@ -1682,7 +1682,7 @@ Base.show(io::IO, _::UndoInfo) = print(io, "UndoInfo(...)")
 
 """
     domove!(b::Board, m::Move)
-    domove!(b::Board, m::String)
+    domove!(b::Board, m::AbstractString)
 
 Destructively modify the board `b` by making the move `m`.
 
@@ -1785,7 +1785,7 @@ function domove!(b::Board, m::Move)::UndoInfo
     result
 end
 
-function domove!(b::Board, m::String)::UndoInfo
+function domove!(b::Board, m::AbstractString)::UndoInfo
     mv = movefromstring(m)
     if isnothing(mv)
         mv = movefromsan(b, m)
@@ -3422,14 +3422,14 @@ end
 
 
 """
-    fromfen(fen::String)
+    fromfen(fen::AbstractString)
 
 Try to create a `Board` value from a FEN string.
 
 If the supplied string doesn't represent a valid board position, this function
 returns `nothing`.
 """
-function fromfen(fen::String)::Union{Board,Nothing}
+function fromfen(fen::AbstractString)::Union{Board,Nothing}
     result = emptyboard()
     components = split(fen, r"\s+")
 

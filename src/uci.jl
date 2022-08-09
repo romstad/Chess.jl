@@ -76,7 +76,7 @@ mutable struct Option
 end
 
 
-function parseoptionname(s::String)::Tuple{String,String}
+function parseoptionname(s::AbstractString)::Tuple{String,String}
     @assert startswith(s, "name ")
     result = ""
     for c in s[6:end]
@@ -87,7 +87,7 @@ function parseoptionname(s::String)::Tuple{String,String}
 end
 
 
-function parseoptiontype(s::String)::Tuple{OptionType,String}
+function parseoptiontype(s::AbstractString)::Tuple{OptionType,String}
     @assert startswith(s, "type ")
     result = ""
     for c in s[6:end]
@@ -105,7 +105,7 @@ function parseoptiontype(s::String)::Tuple{OptionType,String}
 end
 
 
-function parseoptiondefault(ot::OptionType, s::String)::Tuple{OptionValue,String}
+function parseoptiondefault(ot::OptionType, s::AbstractString)::Tuple{OptionValue,String}
     if ot == button
         (nothing, s)
     else
@@ -134,7 +134,7 @@ function parseoptiondefault(ot::OptionType, s::String)::Tuple{OptionValue,String
 end
 
 
-function parsespinminmax(s::String)::Tuple{Int,Int}
+function parsespinminmax(s::AbstractString)::Tuple{Int,Int}
     @assert startswith(s, " min ")
     tokens = split(s[2:end], r"\s+")
     @assert length(tokens) >= 4
@@ -143,7 +143,7 @@ function parsespinminmax(s::String)::Tuple{Int,Int}
 end
 
 
-function parsecombovar(s::String)::Tuple{String,String}
+function parsecombovar(s::AbstractString)::Tuple{String,String}
     @assert startswith(s, "var ")
     result = ""
     for c in s[5:end]
@@ -158,7 +158,7 @@ function parsecombovar(s::String)::Tuple{String,String}
 end
 
 
-function parsecombovars(s::String)::Vector{String}
+function parsecombovars(s::AbstractString)::Vector{String}
     result = String[]
     while startswith(s, "var ")
         (next, rest) = parsecombovar(s)
@@ -169,7 +169,7 @@ function parsecombovars(s::String)::Vector{String}
 end
 
 
-function parseoption(s::String)::Option
+function parseoption(s::AbstractString)::Option
     @assert startswith(s, "option name")
     s = s[8:end]
     (name, s) = parseoptionname(s)
@@ -245,11 +245,11 @@ Base.show(io::IO, engine::Engine) = print(io, "Engine: $(engine.name)")
 
 
 """
-    function runengine(path::String)::Engine
+    function runengine(path::AbstractString)::Engine
 
 Runs the engine at the specified path, returning an `Engine`.
 """
-function runengine(path::String)::Engine
+function runengine(path::AbstractString)::Engine
     process = open(`$path`, "r+")
     options = Dict{String,Option}()
     println(process, "uci")
@@ -289,11 +289,11 @@ end
 
 
 """
-    sendcommand(e::Engine, cmd::String)
+    sendcommand(e::Engine, cmd::AbstractString)
 
 Sends the UCI command `cmd` to the engine `e`.
 """
-function sendcommand(e::Engine, cmd::String)
+function sendcommand(e::Engine, cmd::AbstractString)
     println(e.io, cmd)
 end
 
@@ -324,14 +324,14 @@ end
 
 
 """
-    function setoption(e::Engine, name::String, value::OptionValue = nothing)
+    function setoption(e::Engine, name::AbstractString, value::OptionValue = nothing)
 
 Sets the UCI option named `name` to the new value `value`.
 
 Throws an error if the engine `e` does not have an option with the provided
 name, or if the value is incompatible with the type of the option.
 """
-function setoption(e::Engine, name::String, value::OptionValue = nothing)
+function setoption(e::Engine, name::AbstractString, value::OptionValue = nothing)
     if !haskey(e.options, name)
         throw("Engine $(e.name) has no option named $name")
     elseif !isvalidvalueforoption(e.options[name], value)
@@ -506,11 +506,11 @@ end
 
 
 """
-    parsebestmove(line::String)::BestMoveInfo
+    parsebestmove(line::AbstractString)::BestMoveInfo
 
 Parses a `bestmove` line printed by a UCI engine to a `BestMoveInfo` object.
 """
-function parsebestmove(line::String)::BestMoveInfo
+function parsebestmove(line::AbstractString)::BestMoveInfo
     @assert startswith(line, "bestmove")
     tokens = split(line, r"\s+")
     bestmove = movefromstring(String(tokens[2]))
@@ -676,14 +676,14 @@ end
 
 
 """
-    parsesearchinfo(line::String)::SearchInfo
+    parsesearchinfo(line::AbstractString)::SearchInfo
 
 Parses an `info` line printed by a UCI engine to a `SearchInfo` object.
 
 See the documentation for `SearchInfo` for information about how to inspect
 and use the return value.
 """
-function parsesearchinfo(line::String)::SearchInfo
+function parsesearchinfo(line::AbstractString)::SearchInfo
     @assert startswith(line, "info")
     result = SearchInfo()
     tokens = split(line, r"\s+")[2:end]
@@ -724,7 +724,7 @@ end
 
 
 """
-    function search(e::Engine, gocmd::String; infoaction = nothing)
+    function search(e::Engine, gocmd::AbstractString; infoaction = nothing)
 
 Tells a UCI engine to start searching.
 
@@ -736,7 +736,7 @@ of `parsesearchinfo()`.
 
 The return value is of type `BestMoveInfo`.
 """
-function search(e::Engine, gocmd::String; infoaction = nothing)::BestMoveInfo
+function search(e::Engine, gocmd::AbstractString; infoaction = nothing)::BestMoveInfo
     sendcommand(e, gocmd)
     while true
         line = readline(e.io)
@@ -858,7 +858,7 @@ function mpvsearch(
 
     result = SearchInfo[]
 
-    function infoaction(info::String)
+    function infoaction(info::AbstractString)
         info = parsesearchinfo(info)
         if !isnothing(info.multipv)
             info.multipv == 1 && empty!(result)

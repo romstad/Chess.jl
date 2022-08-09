@@ -530,7 +530,7 @@ end
 
 
 """
-    gamesinfile(filename::String; annotations=false, skip=0, movelist::MoveList=MoveList(200))
+    gamesinfile(filename::AbstractString; annotations=false, skip=0, movelist::MoveList=MoveList(200))
 
 Creates a `Channel` of `Game`/`SimpleGame` objects read from the PGN file with
 the provided file name.
@@ -548,7 +548,7 @@ It is up to the caller to ensure that `movelist` has sufficient capacity.
 The optional parameter `skip` makes the function skip the first `skip` games of
 the file.
 """
-gamesinfile(filename::String; annotations = false, skip = 0, movelist::MoveList = MoveList(200)) = gamesfromstream(open(filename, "r"), annotations = annotations, skip = skip, movelist = MoveList(200))
+gamesinfile(filename::AbstractString; annotations = false, skip = 0, movelist::MoveList = MoveList(200)) = gamesfromstream(open(filename, "r"), annotations = annotations, skip = skip, movelist = MoveList(200))
 
 """
     gamesfromstream(stream::IO; annotations=false, skip=0, movelist::MoveList=MoveList(200))
@@ -592,7 +592,7 @@ end
 
 
 """
-    gamefromstring(s::String; annotations=false, movelist::MoveList=MoveList(200))
+    gamefromstring(s::AbstractString; annotations=false, movelist::MoveList=MoveList(200))
 
 Attempts to create a `Game` or `SimpleGame` object from the provided PGN string.
 
@@ -609,17 +609,17 @@ sufficient capacity.
 If the string does not parse as valid PGN, or if the notation contains illegal
 or ambiguous moves, the function raises a `PGNException`.
 """
-function gamefromstring(s::String; annotations = false, movelist::MoveList=MoveList(200))
+function gamefromstring(s::AbstractString; annotations = false, movelist::MoveList=MoveList(200))
     readgame(PGNReader(IOBuffer(s)), annotations = annotations, movelist = movelist)
 end
 
 
-function formatstring(s::String)::String
+function formatstring(s::AbstractString)::String
     "\"" * replace(replace(s, "\\" => "\\\\"), "\"" => "\\\"") * "\""
 end
 
 
-function formatheader(name::String, value::String)
+function formatheader(name::AbstractString, value::AbstractString)
     "[" * name * " " * formatstring(value) * "]\n"
 end
 
