@@ -289,7 +289,7 @@ end
 
 function addgamefile!(
     entries::Vector{BookEntry},
-    filename::String,
+    filename::AbstractString,
     scorewhitewin,
     scorewhitedraw,
     scorewhiteloss,
@@ -439,7 +439,7 @@ end
 
 
 """
-    writebooktofile(entries::Vector{BookEntry}, filename::String,
+    writebooktofile(entries::Vector{BookEntry}, filename::AbstractString,
                     compact = false)
 
 Writes a book (as created by `createbookfile`) to a binary file.
@@ -447,7 +447,7 @@ Writes a book (as created by `createbookfile`) to a binary file.
 If the optional parameter `compact` is `true`, the book is written in a more
 compact format that does not include W/L/D counts, Elo numbers and years.
 """
-function writebooktofile(entries::Vector{BookEntry}, filename::String, compact = false)
+function writebooktofile(entries::Vector{BookEntry}, filename::AbstractString, compact = false)
     open(filename, "w") do f
         write(f, UInt8(compact ? 1 : 0))
         for e ∈ entries
@@ -458,7 +458,7 @@ end
 
 
 """
-    purgebook(infilename::String, outfilename::String;
+    purgebook(infilename::AbstractString, outfilename::AbstractString;
               minscore = 0, mingamecount = 5, compact = false)
 
 Creates a smaller version of an opening book file by removing unimportant lines.
@@ -470,8 +470,8 @@ If the optional parameter `compact` is `true`, the output file is written in a
 more compact format that does not include W/L/D counts, Elo numbers and years.
 """
 function purgebook(
-    infilename::String,
-    outfilename::String;
+    infilename::AbstractString,
+    outfilename::AbstractString;
     minscore = 0,
     mingamecount = 5,
     compact = false,

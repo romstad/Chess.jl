@@ -237,20 +237,22 @@ begin
 end
 
 begin
-    fens = [
-        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -",
-        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w Kq -",
-        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w Qk -",
-        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - -",
-        "rnbqkbnr/pppp1ppp/4p3/4P3/8/8/PPPP1PPP/RNBQKBNR w KQkq d6",
-    ]
-    for f in fens
-        @test fen(fromfen(f)) == f
-    end
+    for T in [String, SubString]
+        fens = T.([
+            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -",
+            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w Kq -",
+            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w Qk -",
+            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - -",
+            "rnbqkbnr/pppp1ppp/4p3/4P3/8/8/PPPP1PPP/RNBQKBNR w KQkq d6",
+        ])
+        for f in fens
+            @test fen(fromfen(f)) == f
+        end
 
-    for i = 0:959
-        f = chess960fen(i)
-        @test fen(fromfen(f)) == f
+        for i = 0:959
+            f = chess960fen(i)
+            @test fen(fromfen(f)) == f
+        end
     end
 end
 

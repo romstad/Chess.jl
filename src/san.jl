@@ -14,8 +14,8 @@ end
 
 
 """
-    movefromsan(b::Board, san::String, movelist::MoveList)::Union{Move,Nothing}
-    movefromsan(b::Board, san::String)::Union{Move,Nothing}
+    movefromsan(b::Board, san::AbstractString, movelist::MoveList)::Union{Move,Nothing}
+    movefromsan(b::Board, san::AbstractString)::Union{Move,Nothing}
 
 Tries to read a move in Short Algebraic Notation.
 
@@ -42,9 +42,9 @@ julia> movefromsan(b, "???") == nothing
 true
 ```
 """
-movefromsan(b::Board, san::String)::Union{Move,Nothing} = movefromsan(b, san, MoveList(200))
+movefromsan(b::Board, san::AbstractString)::Union{Move,Nothing} = movefromsan(b, san, MoveList(200))
 
-function movefromsan(b::Board, san::String, movelist::MoveList)::Union{Move,Nothing}
+function movefromsan(b::Board, san::AbstractString, movelist::MoveList)::Union{Move,Nothing}
     recycle!(movelist)
     ms = moves(b, movelist)
 
