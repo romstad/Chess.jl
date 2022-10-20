@@ -1368,16 +1368,7 @@ end
 
 function isrepetitiondraw(g::SimpleGame)::Bool
     key = board(g).key
-    rcount = 1
-    for i ∈ 2:2:board(g).r50
-        if g.history[g.ply-i].key == key
-            rcount += 1
-            if rcount == 3
-                return true
-            end
-        end
-    end
-    false
+    sum(map(hist -> hist.key==key, g.history)) == 3
 end
 
 function isrepetitiondraw(g::Game)::Bool
