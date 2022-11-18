@@ -19,7 +19,6 @@ export attacksto,
     cancastlekingside,
     cancastlequeenside,
     compress,
-    copyto!,
     decompress,
     divide,
     domove,
@@ -216,7 +215,28 @@ function Base.show(io::IO, ::MIME"text/html", b::Board)
 end
 
 
-function copyto!(dest::Board, src::Board)
+function Base.copy(src::Board)
+    Board(
+        copy(src.board),
+        copy(src.bycolor),
+        copy(src.bytype),
+        src.side,
+        src.castlerights,
+        copy(src.castlefiles),
+        src.epsq,
+        src.r50,
+        copy(src.ksq),
+        src.move,
+        src.occ,
+        src.checkers,
+        src.pin,
+        src.key,
+        src.is960,
+    )
+end
+
+
+function Base.copyto!(dest::Board, src::Board)
     Base.copyto!(dest.board, src.board)
     Base.copyto!(dest.bycolor, src.bycolor)
     Base.copyto!(dest.bytype, src.bytype)
@@ -1599,7 +1619,7 @@ function domove(b::Board, m::Move)::Board
         return donullmove(b)
     end
 
-    result = deepcopy(b)
+    result = copy(b)
     f = from(m)
     t = to(m)
     capture = pieceon(b, t)
@@ -2008,13 +2028,13 @@ ERROR: "Illegal or ambiguous move: c5"
 ```
 """
 function domoves(b::Board, moves::Vararg{Move})::Board
-    b = deepcopy(b)
+    b = copy(b)
     domoves!(b, moves...)
     b
 end
 
 function domoves(b::Board, moves::Vararg{String}; movelist::MoveList=MoveList(200))::Board
-    b = deepcopy(b)
+    b = copy(b)
     domoves!(b, moves...; movelist)
 end
 
@@ -2037,7 +2057,7 @@ There is a much faster destructive function `donullmove!` that should be called
 instead when high performance is required.
 """
 function donullmove(b::Board)::Board
-    result = deepcopy(b)
+    result = copy(b)
     us = sidetomove(b)
     result.side = coloropp(us).val
     result.r50 += 1
@@ -4132,7 +4152,7 @@ Board (rnbqkbnr/ppp2ppp/4p3/3p4/2PP4/8/PP2PPPP/RNBQKBNR w KQkq -):
 """
 macro domoves(board::Board, moves...)
     quote
-        local b = deepcopy($(esc(board)))
+        local b = copy($(esc(board)))
         $(map(m -> :(domove!(b, $(string(m)))), moves)...)
         b
     end

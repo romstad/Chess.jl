@@ -116,7 +116,7 @@ end
 
 function gamestring(g::SimpleGame)
     result = IOBuffer()
-    b = deepcopy(g.startboard)
+    b = copy(g.startboard)
     ply = 1
     for ghe in g.history
         ply == g.ply && write(result, "* ")
@@ -179,8 +179,8 @@ no board is provided, the default `startboard()` is used.
 function SimpleGame(startboard::Board = startboard())
     result = SimpleGame(
         GameHeaders(),
-        deepcopy(startboard),
-        deepcopy(startboard),
+        copy(startboard),
+        copy(startboard),
         GameHistoryEntry[GameHistoryEntry(nothing, nothing, startboard.key)],
         1,
     )
@@ -279,7 +279,7 @@ The resulting `GameNode` has no parent. This constructor is used to create the
 root node of a game.
 """
 function GameNode(board::Board, id::Int, ply::Int = 1)
-    GameNode(nothing, deepcopy(board), GameNode[], Dict{String,Any}(), id, ply)
+    GameNode(nothing, copy(board), GameNode[], Dict{String,Any}(), id, ply)
 end
 
 
@@ -1495,15 +1495,15 @@ end
 Returns a vector of all the boards along the main line of the game.
 """
 function boards(g::SimpleGame)::Vector{Board}
-    saveboard = deepcopy(board(g))
+    saveboard = copy(board(g))
     saveply = g.ply
     result = Board[]
     tobeginning!(g)
     while !isatend(g)
-        push!(result, deepcopy(board(g)))
+        push!(result, copy(board(g)))
         forward!(g)
     end
-    push!(result, deepcopy(board(g)))
+    push!(result, copy(board(g)))
     copyto!(g.board, saveboard)
     g.ply = saveply
     result
@@ -1515,10 +1515,10 @@ function boards(g::Game)::Vector{Board}
     result = Board[]
     tobeginning!(g)
     while !isatend(g)
-        push!(result, deepcopy(board(g)))
+        push!(result, copy(board(g)))
         forward!(g)
     end
-    push!(result, deepcopy(board(g)))
+    push!(result, copy(board(g)))
     tonode!(g, savenodeid)
     result
 end
