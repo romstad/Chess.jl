@@ -2,7 +2,7 @@ module Book
 
 using Artifacts
 using Dates
-using Formatting
+using Format
 using Printf
 using StatsBase
 

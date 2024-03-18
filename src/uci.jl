@@ -2,7 +2,7 @@ module UCI
 
 import Base.-
 
-using Formatting
+using Format
 
 using ..Chess
 
